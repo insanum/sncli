@@ -227,15 +227,6 @@ class sncli:
                 else:
                     return key
 
-        class NoteView(urwid.Filler):
-            def __init__(self, note):
-                note_widget = urwid.Text(('note_view', note['content']))
-                super(NoteView, self).__init__(note_widget, 'top')
-
-        def urwid_unhandled_keypress(key):
-            if key == 'q' or key == 'Q':
-                sncli_loop.widget = NoteTitleListBox()
-
         palette = [
                     ('note_title_focus', 'black',    'dark red'),
                     ('note_title',       'dark red', 'default'),
@@ -244,7 +235,7 @@ class sncli:
 
         sncli_loop = urwid.MainLoop(NoteTitleListBox(),
                                     palette,
-                                    unhandled_input=urwid_unhandled_keypress)
+                                    handle_mouse=False)
         sncli_loop.run()
 
     def urwid_one(self):
