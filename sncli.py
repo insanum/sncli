@@ -26,7 +26,8 @@ class Config:
                     'page_up'        : 'b',
                     'half_page_down' : 'ctrl d',
                     'half_page_up'   : 'ctrl u',
-                    'view_note'      : 'enter'
+                    'view_note'      : 'enter',
+                    'view_log'       : 'l'
                    }
 
         cp = ConfigParser.SafeConfigParser(defaults)
@@ -40,10 +41,10 @@ class Config:
         else:
             self.ok = True
 
-        self.sn_username  = cp.get(cfg_sec, 'sn_username', raw=True)
-        self.sn_password  = cp.get(cfg_sec, 'sn_password', raw=True)
-        self.db_path      = cp.get(cfg_sec, 'db_path')
-        self.search_mode  = cp.get(cfg_sec, 'search_mode')
+        self.sn_username  = cp.get(cfg_sec,    'sn_username', raw=True)
+        self.sn_password  = cp.get(cfg_sec,    'sn_password', raw=True)
+        self.db_path      = cp.get(cfg_sec,    'db_path')
+        self.search_mode  = cp.get(cfg_sec,    'search_mode')
         self.search_tags  = cp.getint(cfg_sec, 'search_tags')
         self.sort_mode    = cp.getint(cfg_sec, 'sort_mode')
         self.pinned_ontop = cp.getint(cfg_sec, 'pinned_ontop')
@@ -59,7 +60,8 @@ class Config:
               'page_up'        : [ cp.get(cfg_sec, 'page_up'),        'Page up' ],
               'half_page_down' : [ cp.get(cfg_sec, 'half_page_down'), 'Half page down' ],
               'half_page_up'   : [ cp.get(cfg_sec, 'half_page_up'),   'Half page up' ],
-              'view_note'      : [ cp.get(cfg_sec, 'view_note'),      'View note' ]
+              'view_note'      : [ cp.get(cfg_sec, 'view_note'),      'View note' ],
+              'view_log'       : [ cp.get(cfg_sec, 'view_log'),       'View log' ]
             }
 
 class sncli:
@@ -126,11 +128,14 @@ class sncli:
         def pop_last_view():
             return self.last_view.pop()
 
+        def get_logfile():
+            return self.logfile
+
         class NoteTitles(urwid.ListBox):
             def __init__(self):
+                self.keybinds = get_keybinds()
                 body = urwid.SimpleFocusListWalker( list_get_note_titles() )
                 super(NoteTitles, self).__init__(body)
-                self.keybinds = get_keybinds()
                 self.focus.set_text(('note_title_focus', self.focus.text))
 
             def keypress(self, size, key):
@@ -141,7 +146,11 @@ class sncli:
 
                 if key == self.keybinds['help'][0]:
                     push_last_view(self)
-                    sncli_loop.widget = Help(self)
+                    sncli_loop.widget = Help()
+
+                elif key == self.keybinds['view_log'][0]:
+                    push_last_view(self)
+                    sncli_loop.widget = ViewLog()
 
                 elif key == self.keybinds['down'][0]:
                     last = len(self.body.positions())
@@ -214,8 +223,8 @@ class sncli:
 
         class NoteContent(urwid.ListBox):
             def __init__(self, nl_focus_index):
-                body = urwid.SimpleFocusListWalker(list_get_note_content(nl_focus_index))
                 self.keybinds = get_keybinds()
+                body = urwid.SimpleFocusListWalker(list_get_note_content(nl_focus_index))
                 self.note = list_get_note_json(nl_focus_index)
                 super(NoteContent, self).__init__(body)
 
@@ -225,9 +234,13 @@ class sncli:
                 if key == self.keybinds['quit'][0]:
                     sncli_loop.widget = pop_last_view()
 
-                if key == self.keybinds['help'][0]:
+                elif key == self.keybinds['help'][0]:
                     push_last_view(self)
-                    sncli_loop.widget = Help(self)
+                    sncli_loop.widget = Help()
+
+                elif key == self.keybinds['view_log'][0]:
+                    push_last_view(self)
+                    sncli_loop.widget = ViewLog()
 
                 elif key == self.keybinds['down'][0]:
                     key = super(NoteContent, self).keypress(size, 'down')
@@ -262,8 +275,62 @@ class sncli:
                                       offset_inset=0,
                                       coming_from='below')
 
+        class ViewLog(urwid.ListBox):
+            def __init__(self):
+                self.keybinds = get_keybinds()
+                f = open(get_logfile())
+                lines = []
+                for line in f:
+                    lines.append(urwid.Text(('default', line.rstrip())))
+                f.close()
+                body = urwid.SimpleFocusListWalker(lines)
+                super(ViewLog, self).__init__(body)
+
+            def keypress(self, size, key):
+                key = super(ViewLog, self).keypress(size, key)
+
+                if key == self.keybinds['quit'][0]:
+                    sncli_loop.widget = pop_last_view()
+
+                if key == self.keybinds['help'][0]:
+                    push_last_view(self)
+                    sncli_loop.widget = Help()
+
+                elif key == self.keybinds['down'][0]:
+                    key = super(ViewLog, self).keypress(size, 'down')
+
+                elif key == self.keybinds['up'][0]:
+                    key = super(ViewLog, self).keypress(size, 'up')
+
+                elif key == self.keybinds['page_down'][0]:
+                    key = super(ViewLog, self).keypress(size, 'page down')
+
+                elif key == self.keybinds['page_up'][0]:
+                    key = super(ViewLog, self).keypress(size, 'page up')
+
+                elif key == self.keybinds['half_page_down'][0]:
+                    last = len(self.body.positions())
+                    next_focus = self.focus_position + (size[1] / 2)
+                    if next_focus >= last:
+                        next_focus = last - 1
+                    self.change_focus(size, next_focus,
+                                      offset_inset=0,
+                                      coming_from='above')
+
+                elif key == self.keybinds['half_page_up'][0]:
+                    if 'bottom' in self.ends_visible(size):
+                        last = len(self.body.positions())
+                        next_focus = last - size[1] - (size[1] / 2)
+                    else:
+                        next_focus = self.focus_position - (size[1] / 2)
+                    if next_focus < 0:
+                        next_focus = 0
+                    self.change_focus(size, next_focus,
+                                      offset_inset=0,
+                                      coming_from='below')
+
         class Help(urwid.ListBox):
-            def __init__(self, last_view):
+            def __init__(self):
                 self.keybinds = get_keybinds()
 
                 col1_txt_common = \
@@ -295,6 +362,9 @@ class sncli:
                                align='right'),
                     urwid.Text(('help_col1',
                                 "'" + self.keybinds['help'][0] + "'"),
+                               align='right'),
+                    urwid.Text(('help_col1',
+                                "'" + self.keybinds['view_log'][0] + "'"),
                                align='right')
                   ]
 
@@ -311,7 +381,8 @@ class sncli:
                   [
                     urwid.Text(('help_col2', u'half_page_down')),
                     urwid.Text(('help_col2', u'half_page_up')),
-                    urwid.Text(('help_col2', u'help'))
+                    urwid.Text(('help_col2', u'help')),
+                    urwid.Text(('help_col2', u'view_log'))
                   ]
 
                 col3_txt_common = \
@@ -327,7 +398,8 @@ class sncli:
                   [
                     urwid.Text(('help_col3', self.keybinds['half_page_down'][1])),
                     urwid.Text(('help_col3', self.keybinds['half_page_up'][1])),
-                    urwid.Text(('help_col3', self.keybinds['help'][1]))
+                    urwid.Text(('help_col3', self.keybinds['help'][1])),
+                    urwid.Text(('help_col3', self.keybinds['view_log'][1]))
                   ]
 
                 space = urwid.Text(('help_hdr', u""))
@@ -377,6 +449,21 @@ class sncli:
                                           ('fixed', 32, nc_col3_pile) ],
                                         3, focus_column=1)
 
+                log_hdr = urwid.Text(('help_hdr', u"Log"))
+
+                log_col1_txt = copy.copy(col1_txt_common)
+                log_col2_txt = copy.copy(col2_txt_common)
+                log_col3_txt = copy.copy(col3_txt_common)
+
+                log_col1_pile = urwid.Pile(log_col1_txt) 
+                log_col2_pile = urwid.Pile(log_col2_txt) 
+                log_col3_pile = urwid.Pile(log_col3_txt) 
+
+                log_cols = urwid.Columns([ ('fixed', 16, log_col1_pile),
+                                           ('fixed', 16, log_col2_pile),
+                                           ('fixed', 32, log_col3_pile) ],
+                                         3, focus_column=1)
+
                 help_hdr = urwid.Text(('help_hdr', u"Help"))
 
                 help_col1_txt = copy.copy(col1_txt_common)
@@ -394,6 +481,7 @@ class sncli:
 
                 help_pile = urwid.Pile( [ space, nl_hdr,   nl_cols,
                                           space, nc_hdr,   nc_cols,
+                                          space, log_hdr,  log_cols,
                                           space, help_hdr, help_cols ] )
 
                 body = urwid.SimpleFocusListWalker([help_pile])
