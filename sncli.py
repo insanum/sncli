@@ -10,24 +10,40 @@ class Config:
     def __init__(self):
         self.home = os.path.abspath(os.path.expanduser('~'))
         defaults = {
-                    'sn_username'       : '',
-                    'sn_password'       : '',
-                    'db_path'           : os.path.join(self.home, '.sncli'),
-                    'search_mode'       : 'gstyle',
-                    'search_tags'       : '1',
-                    'sort_mode'         : '1',
-                    'pinned_ontop'      : '1',
-                    'tabstop'           : '4',
-                    'kb_help'           : 'h',
-                    'kb_quit'           : 'q',
-                    'kb_down'           : 'j',
-                    'kb_up'             : 'k',
-                    'kb_page_down'      : ' ',
-                    'kb_page_up'        : 'b',
-                    'kb_half_page_down' : 'ctrl d',
-                    'kb_half_page_up'   : 'ctrl u',
-                    'kb_view_note'      : 'enter',
-                    'kb_view_log'       : 'l'
+                    'sn_username'             : '',
+                    'sn_password'             : '',
+                    'db_path'                 : os.path.join(self.home, '.sncli'),
+                    'search_mode'             : 'gstyle',
+                    'search_tags'             : '1',
+                    'sort_mode'               : '1',
+                    'pinned_ontop'            : '1',
+                    'tabstop'                 : '4',
+                    'kb_help'                 : 'h',
+                    'kb_quit'                 : 'q',
+                    'kb_down'                 : 'j',
+                    'kb_up'                   : 'k',
+                    'kb_page_down'            : ' ',
+                    'kb_page_up'              : 'b',
+                    'kb_half_page_down'       : 'ctrl d',
+                    'kb_half_page_up'         : 'ctrl u',
+                    'kb_view_note'            : 'enter',
+                    'kb_view_log'             : 'l',
+                    'clr_default_fg'          : 'default',
+                    'clr_default_bg'          : 'default',
+                    'clr_note_title_fg'       : 'dark blue',
+                    'clr_note_title_bg'       : 'default',
+                    'clr_note_title_focus_fg' : 'white',
+                    'clr_note_title_focus_bg' : 'default',
+                    'clr_note_content_fg'     : 'default',
+                    'clr_note_content_bg'     : 'default',
+                    'clr_help_header_fg'      : 'dark blue',
+                    'clr_help_header_bg'      : 'default',
+                    'clr_help_column1_fg'     : 'default',
+                    'clr_help_column1_bg'     : 'default',
+                    'clr_help_column2_fg'     : 'dark green',
+                    'clr_help_column2_bg'     : 'default',
+                    'clr_help_column3_fg'     : 'default',
+                    'clr_help_column3_bg'     : 'default'
                    }
 
         cp = ConfigParser.SafeConfigParser(defaults)
@@ -49,6 +65,23 @@ class Config:
         self.sort_mode    = cp.getint(cfg_sec, 'sort_mode')
         self.pinned_ontop = cp.getint(cfg_sec, 'pinned_ontop')
         self.tabstop      = cp.getint(cfg_sec, 'tabstop')
+
+        self.clr_default_fg          = cp.get(cfg_sec, 'clr_default_fg')
+        self.clr_default_bg          = cp.get(cfg_sec, 'clr_default_bg')
+        self.clr_note_title_fg       = cp.get(cfg_sec, 'clr_note_title_fg')
+        self.clr_note_title_bg       = cp.get(cfg_sec, 'clr_note_title_bg')
+        self.clr_note_title_focus_fg = cp.get(cfg_sec, 'clr_note_title_focus_fg')
+        self.clr_note_title_focus_bg = cp.get(cfg_sec, 'clr_note_title_focus_bg')
+        self.clr_note_content_fg     = cp.get(cfg_sec, 'clr_note_content_fg')
+        self.clr_note_content_bg     = cp.get(cfg_sec, 'clr_note_content_bg')
+        self.clr_help_header_fg      = cp.get(cfg_sec, 'clr_help_header_fg')
+        self.clr_help_header_bg      = cp.get(cfg_sec, 'clr_help_header_bg')
+        self.clr_help_column1_fg     = cp.get(cfg_sec, 'clr_help_column1_fg')
+        self.clr_help_column1_bg     = cp.get(cfg_sec, 'clr_help_column1_bg')
+        self.clr_help_column2_fg     = cp.get(cfg_sec, 'clr_help_column2_fg')
+        self.clr_help_column2_bg     = cp.get(cfg_sec, 'clr_help_column2_bg')
+        self.clr_help_column3_fg     = cp.get(cfg_sec, 'clr_help_column3_fg')
+        self.clr_help_column3_bg     = cp.get(cfg_sec, 'clr_help_column3_bg')
 
         self.keybinds = \
             {
@@ -112,7 +145,7 @@ class sncli:
         def list_get_note_content(index):
             note_contents = []
             for l in self.all_notes[index].note['content'].split('\n'):
-                note_contents.append(urwid.Text(('note_view',
+                note_contents.append(urwid.Text(('note_content',
                                                  l.replace('\t', ' ' * self.config.tabstop))))
             return note_contents
 
@@ -335,90 +368,90 @@ class sncli:
 
                 col1_txt_common = \
                   [
-                    urwid.Text(('help_col1',
+                    urwid.Text(('help_column1',
                                 "'" + self.keybinds['quit'][0] + "'"),
                                align='right'),
-                    urwid.Text(('help_col1',
+                    urwid.Text(('help_column1',
                                 "'" + self.keybinds['down'][0] + "'"),
                                align='right'),
-                    urwid.Text(('help_col1',
+                    urwid.Text(('help_column1',
                                 "'" + self.keybinds['up'][0] + "'"),
                                 align='right'),
-                    urwid.Text(('help_col1',
+                    urwid.Text(('help_column1',
                                 "'" + self.keybinds['page_down'][0] + "'"),
                                align='right'),
-                    urwid.Text(('help_col1',
+                    urwid.Text(('help_column1',
                                 "'" + self.keybinds['page_up'][0] + "'"),
                                align='right')
                   ]
 
                 col1_txt_common2 = \
                   [
-                    urwid.Text(('help_col1',
+                    urwid.Text(('help_column1',
                                 "'" + self.keybinds['half_page_down'][0] + "'"),
                                align='right'),
-                    urwid.Text(('help_col1',
+                    urwid.Text(('help_column1',
                                 "'" + self.keybinds['half_page_up'][0] + "'"),
                                align='right'),
-                    urwid.Text(('help_col1',
+                    urwid.Text(('help_column1',
                                 "'" + self.keybinds['help'][0] + "'"),
                                align='right'),
-                    urwid.Text(('help_col1',
+                    urwid.Text(('help_column1',
                                 "'" + self.keybinds['view_log'][0] + "'"),
                                align='right')
                   ]
 
                 col2_txt_common = \
                   [
-                    urwid.Text(('help_col2', u'quit')),
-                    urwid.Text(('help_col2', u'down')),
-                    urwid.Text(('help_col2', u'up')),
-                    urwid.Text(('help_col2', u'page_down')),
-                    urwid.Text(('help_col2', u'page_up'))
+                    urwid.Text(('help_column2', u'quit')),
+                    urwid.Text(('help_column2', u'down')),
+                    urwid.Text(('help_column2', u'up')),
+                    urwid.Text(('help_column2', u'page_down')),
+                    urwid.Text(('help_column2', u'page_up'))
                   ]
 
                 col2_txt_common2 = \
                   [
-                    urwid.Text(('help_col2', u'half_page_down')),
-                    urwid.Text(('help_col2', u'half_page_up')),
-                    urwid.Text(('help_col2', u'help')),
-                    urwid.Text(('help_col2', u'view_log'))
+                    urwid.Text(('help_column2', u'half_page_down')),
+                    urwid.Text(('help_column2', u'half_page_up')),
+                    urwid.Text(('help_column2', u'help')),
+                    urwid.Text(('help_column2', u'view_log'))
                   ]
 
                 col3_txt_common = \
                   [
-                    urwid.Text(('help_col3', self.keybinds['quit'][1])),
-                    urwid.Text(('help_col3', self.keybinds['down'][1])),
-                    urwid.Text(('help_col3', self.keybinds['up'][1])),
-                    urwid.Text(('help_col3', self.keybinds['page_down'][1])),
-                    urwid.Text(('help_col3', self.keybinds['page_up'][1]))
+                    urwid.Text(('help_column3', self.keybinds['quit'][1])),
+                    urwid.Text(('help_column3', self.keybinds['down'][1])),
+                    urwid.Text(('help_column3', self.keybinds['up'][1])),
+                    urwid.Text(('help_column3', self.keybinds['page_down'][1])),
+                    urwid.Text(('help_column3', self.keybinds['page_up'][1]))
                   ]
 
                 col3_txt_common2 = \
                   [
-                    urwid.Text(('help_col3', self.keybinds['half_page_down'][1])),
-                    urwid.Text(('help_col3', self.keybinds['half_page_up'][1])),
-                    urwid.Text(('help_col3', self.keybinds['help'][1])),
-                    urwid.Text(('help_col3', self.keybinds['view_log'][1]))
+                    urwid.Text(('help_column3', self.keybinds['half_page_down'][1])),
+                    urwid.Text(('help_column3', self.keybinds['half_page_up'][1])),
+                    urwid.Text(('help_column3', self.keybinds['help'][1])),
+                    urwid.Text(('help_column3', self.keybinds['view_log'][1]))
                   ]
 
-                space = urwid.Text(('help_hdr', u""))
+                space = urwid.Text(('help_header', u""))
 
-                nl_hdr = urwid.Text(('help_hdr', u"Note List"))
+                nl_hdr = urwid.Text(('help_header', u"Note List"))
 
                 nl_col1_txt = copy.copy(col1_txt_common)
                 nl_col1_txt.extend(copy.copy(col1_txt_common2))
-                nl_col1_txt.append(urwid.Text(('help_col1',
+                nl_col1_txt.append(urwid.Text(('help_column1',
                                                "'" + self.keybinds['view_note'][0] + "'"),
                                               align='right'))
 
                 nl_col2_txt = copy.copy(col2_txt_common)
                 nl_col2_txt.extend(copy.copy(col2_txt_common2))
-                nl_col2_txt.append(urwid.Text(('help_col2', u'view_note')))
+                nl_col2_txt.append(urwid.Text(('help_column2', u'view_note')))
 
                 nl_col3_txt = copy.copy(col3_txt_common)
                 nl_col3_txt.extend(copy.copy(col3_txt_common2))
-                nl_col3_txt.append(urwid.Text(('help_col3', self.keybinds['view_note'][1])))
+                nl_col3_txt.append(urwid.Text(('help_column3', self.keybinds['view_note'][1])))
 
                 nl_col1_pile = urwid.Pile(nl_col1_txt) 
                 nl_col2_pile = urwid.Pile(nl_col2_txt) 
@@ -429,7 +462,7 @@ class sncli:
                                           ('fixed', 32, nl_col3_pile) ],
                                         3, focus_column=1)
 
-                nc_hdr = urwid.Text(('help_hdr', u"Note Content"))
+                nc_hdr = urwid.Text(('help_header', u"Note Content"))
 
                 nc_col1_txt = copy.copy(col1_txt_common)
                 nc_col1_txt.extend(copy.copy(col1_txt_common2))
@@ -449,7 +482,7 @@ class sncli:
                                           ('fixed', 32, nc_col3_pile) ],
                                         3, focus_column=1)
 
-                log_hdr = urwid.Text(('help_hdr', u"Log"))
+                log_hdr = urwid.Text(('help_header', u"Log"))
 
                 log_col1_txt = copy.copy(col1_txt_common)
                 log_col2_txt = copy.copy(col2_txt_common)
@@ -464,7 +497,7 @@ class sncli:
                                            ('fixed', 32, log_col3_pile) ],
                                          3, focus_column=1)
 
-                help_hdr = urwid.Text(('help_hdr', u"Help"))
+                help_hdr = urwid.Text(('help_header', u"Help"))
 
                 help_col1_txt = copy.copy(col1_txt_common)
                 help_col2_txt = copy.copy(col2_txt_common)
@@ -506,14 +539,30 @@ class sncli:
                     key = super(Help, self).keypress(size, 'page up')
 
         palette = [
-                    ('default',          'default',    'default'),
-                    ('note_title_focus', 'black',      'dark red'),
-                    ('note_title',       'dark red',   'default'),
-                    ('note_view',        'default',    'default'),
-                    ('help_hdr',         'dark blue',  'default'),
-                    ('help_col1',        'default',    'default'),
-                    ('help_col2',        'dark green', 'default'),
-                    ('help_col3',        'default',    'default'),
+                    ('default',
+                        self.config.clr_default_fg,
+                        self.config.clr_default_bg ),
+                    ('note_title',
+                        self.config.clr_note_title_fg,
+                        self.config.clr_note_title_bg ),
+                    ('note_title_focus',
+                        self.config.clr_note_title_focus_fg,
+                        self.config.clr_note_title_focus_bg ),
+                    ('note_content',
+                        self.config.clr_note_content_fg,
+                        self.config.clr_note_content_bg ),
+                    ('help_header',
+                        self.config.clr_help_header_fg,
+                        self.config.clr_help_header_bg ),
+                    ('help_column1',
+                        self.config.clr_help_column1_fg,
+                        self.config.clr_help_column1_bg ),
+                    ('help_column2',
+                        self.config.clr_help_column2_fg,
+                        self.config.clr_help_column2_bg ),
+                    ('help_column3',
+                        self.config.clr_help_column3_fg,
+                        self.config.clr_help_column3_bg )
                   ]
 
         sncli_loop = urwid.MainLoop(NoteTitles(),
