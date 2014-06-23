@@ -28,6 +28,9 @@ class Config:
                     'kb_half_page_up'         : 'ctrl u',
                     'kb_view_note'            : 'enter',
                     'kb_view_log'             : 'l',
+                    'kb_tabstop2'             : '2',
+                    'kb_tabstop4'             : '4',
+                    'kb_tabstop8'             : '8',
                     'clr_default_fg'          : 'default',
                     'clr_default_bg'          : 'default',
                     'clr_note_title_fg'       : 'dark blue',
@@ -94,7 +97,10 @@ class Config:
               'half_page_down' : [ cp.get(cfg_sec, 'kb_half_page_down'), 'Half page down' ],
               'half_page_up'   : [ cp.get(cfg_sec, 'kb_half_page_up'),   'Half page up' ],
               'view_note'      : [ cp.get(cfg_sec, 'kb_view_note'),      'View note' ],
-              'view_log'       : [ cp.get(cfg_sec, 'kb_view_log'),       'View log' ]
+              'view_log'       : [ cp.get(cfg_sec, 'kb_view_log'),       'View log' ],
+              'tabstop2'       : [ cp.get(cfg_sec, 'kb_tabstop2'),       'View with tabstop=2' ],
+              'tabstop4'       : [ cp.get(cfg_sec, 'kb_tabstop4'),       'View with tabstop=4' ],
+              'tabstop8'       : [ cp.get(cfg_sec, 'kb_tabstop8'),       'View with tabstop=8' ]
             }
 
 class sncli:
@@ -142,18 +148,18 @@ class sncli:
                 note_titles.append(urwid.Text(('note_title', utils.get_note_title(n.note))))
             return note_titles
 
-        def list_get_note_content(index):
+        def list_get_note_content(index, tabstop):
             note_contents = []
             for l in self.all_notes[index].note['content'].split('\n'):
                 note_contents.append(urwid.Text(('note_content',
-                                                 l.replace('\t', ' ' * self.config.tabstop))))
+                                                 l.replace('\t', ' ' * tabstop))))
             return note_contents
 
         def list_get_note_json(index):
             return self.all_notes[index].note
 
-        def get_keybinds():
-            return self.config.keybinds
+        def get_config():
+            return self.config
 
         def push_last_view(view):
             self.last_view.append(view)
@@ -166,7 +172,7 @@ class sncli:
 
         class NoteTitles(urwid.ListBox):
             def __init__(self):
-                self.keybinds = get_keybinds()
+                self.keybinds = get_config().keybinds
                 body = urwid.SimpleFocusListWalker( list_get_note_titles() )
                 super(NoteTitles, self).__init__(body)
                 self.focus.set_text(('note_title_focus', self.focus.text))
@@ -252,13 +258,16 @@ class sncli:
 
                 elif key == self.keybinds['view_note'][0]:
                     push_last_view(self)
-                    sncli_loop.widget = NoteContent(self.focus_position)
+                    sncli_loop.widget = NoteContent(self.focus_position, get_config().tabstop)
 
         class NoteContent(urwid.ListBox):
-            def __init__(self, nl_focus_index):
-                self.keybinds = get_keybinds()
-                body = urwid.SimpleFocusListWalker(list_get_note_content(nl_focus_index))
-                self.note = list_get_note_json(nl_focus_index)
+            def __init__(self, nl_focus_index, tabstop):
+                self.keybinds = get_config().keybinds
+                self.nl_focus_index = nl_focus_index
+                body = \
+                    urwid.SimpleFocusListWalker(
+                            list_get_note_content(self.nl_focus_index, tabstop))
+                self.note = list_get_note_json(self.nl_focus_index)
                 super(NoteContent, self).__init__(body)
 
             def keypress(self, size, key):
@@ -308,9 +317,18 @@ class sncli:
                                       offset_inset=0,
                                       coming_from='below')
 
+                elif key == self.keybinds['tabstop2'][0]:
+                    sncli_loop.widget = NoteContent(self.nl_focus_index, 2)
+
+                elif key == self.keybinds['tabstop4'][0]:
+                    sncli_loop.widget = NoteContent(self.nl_focus_index, 4)
+
+                elif key == self.keybinds['tabstop8'][0]:
+                    sncli_loop.widget = NoteContent(self.nl_focus_index, 8)
+
         class ViewLog(urwid.ListBox):
             def __init__(self):
-                self.keybinds = get_keybinds()
+                self.keybinds = get_config().keybinds
                 f = open(get_logfile())
                 lines = []
                 for line in f:
@@ -364,7 +382,7 @@ class sncli:
 
         class Help(urwid.ListBox):
             def __init__(self):
-                self.keybinds = get_keybinds()
+                self.keybinds = get_config().keybinds
 
                 col1_txt_common = \
                   [
@@ -403,19 +421,19 @@ class sncli:
 
                 col2_txt_common = \
                   [
-                    urwid.Text(('help_column2', u'quit')),
-                    urwid.Text(('help_column2', u'down')),
-                    urwid.Text(('help_column2', u'up')),
-                    urwid.Text(('help_column2', u'page_down')),
-                    urwid.Text(('help_column2', u'page_up'))
+                    urwid.Text(('help_column2', u'kb_quit')),
+                    urwid.Text(('help_column2', u'kb_down')),
+                    urwid.Text(('help_column2', u'kb_up')),
+                    urwid.Text(('help_column2', u'kb_page_down')),
+                    urwid.Text(('help_column2', u'kb_page_up'))
                   ]
 
                 col2_txt_common2 = \
                   [
-                    urwid.Text(('help_column2', u'half_page_down')),
-                    urwid.Text(('help_column2', u'half_page_up')),
-                    urwid.Text(('help_column2', u'help')),
-                    urwid.Text(('help_column2', u'view_log'))
+                    urwid.Text(('help_column2', u'kb_half_page_down')),
+                    urwid.Text(('help_column2', u'kb_half_page_up')),
+                    urwid.Text(('help_column2', u'kb_help')),
+                    urwid.Text(('help_column2', u'kb_view_log'))
                   ]
 
                 col3_txt_common = \
@@ -447,7 +465,7 @@ class sncli:
 
                 nl_col2_txt = copy.copy(col2_txt_common)
                 nl_col2_txt.extend(copy.copy(col2_txt_common2))
-                nl_col2_txt.append(urwid.Text(('help_column2', u'view_note')))
+                nl_col2_txt.append(urwid.Text(('help_column2', u'kb_view_note')))
 
                 nl_col3_txt = copy.copy(col3_txt_common)
                 nl_col3_txt.extend(copy.copy(col3_txt_common2))
@@ -458,7 +476,7 @@ class sncli:
                 nl_col3_pile = urwid.Pile(nl_col3_txt) 
 
                 nl_cols = urwid.Columns([ ('fixed', 16, nl_col1_pile),
-                                          ('fixed', 16, nl_col2_pile),
+                                          ('fixed', 24, nl_col2_pile),
                                           ('fixed', 32, nl_col3_pile) ],
                                         3, focus_column=1)
 
@@ -466,19 +484,34 @@ class sncli:
 
                 nc_col1_txt = copy.copy(col1_txt_common)
                 nc_col1_txt.extend(copy.copy(col1_txt_common2))
+                nc_col1_txt.append(urwid.Text(('help_column1',
+                                               "'" + self.keybinds['tabstop2'][0] + "'"),
+                                              align='right'))
+                nc_col1_txt.append(urwid.Text(('help_column1',
+                                               "'" + self.keybinds['tabstop4'][0] + "'"),
+                                              align='right'))
+                nc_col1_txt.append(urwid.Text(('help_column1',
+                                               "'" + self.keybinds['tabstop8'][0] + "'"),
+                                              align='right'))
 
                 nc_col2_txt = copy.copy(col2_txt_common)
                 nc_col2_txt.extend(copy.copy(col2_txt_common2))
+                nc_col2_txt.append(urwid.Text(('help_column2', u'kb_tabstop2')))
+                nc_col2_txt.append(urwid.Text(('help_column2', u'kb_tabstop4')))
+                nc_col2_txt.append(urwid.Text(('help_column2', u'kb_tabstop8')))
 
                 nc_col3_txt = copy.copy(col3_txt_common)
                 nc_col3_txt.extend(copy.copy(col3_txt_common2))
+                nc_col3_txt.append(urwid.Text(('help_column3', self.keybinds['tabstop2'][1])))
+                nc_col3_txt.append(urwid.Text(('help_column3', self.keybinds['tabstop4'][1])))
+                nc_col3_txt.append(urwid.Text(('help_column3', self.keybinds['tabstop8'][1])))
 
                 nc_col1_pile = urwid.Pile(nc_col1_txt) 
                 nc_col2_pile = urwid.Pile(nc_col2_txt) 
                 nc_col3_pile = urwid.Pile(nc_col3_txt) 
 
                 nc_cols = urwid.Columns([ ('fixed', 16, nc_col1_pile),
-                                          ('fixed', 16, nc_col2_pile),
+                                          ('fixed', 24, nc_col2_pile),
                                           ('fixed', 32, nc_col3_pile) ],
                                         3, focus_column=1)
 
@@ -493,7 +526,7 @@ class sncli:
                 log_col3_pile = urwid.Pile(log_col3_txt) 
 
                 log_cols = urwid.Columns([ ('fixed', 16, log_col1_pile),
-                                           ('fixed', 16, log_col2_pile),
+                                           ('fixed', 24, log_col2_pile),
                                            ('fixed', 32, log_col3_pile) ],
                                          3, focus_column=1)
 
@@ -508,7 +541,7 @@ class sncli:
                 help_col3_pile = urwid.Pile(help_col3_txt) 
 
                 help_cols = urwid.Columns([ ('fixed', 16, help_col1_pile),
-                                            ('fixed', 16, help_col2_pile),
+                                            ('fixed', 24, help_col2_pile),
                                             ('fixed', 32, help_col3_pile) ],
                                           3, focus_column=1)
 
