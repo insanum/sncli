@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import os, sys, signal, time, logging, json, urwid, ConfigParser, utils
+import os, sys, signal, time, copy, logging, json, urwid, ConfigParser, utils
 from simplenote import Simplenote
 from notes_db import NotesDB, SyncError, ReadError, WriteError
 from logging.handlers import RotatingFileHandler
@@ -10,13 +10,23 @@ class Config:
     def __init__(self):
         self.home = os.path.abspath(os.path.expanduser('~'))
         defaults = {
-                    'sn_username'  : 'edavis@insanum.com',
-                    'sn_password'  : 'biteme55',
-                    'db_path'      : os.path.join(self.home, '.sncli'),
-                    'search_mode'  : 'gstyle',
-                    'search_tags'  : '1',
-                    'sort_mode'    : '1',
-                    'pinned_ontop' : '1',
+                    'sn_username'    : 'edavis@insanum.com',
+                    'sn_password'    : 'biteme55',
+                    'db_path'        : os.path.join(self.home, '.sncli'),
+                    'search_mode'    : 'gstyle',
+                    'search_tags'    : '1',
+                    'sort_mode'      : '1',
+                    'pinned_ontop'   : '1',
+                    'tabstop'        : '4',
+                    'help'           : 'h',
+                    'quit'           : 'q',
+                    'down'           : 'j',
+                    'up'             : 'k',
+                    'page_down'      : ' ',
+                    'page_up'        : 'b',
+                    'half_page_down' : 'ctrl d',
+                    'half_page_up'   : 'ctrl u',
+                    'view_note'      : 'enter'
                    }
 
         cp = ConfigParser.SafeConfigParser(defaults)
@@ -37,6 +47,20 @@ class Config:
         self.search_tags  = cp.getint(cfg_sec, 'search_tags')
         self.sort_mode    = cp.getint(cfg_sec, 'sort_mode')
         self.pinned_ontop = cp.getint(cfg_sec, 'pinned_ontop')
+        self.tabstop      = cp.getint(cfg_sec, 'tabstop')
+
+        self.keybinds = \
+            {
+              'help'           : [ cp.get(cfg_sec, 'help'),           'Help' ],
+              'quit'           : [ cp.get(cfg_sec, 'quit'),           'Quit' ],
+              'down'           : [ cp.get(cfg_sec, 'down'),           'Scroll down one line' ],
+              'up'             : [ cp.get(cfg_sec, 'up'),             'Scroll up one line' ],
+              'page_down'      : [ cp.get(cfg_sec, 'page_down'),      'Page down' ],
+              'page_up'        : [ cp.get(cfg_sec, 'page_up'),        'Page up' ],
+              'half_page_down' : [ cp.get(cfg_sec, 'half_page_down'), 'Half page down' ],
+              'half_page_up'   : [ cp.get(cfg_sec, 'half_page_up'),   'Half page up' ],
+              'view_note'      : [ cp.get(cfg_sec, 'view_note'),      'View note' ]
+            }
 
 class sncli:
 
@@ -62,6 +86,8 @@ class sncli:
             print e
             exit(1)
 
+        self.last_view = []
+
         # XXX
         #self.all_notes, match_regex, self.all_notes_cnt = self.ndb.filter_notes()
         #return
@@ -75,41 +101,49 @@ class sncli:
 
     def do_it(self):
 
-        #self.urwid_one()
-        #self.urwid_two()
-        #self.urwid_three()
-        #self.urwid_four()
-        #self.urwid_five()
-        #self.urwid_six()
-        #self.urwid_seven()
-        #self.urwid_eight()
-        #return
-
         def list_get_note_titles():
             note_titles = []
             for n in self.all_notes:
                 note_titles.append(urwid.Text(('note_title', utils.get_note_title(n.note))))
             return note_titles
 
-        def list_get_note(index):
+        def list_get_note_content(index):
             note_contents = []
             for l in self.all_notes[index].note['content'].split('\n'):
-                note_contents.append(urwid.Text(('note_view', l)))
+                note_contents.append(urwid.Text(('note_view',
+                                                 l.replace('\t', ' ' * self.config.tabstop))))
             return note_contents
 
-        class NoteTitleListBox(urwid.ListBox):
+        def list_get_note_json(index):
+            return self.all_notes[index].note
+
+        def get_keybinds():
+            return self.config.keybinds
+
+        def push_last_view(view):
+            self.last_view.append(view)
+
+        def pop_last_view():
+            return self.last_view.pop()
+
+        class NoteTitles(urwid.ListBox):
             def __init__(self):
                 body = urwid.SimpleFocusListWalker( list_get_note_titles() )
-                super(NoteTitleListBox, self).__init__(body)
+                super(NoteTitles, self).__init__(body)
+                self.keybinds = get_keybinds()
                 self.focus.set_text(('note_title_focus', self.focus.text))
 
             def keypress(self, size, key):
-                key = super(NoteTitleListBox, self).keypress(size, key)
+                key = super(NoteTitles, self).keypress(size, key)
 
-                if key in ('q', 'Q'):
+                if key == self.keybinds['quit'][0]:
                     raise urwid.ExitMainLoop()
 
-                elif key == 'j':
+                if key == self.keybinds['help'][0]:
+                    push_last_view(self)
+                    sncli_loop.widget = Help(self)
+
+                elif key == self.keybinds['down'][0]:
                     last = len(self.body.positions())
                     if self.focus_position == (last - 1):
                         return
@@ -117,14 +151,14 @@ class sncli:
                     self.focus_position = self.focus_position + 1
                     self.focus.set_text(('note_title_focus', self.focus.text))
 
-                elif key == 'k':
+                elif key == self.keybinds['up'][0]:
                     if self.focus_position == 0:
                         return
                     self.focus.set_text(('note_title', self.focus.text))
                     self.focus_position = self.focus_position - 1
                     self.focus.set_text(('note_title_focus', self.focus.text))
 
-                elif key == ' ':
+                elif key == self.keybinds['page_down'][0]:
                     last = len(self.body.positions())
                     next_focus = self.focus_position + size[1]
                     if next_focus >= last:
@@ -135,7 +169,7 @@ class sncli:
                                       coming_from='above')
                     self.focus.set_text(('note_title_focus', self.focus.text))
 
-                elif key == 'b':
+                elif key == self.keybinds['page_up'][0]:
                     if 'bottom' in self.ends_visible(size):
                         last = len(self.body.positions())
                         next_focus = last - size[1] - size[1]
@@ -149,7 +183,7 @@ class sncli:
                                       coming_from='below')
                     self.focus.set_text(('note_title_focus', self.focus.text))
 
-                elif key == 'ctrl d':
+                elif key == self.keybinds['half_page_down'][0]:
                     last = len(self.body.positions())
                     next_focus = self.focus_position + (size[1] / 2)
                     if next_focus >= last:
@@ -160,7 +194,7 @@ class sncli:
                                       coming_from='above')
                     self.focus.set_text(('note_title_focus', self.focus.text))
 
-                elif key == 'ctrl u':
+                elif key == self.keybinds['half_page_up'][0]:
                     if 'bottom' in self.ends_visible(size):
                         last = len(self.body.positions())
                         next_focus = last - size[1] - (size[1] / 2)
@@ -174,36 +208,40 @@ class sncli:
                                       coming_from='below')
                     self.focus.set_text(('note_title_focus', self.focus.text))
 
-                elif key == 'enter':
-                    sncli_loop.widget = NoteViewListBox(self.focus_position)
+                elif key == self.keybinds['view_note'][0]:
+                    push_last_view(self)
+                    sncli_loop.widget = NoteContent(self.focus_position)
 
-                else:
-                    return key
-
-        class NoteViewListBox(urwid.ListBox):
-            def __init__(self, index):
-                body = urwid.SimpleFocusListWalker( list_get_note(index) )
-                super(NoteViewListBox, self).__init__(body)
+        class NoteContent(urwid.ListBox):
+            def __init__(self, nl_focus_index):
+                body = urwid.SimpleFocusListWalker(list_get_note_content(nl_focus_index))
+                self.keybinds = get_keybinds()
+                self.note = list_get_note_json(nl_focus_index)
+                super(NoteContent, self).__init__(body)
 
             def keypress(self, size, key):
-                key = super(NoteViewListBox, self).keypress(size, key)
+                key = super(NoteContent, self).keypress(size, key)
 
-                if key in ('q', 'Q'):
-                    sncli_loop.widget = NoteTitleListBox()
+                if key == self.keybinds['quit'][0]:
+                    sncli_loop.widget = pop_last_view()
 
-                elif key in [ 'j', 'enter' ]:
-                    key = super(NoteViewListBox, self).keypress(size, 'down')
+                if key == self.keybinds['help'][0]:
+                    push_last_view(self)
+                    sncli_loop.widget = Help(self)
 
-                elif key == 'k':
-                    key = super(NoteViewListBox, self).keypress(size, 'up')
+                elif key == self.keybinds['down'][0]:
+                    key = super(NoteContent, self).keypress(size, 'down')
 
-                elif key == ' ':
-                    key = super(NoteViewListBox, self).keypress(size, 'page down')
+                elif key == self.keybinds['up'][0]:
+                    key = super(NoteContent, self).keypress(size, 'up')
 
-                elif key == 'b':
-                    key = super(NoteViewListBox, self).keypress(size, 'page up')
+                elif key == self.keybinds['page_down'][0]:
+                    key = super(NoteContent, self).keypress(size, 'page down')
 
-                elif key == 'ctrl d':
+                elif key == self.keybinds['page_up'][0]:
+                    key = super(NoteContent, self).keypress(size, 'page up')
+
+                elif key == self.keybinds['half_page_down'][0]:
                     last = len(self.body.positions())
                     next_focus = self.focus_position + (size[1] / 2)
                     if next_focus >= last:
@@ -212,7 +250,7 @@ class sncli:
                                       offset_inset=0,
                                       coming_from='above')
 
-                elif key == 'ctrl u':
+                elif key == self.keybinds['half_page_up'][0]:
                     if 'bottom' in self.ends_visible(size):
                         last = len(self.body.positions())
                         next_focus = last - size[1] - (size[1] / 2)
@@ -224,170 +262,176 @@ class sncli:
                                       offset_inset=0,
                                       coming_from='below')
 
-                else:
-                    return key
+        class Help(urwid.ListBox):
+            def __init__(self, last_view):
+                self.keybinds = get_keybinds()
 
-        palette = [
-                    ('note_title_focus', 'black',    'dark red'),
-                    ('note_title',       'dark red', 'default'),
-                    ('note_view',        'default',  'default')
+                col1_txt_common = \
+                  [
+                    urwid.Text(('help_col1',
+                                "'" + self.keybinds['quit'][0] + "'"),
+                               align='right'),
+                    urwid.Text(('help_col1',
+                                "'" + self.keybinds['down'][0] + "'"),
+                               align='right'),
+                    urwid.Text(('help_col1',
+                                "'" + self.keybinds['up'][0] + "'"),
+                                align='right'),
+                    urwid.Text(('help_col1',
+                                "'" + self.keybinds['page_down'][0] + "'"),
+                               align='right'),
+                    urwid.Text(('help_col1',
+                                "'" + self.keybinds['page_up'][0] + "'"),
+                               align='right')
                   ]
 
-        sncli_loop = urwid.MainLoop(NoteTitleListBox(),
+                col1_txt_common2 = \
+                  [
+                    urwid.Text(('help_col1',
+                                "'" + self.keybinds['half_page_down'][0] + "'"),
+                               align='right'),
+                    urwid.Text(('help_col1',
+                                "'" + self.keybinds['half_page_up'][0] + "'"),
+                               align='right'),
+                    urwid.Text(('help_col1',
+                                "'" + self.keybinds['help'][0] + "'"),
+                               align='right')
+                  ]
+
+                col2_txt_common = \
+                  [
+                    urwid.Text(('help_col2', u'quit')),
+                    urwid.Text(('help_col2', u'down')),
+                    urwid.Text(('help_col2', u'up')),
+                    urwid.Text(('help_col2', u'page_down')),
+                    urwid.Text(('help_col2', u'page_up'))
+                  ]
+
+                col2_txt_common2 = \
+                  [
+                    urwid.Text(('help_col2', u'half_page_down')),
+                    urwid.Text(('help_col2', u'half_page_up')),
+                    urwid.Text(('help_col2', u'help'))
+                  ]
+
+                col3_txt_common = \
+                  [
+                    urwid.Text(('help_col3', self.keybinds['quit'][1])),
+                    urwid.Text(('help_col3', self.keybinds['down'][1])),
+                    urwid.Text(('help_col3', self.keybinds['up'][1])),
+                    urwid.Text(('help_col3', self.keybinds['page_down'][1])),
+                    urwid.Text(('help_col3', self.keybinds['page_up'][1]))
+                  ]
+
+                col3_txt_common2 = \
+                  [
+                    urwid.Text(('help_col3', self.keybinds['half_page_down'][1])),
+                    urwid.Text(('help_col3', self.keybinds['half_page_up'][1])),
+                    urwid.Text(('help_col3', self.keybinds['help'][1]))
+                  ]
+
+                space = urwid.Text(('help_hdr', u""))
+
+                nl_hdr = urwid.Text(('help_hdr', u"Note List"))
+
+                nl_col1_txt = copy.copy(col1_txt_common)
+                nl_col1_txt.extend(copy.copy(col1_txt_common2))
+                nl_col1_txt.append(urwid.Text(('help_col1',
+                                               "'" + self.keybinds['view_note'][0] + "'"),
+                                              align='right'))
+
+                nl_col2_txt = copy.copy(col2_txt_common)
+                nl_col2_txt.extend(copy.copy(col2_txt_common2))
+                nl_col2_txt.append(urwid.Text(('help_col2', u'view_note')))
+
+                nl_col3_txt = copy.copy(col3_txt_common)
+                nl_col3_txt.extend(copy.copy(col3_txt_common2))
+                nl_col3_txt.append(urwid.Text(('help_col3', self.keybinds['view_note'][1])))
+
+                nl_col1_pile = urwid.Pile(nl_col1_txt) 
+                nl_col2_pile = urwid.Pile(nl_col2_txt) 
+                nl_col3_pile = urwid.Pile(nl_col3_txt) 
+
+                nl_cols = urwid.Columns([ ('fixed', 16, nl_col1_pile),
+                                          ('fixed', 16, nl_col2_pile),
+                                          ('fixed', 32, nl_col3_pile) ],
+                                        3, focus_column=1)
+
+                nc_hdr = urwid.Text(('help_hdr', u"Note Content"))
+
+                nc_col1_txt = copy.copy(col1_txt_common)
+                nc_col1_txt.extend(copy.copy(col1_txt_common2))
+
+                nc_col2_txt = copy.copy(col2_txt_common)
+                nc_col2_txt.extend(copy.copy(col2_txt_common2))
+
+                nc_col3_txt = copy.copy(col3_txt_common)
+                nc_col3_txt.extend(copy.copy(col3_txt_common2))
+
+                nc_col1_pile = urwid.Pile(nc_col1_txt) 
+                nc_col2_pile = urwid.Pile(nc_col2_txt) 
+                nc_col3_pile = urwid.Pile(nc_col3_txt) 
+
+                nc_cols = urwid.Columns([ ('fixed', 16, nc_col1_pile),
+                                          ('fixed', 16, nc_col2_pile),
+                                          ('fixed', 32, nc_col3_pile) ],
+                                        3, focus_column=1)
+
+                help_hdr = urwid.Text(('help_hdr', u"Help"))
+
+                help_col1_txt = copy.copy(col1_txt_common)
+                help_col2_txt = copy.copy(col2_txt_common)
+                help_col3_txt = copy.copy(col3_txt_common)
+
+                help_col1_pile = urwid.Pile(help_col1_txt) 
+                help_col2_pile = urwid.Pile(help_col2_txt) 
+                help_col3_pile = urwid.Pile(help_col3_txt) 
+
+                help_cols = urwid.Columns([ ('fixed', 16, help_col1_pile),
+                                            ('fixed', 16, help_col2_pile),
+                                            ('fixed', 32, help_col3_pile) ],
+                                          3, focus_column=1)
+
+                help_pile = urwid.Pile( [ space, nl_hdr,   nl_cols,
+                                          space, nc_hdr,   nc_cols,
+                                          space, help_hdr, help_cols ] )
+
+                body = urwid.SimpleFocusListWalker([help_pile])
+                super(Help, self).__init__(body)
+
+            def keypress(self, size, key):
+                key = super(Help, self).keypress(size, key)
+
+                if key == self.keybinds['quit'][0]:
+                    sncli_loop.widget = pop_last_view()
+
+                elif key == self.keybinds['down'][0]:
+                    key = super(Help, self).keypress(size, 'down')
+
+                elif key == self.keybinds['up'][0]:
+                    key = super(Help, self).keypress(size, 'up')
+
+                elif key == self.keybinds['page_down'][0]:
+                    key = super(Help, self).keypress(size, 'page down')
+
+                elif key == self.keybinds['page_up'][0]:
+                    key = super(Help, self).keypress(size, 'page up')
+
+        palette = [
+                    ('default',          'default',    'default'),
+                    ('note_title_focus', 'black',      'dark red'),
+                    ('note_title',       'dark red',   'default'),
+                    ('note_view',        'default',    'default'),
+                    ('help_hdr',         'dark blue',  'default'),
+                    ('help_col1',        'default',    'default'),
+                    ('help_col2',        'dark green', 'default'),
+                    ('help_col3',        'default',    'default'),
+                  ]
+
+        sncli_loop = urwid.MainLoop(NoteTitles(),
                                     palette,
                                     handle_mouse=False)
         sncli_loop.run()
-
-    def urwid_one(self):
-        txt = urwid.Text(u"Hello World!")
-        fill = urwid.Filler(txt, 'top')
-        loop = urwid.MainLoop(fill)
-        loop.run()
-
-    def urwid_two(self):
-        def show_or_exit(key):
-            if key in ('q', 'Q'):
-                raise urwid.ExitMainLoop()
-            txt.set_text(repr(key))
-
-        txt = urwid.Text(u"Hello World!")
-        fill = urwid.Filler(txt, 'top')
-        loop = urwid.MainLoop(fill, unhandled_input=show_or_exit)
-        loop.run()
-
-    def urwid_three(self):
-        def exit_on_q(key):
-            if key in ('q', 'Q'):
-                raise urwid.ExitMainLoop()
-
-        palette = [ ('banner', 'black', 'light gray'),
-                    ('streak', 'black', 'dark red'),
-                    ('bg',     'black', 'dark blue') ]
-
-        txt = urwid.Text(('banner', u"Hello World!"), align='center')
-        map1 = urwid.AttrMap(txt, 'streak')
-        fill = urwid.Filler(map1)
-        map2 = urwid.AttrMap(fill, 'bg')
-        loop = urwid.MainLoop(map2, palette, unhandled_input=exit_on_q)
-        loop.run()
-
-    def urwid_four(self):
-        def exit_on_q(key):
-            if key in ('q', 'Q'):
-                raise urwid.ExitMainLoop()
-
-        palette = [ ('banner',  '', '', '', '#ffa', '#60d'),
-                    ('streak',  '', '', '', 'g50',  '#60a'),
-                    ('inside',  '', '', '', 'g38',  '#808'),
-                    ('outside', '', '', '', 'g27',  '#a06'),
-                    ('bg',      '', '', '', 'g7',   '#d06') ]
-
-        placeholder = urwid.SolidFill()
-        loop = urwid.MainLoop(placeholder, palette, unhandled_input=exit_on_q)
-        loop.screen.set_terminal_properties(colors=256)
-        loop.widget = urwid.AttrMap(placeholder, 'bg')
-        loop.widget.original_widget = urwid.Filler(urwid.Pile([]))
-
-        div = urwid.Divider()
-        outside = urwid.AttrMap(div, 'outside')
-        inside = urwid.AttrMap(div, 'inside')
-        txt = urwid.Text(('banner', u" Hello World "), align='center')
-        streak = urwid.AttrMap(txt, 'streak')
-        pile = loop.widget.base_widget # .base_widget skips the decorations
-        for item in [outside, inside, streak, inside, outside]:
-            pile.contents.append((item, pile.options()))
-
-        loop.run()
-
-    def urwid_five(self):
-        def exit_on_q(key):
-            if key in ('q', 'Q'):
-                raise urwid.ExitMainLoop()
-
-        class QuestionBox(urwid.Filler):
-            def keypress(self, size, key):
-                if key != 'enter':
-                    return super(QuestionBox, self).keypress(size, key)
-                self.original_widget = urwid.Text(u"Nice to meet you,\n%s.\n\nPress Q to exit." % ask.edit_text) 
-        ask = urwid.Edit(u"What is your name?\n")
-        fill = QuestionBox(ask)
-        loop = urwid.MainLoop(fill, unhandled_input=exit_on_q)
-        loop.run()
-
-    def urwid_six(self):
-        palette = [ ('I say', 'default,bold', 'default', 'bold') ]
-        ask = urwid.Edit(('I say', u"What is your name?\n"))
-        reply = urwid.Text(u"")
-        button = urwid.Button(u'Exit')
-        div = urwid.Divider()
-        pile = urwid.Pile([ask, div, reply, div, button])
-        top = urwid.Filler(pile, valign='top')
-
-        def on_ask_change(edit, new_edit_text):
-            reply.set_text(('I say', u"Nice to meet you, %s" % new_edit_text))
-
-        def on_exit_clicked(button):
-            raise urwid.ExitMainLoop()
-
-        urwid.connect_signal(ask, 'change', on_ask_change)
-        urwid.connect_signal(button, 'click', on_exit_clicked)
-
-        urwid.MainLoop(top, palette).run()
-
-    def urwid_seven(self):
-        def question():
-            return urwid.Pile( [ urwid.Edit(('I say', u"What is your name?\n")) ] )
-
-        def answer(name):
-            return urwid.Text(('I say', u"Nice to meet you, " + name + "\n"))
-
-        class ConversationListBox(urwid.ListBox):
-            def __init__(self):
-                body = urwid.SimpleFocusListWalker( [ question() ] )
-                super(ConversationListBox, self).__init__(body)
-
-            def keypress(self, size, key):
-                key = super(ConversationListBox, self).keypress(size, key)
-                if key != 'enter':
-                    return key
-                name = self.focus[0].edit_text
-                if not name:
-                    raise urwid.ExitMainLoop()
-                # replace or add response
-                self.focus.contents[1:] = [(answer(name), self.focus.options())]
-                pos = self.focus_position
-                # add a new question
-                self.body.insert(pos + 1, question())
-                self.focus_position = pos + 1
-
-        palette = [ ('I say', 'default,bold', 'default') ]
-        urwid.MainLoop(ConversationListBox(), palette).run()
-
-    def urwid_eight(self):
-        choices = u'Chapman Cleese Gilliam Idle Jones Palin'.split()
-
-        def menu(title, choices):
-            body = [ urwid.Text(title), urwid.Divider() ]
-            for c in choices:
-                button = urwid.Button(c)
-                urwid.connect_signal(button, 'click', item_chosen, c)
-                body.append(urwid.AttrMap(button, None, focus_map='reversed'))
-            return urwid.ListBox(urwid.SimpleFocusListWalker(body))
-
-        def item_chosen(button, choice):
-            response = urwid.Text([u'You chose ', choice, u'\n'])
-            done = urwid.Button(u'Ok')
-            urwid.connect_signal(done, 'click', exit_program)
-            main.original_widget = urwid.Filler(urwid.Pile([response, urwid.AttrMap(done, None, focus_map='reversed')]))
-        def exit_program(button):
-            raise urwid.ExitMainLoop() 
-
-        main = urwid.Padding(menu(u'Pythons', choices), left=2, right=2)
-        top = urwid.Overlay(main, urwid.SolidFill(u'\N{MEDIUM SHADE}'),
-                            align='center', width=('relative', 60),
-                            valign='middle', height=('relative', 60),
-                            min_width=20, min_height=9)
-        urwid.MainLoop(top, palette=[ ('reversed', 'standout', '') ]).run()
 
     def sync_full(self):
         try:
@@ -446,20 +490,8 @@ def SIGINT_handler(signum, frame):
 signal.signal(signal.SIGINT, SIGINT_handler)
 
 def main():
-    SNCLI = sncli()
-    SNCLI.do_it()
+    sncli().do_it()
 
 if __name__ == '__main__':
     main()
-
-#notes_list, status = sn.get_note_list()
-#if status == -1:
-#    exit(1)
-
-#for i in notes_list:
-#    note = sn.get_note(i['key'], version=i['version'])
-#    if note[1] == 0:
-#        print '-----------------------------------'
-#        print i['key']
-#        print note[0]['content']
 
