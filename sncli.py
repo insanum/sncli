@@ -10,24 +10,24 @@ class Config:
     def __init__(self):
         self.home = os.path.abspath(os.path.expanduser('~'))
         defaults = {
-                    'sn_username'    : 'edavis@insanum.com',
-                    'sn_password'    : 'biteme55',
-                    'db_path'        : os.path.join(self.home, '.sncli'),
-                    'search_mode'    : 'gstyle',
-                    'search_tags'    : '1',
-                    'sort_mode'      : '1',
-                    'pinned_ontop'   : '1',
-                    'tabstop'        : '4',
-                    'help'           : 'h',
-                    'quit'           : 'q',
-                    'down'           : 'j',
-                    'up'             : 'k',
-                    'page_down'      : ' ',
-                    'page_up'        : 'b',
-                    'half_page_down' : 'ctrl d',
-                    'half_page_up'   : 'ctrl u',
-                    'view_note'      : 'enter',
-                    'view_log'       : 'l'
+                    'sn_username'       : '',
+                    'sn_password'       : '',
+                    'db_path'           : os.path.join(self.home, '.sncli'),
+                    'search_mode'       : 'gstyle',
+                    'search_tags'       : '1',
+                    'sort_mode'         : '1',
+                    'pinned_ontop'      : '1',
+                    'tabstop'           : '4',
+                    'kb_help'           : 'h',
+                    'kb_quit'           : 'q',
+                    'kb_down'           : 'j',
+                    'kb_up'             : 'k',
+                    'kb_page_down'      : ' ',
+                    'kb_page_up'        : 'b',
+                    'kb_half_page_down' : 'ctrl d',
+                    'kb_half_page_up'   : 'ctrl u',
+                    'kb_view_note'      : 'enter',
+                    'kb_view_log'       : 'l'
                    }
 
         cp = ConfigParser.SafeConfigParser(defaults)
@@ -52,16 +52,16 @@ class Config:
 
         self.keybinds = \
             {
-              'help'           : [ cp.get(cfg_sec, 'help'),           'Help' ],
-              'quit'           : [ cp.get(cfg_sec, 'quit'),           'Quit' ],
-              'down'           : [ cp.get(cfg_sec, 'down'),           'Scroll down one line' ],
-              'up'             : [ cp.get(cfg_sec, 'up'),             'Scroll up one line' ],
-              'page_down'      : [ cp.get(cfg_sec, 'page_down'),      'Page down' ],
-              'page_up'        : [ cp.get(cfg_sec, 'page_up'),        'Page up' ],
-              'half_page_down' : [ cp.get(cfg_sec, 'half_page_down'), 'Half page down' ],
-              'half_page_up'   : [ cp.get(cfg_sec, 'half_page_up'),   'Half page up' ],
-              'view_note'      : [ cp.get(cfg_sec, 'view_note'),      'View note' ],
-              'view_log'       : [ cp.get(cfg_sec, 'view_log'),       'View log' ]
+              'help'           : [ cp.get(cfg_sec, 'kb_help'),           'Help' ],
+              'quit'           : [ cp.get(cfg_sec, 'kb_quit'),           'Quit' ],
+              'down'           : [ cp.get(cfg_sec, 'kb_down'),           'Scroll down one line' ],
+              'up'             : [ cp.get(cfg_sec, 'kb_up'),             'Scroll up one line' ],
+              'page_down'      : [ cp.get(cfg_sec, 'kb_page_down'),      'Page down' ],
+              'page_up'        : [ cp.get(cfg_sec, 'kb_page_up'),        'Page up' ],
+              'half_page_down' : [ cp.get(cfg_sec, 'kb_half_page_down'), 'Half page down' ],
+              'half_page_up'   : [ cp.get(cfg_sec, 'kb_half_page_up'),   'Half page up' ],
+              'view_note'      : [ cp.get(cfg_sec, 'kb_view_note'),      'View note' ],
+              'view_log'       : [ cp.get(cfg_sec, 'kb_view_log'),       'View log' ]
             }
 
 class sncli:
