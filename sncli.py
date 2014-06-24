@@ -1,6 +1,8 @@
 #!/usr/bin/env python2
 
-import os, sys, signal, time, copy, logging, json, urwid, ConfigParser, utils
+import os, sys, re, signal, time, datetime, logging
+import copy, json, urwid, datetime, ConfigParser
+import utils
 from simplenote import Simplenote
 from notes_db import NotesDB, SyncError, ReadError, WriteError
 from logging.handlers import RotatingFileHandler
@@ -18,6 +20,9 @@ class Config:
                     'sort_mode'               : '1',
                     'pinned_ontop'            : '1',
                     'tabstop'                 : '4',
+                    'format_strftime'         : '%Y/%m/%d',
+                    'format_note_title'       : '[%D] %F %N%>%T',
+
                     'kb_help'                 : 'h',
                     'kb_quit'                 : 'q',
                     'kb_down'                 : 'j',
@@ -31,22 +36,61 @@ class Config:
                     'kb_tabstop2'             : '2',
                     'kb_tabstop4'             : '4',
                     'kb_tabstop8'             : '8',
+
                     'clr_default_fg'          : 'default',
                     'clr_default_bg'          : 'default',
-                    'clr_note_title_fg'       : 'dark blue',
-                    'clr_note_title_bg'       : 'default',
-                    'clr_note_title_focus_fg' : 'white',
-                    'clr_note_title_focus_bg' : 'default',
+
+                    'clr_note_title_day_fg'       : 'dark blue',
+                    'clr_note_title_day_bg'       : 'default',
+                    'clr_note_title_day_focus_fg' : 'white',
+                    'clr_note_title_day_focus_bg' : 'default',
+
+                    'clr_note_title_week_fg'       : 'dark blue',
+                    'clr_note_title_week_bg'       : 'default',
+                    'clr_note_title_week_focus_fg' : 'white',
+                    'clr_note_title_week_focus_bg' : 'default',
+
+                    'clr_note_title_month_fg'       : 'dark blue',
+                    'clr_note_title_month_bg'       : 'default',
+                    'clr_note_title_month_focus_fg' : 'white',
+                    'clr_note_title_month_focus_bg' : 'default',
+
+                    'clr_note_title_year_fg'       : 'dark blue',
+                    'clr_note_title_year_bg'       : 'default',
+                    'clr_note_title_year_focus_fg' : 'white',
+                    'clr_note_title_year_focus_bg' : 'default',
+
+                    'clr_note_title_ancient_fg'       : 'dark blue',
+                    'clr_note_title_ancient_bg'       : 'default',
+                    'clr_note_title_ancient_focus_fg' : 'white',
+                    'clr_note_title_ancient_focus_bg' : 'default',
+
+                    'clr_note_date_fg'        : 'dark blue',
+                    'clr_note_date_bg'        : 'default',
+                    'clr_note_date_focus_fg'  : 'white',
+                    'clr_note_date_focus_bg'  : 'default',
+
+                    'clr_note_flags_fg'       : 'dark blue',
+                    'clr_note_flags_bg'       : 'default',
+                    'clr_note_flags_focus_fg' : 'white',
+                    'clr_note_flags_focus_bg' : 'default',
+
+                    'clr_note_tags_fg'        : 'dark blue',
+                    'clr_note_tags_bg'        : 'default',
+                    'clr_note_tags_focus_fg'  : 'white',
+                    'clr_note_tags_focus_bg'  : 'default',
+
                     'clr_note_content_fg'     : 'default',
                     'clr_note_content_bg'     : 'default',
+
                     'clr_help_header_fg'      : 'dark blue',
                     'clr_help_header_bg'      : 'default',
-                    'clr_help_column1_fg'     : 'default',
-                    'clr_help_column1_bg'     : 'default',
-                    'clr_help_column2_fg'     : 'dark green',
-                    'clr_help_column2_bg'     : 'default',
-                    'clr_help_column3_fg'     : 'default',
-                    'clr_help_column3_bg'     : 'default'
+                    'clr_help_key_fg'         : 'default',
+                    'clr_help_key_bg'         : 'default',
+                    'clr_help_config_fg'      : 'dark green',
+                    'clr_help_config_bg'      : 'default',
+                    'clr_help_descr_fg'       : 'default',
+                    'clr_help_descr_bg'       : 'default'
                    }
 
         cp = ConfigParser.SafeConfigParser(defaults)
@@ -60,31 +104,71 @@ class Config:
         else:
             self.ok = True
 
-        self.sn_username  = cp.get(cfg_sec,    'sn_username', raw=True)
-        self.sn_password  = cp.get(cfg_sec,    'sn_password', raw=True)
-        self.db_path      = cp.get(cfg_sec,    'db_path')
-        self.search_mode  = cp.get(cfg_sec,    'search_mode')
-        self.search_tags  = cp.getint(cfg_sec, 'search_tags')
-        self.sort_mode    = cp.getint(cfg_sec, 'sort_mode')
-        self.pinned_ontop = cp.getint(cfg_sec, 'pinned_ontop')
-        self.tabstop      = cp.getint(cfg_sec, 'tabstop')
+        self.sn_username       = cp.get(cfg_sec,    'sn_username', raw=True)
+        self.sn_password       = cp.get(cfg_sec,    'sn_password', raw=True)
+        self.db_path           = cp.get(cfg_sec,    'db_path')
+        self.search_mode       = cp.get(cfg_sec,    'search_mode')
+        self.search_tags       = cp.getint(cfg_sec, 'search_tags')
+        self.sort_mode         = cp.getint(cfg_sec, 'sort_mode')
+        self.pinned_ontop      = cp.getint(cfg_sec, 'pinned_ontop')
+        self.tabstop           = cp.getint(cfg_sec, 'tabstop')
+        self.format_strftime   = cp.get(cfg_sec,    'format_strftime',   raw=True)
+        self.format_note_title = cp.get(cfg_sec,    'format_note_title', raw=True)
 
         self.clr_default_fg          = cp.get(cfg_sec, 'clr_default_fg')
         self.clr_default_bg          = cp.get(cfg_sec, 'clr_default_bg')
-        self.clr_note_title_fg       = cp.get(cfg_sec, 'clr_note_title_fg')
-        self.clr_note_title_bg       = cp.get(cfg_sec, 'clr_note_title_bg')
-        self.clr_note_title_focus_fg = cp.get(cfg_sec, 'clr_note_title_focus_fg')
-        self.clr_note_title_focus_bg = cp.get(cfg_sec, 'clr_note_title_focus_bg')
+
+        self.clr_note_title_day_fg       = cp.get(cfg_sec, 'clr_note_title_day_fg')
+        self.clr_note_title_day_bg       = cp.get(cfg_sec, 'clr_note_title_day_bg')
+        self.clr_note_title_day_focus_fg = cp.get(cfg_sec, 'clr_note_title_day_focus_fg')
+        self.clr_note_title_day_focus_bg = cp.get(cfg_sec, 'clr_note_title_day_focus_bg')
+
+        self.clr_note_title_week_fg       = cp.get(cfg_sec, 'clr_note_title_week_fg')
+        self.clr_note_title_week_bg       = cp.get(cfg_sec, 'clr_note_title_week_bg')
+        self.clr_note_title_week_focus_fg = cp.get(cfg_sec, 'clr_note_title_week_focus_fg')
+        self.clr_note_title_week_focus_bg = cp.get(cfg_sec, 'clr_note_title_week_focus_bg')
+
+        self.clr_note_title_month_fg       = cp.get(cfg_sec, 'clr_note_title_month_fg')
+        self.clr_note_title_month_bg       = cp.get(cfg_sec, 'clr_note_title_month_bg')
+        self.clr_note_title_month_focus_fg = cp.get(cfg_sec, 'clr_note_title_month_focus_fg')
+        self.clr_note_title_month_focus_bg = cp.get(cfg_sec, 'clr_note_title_month_focus_bg')
+
+        self.clr_note_title_year_fg       = cp.get(cfg_sec, 'clr_note_title_year_fg')
+        self.clr_note_title_year_bg       = cp.get(cfg_sec, 'clr_note_title_year_bg')
+        self.clr_note_title_year_focus_fg = cp.get(cfg_sec, 'clr_note_title_year_focus_fg')
+        self.clr_note_title_year_focus_bg = cp.get(cfg_sec, 'clr_note_title_year_focus_bg')
+
+        self.clr_note_title_ancient_fg       = cp.get(cfg_sec, 'clr_note_title_ancient_fg')
+        self.clr_note_title_ancient_bg       = cp.get(cfg_sec, 'clr_note_title_ancient_bg')
+        self.clr_note_title_ancient_focus_fg = cp.get(cfg_sec, 'clr_note_title_ancient_focus_fg')
+        self.clr_note_title_ancient_focus_bg = cp.get(cfg_sec, 'clr_note_title_ancient_focus_bg')
+
+        self.clr_note_date_fg        = cp.get(cfg_sec, 'clr_note_date_fg')
+        self.clr_note_date_bg        = cp.get(cfg_sec, 'clr_note_date_bg')
+        self.clr_note_date_focus_fg  = cp.get(cfg_sec, 'clr_note_date_focus_fg')
+        self.clr_note_date_focus_bg  = cp.get(cfg_sec, 'clr_note_date_focus_bg')
+
+        self.clr_note_flags_fg       = cp.get(cfg_sec, 'clr_note_flags_fg')
+        self.clr_note_flags_bg       = cp.get(cfg_sec, 'clr_note_flags_bg')
+        self.clr_note_flags_focus_fg = cp.get(cfg_sec, 'clr_note_flags_focus_fg')
+        self.clr_note_flags_focus_bg = cp.get(cfg_sec, 'clr_note_flags_focus_bg')
+
+        self.clr_note_tags_fg        = cp.get(cfg_sec, 'clr_note_tags_fg')
+        self.clr_note_tags_bg        = cp.get(cfg_sec, 'clr_note_tags_bg')
+        self.clr_note_tags_focus_fg  = cp.get(cfg_sec, 'clr_note_tags_focus_fg')
+        self.clr_note_tags_focus_bg  = cp.get(cfg_sec, 'clr_note_tags_focus_bg')
+
         self.clr_note_content_fg     = cp.get(cfg_sec, 'clr_note_content_fg')
         self.clr_note_content_bg     = cp.get(cfg_sec, 'clr_note_content_bg')
+
         self.clr_help_header_fg      = cp.get(cfg_sec, 'clr_help_header_fg')
         self.clr_help_header_bg      = cp.get(cfg_sec, 'clr_help_header_bg')
-        self.clr_help_column1_fg     = cp.get(cfg_sec, 'clr_help_column1_fg')
-        self.clr_help_column1_bg     = cp.get(cfg_sec, 'clr_help_column1_bg')
-        self.clr_help_column2_fg     = cp.get(cfg_sec, 'clr_help_column2_fg')
-        self.clr_help_column2_bg     = cp.get(cfg_sec, 'clr_help_column2_bg')
-        self.clr_help_column3_fg     = cp.get(cfg_sec, 'clr_help_column3_fg')
-        self.clr_help_column3_bg     = cp.get(cfg_sec, 'clr_help_column3_bg')
+        self.clr_help_key_fg         = cp.get(cfg_sec, 'clr_help_key_fg')
+        self.clr_help_key_bg         = cp.get(cfg_sec, 'clr_help_key_bg')
+        self.clr_help_config_fg      = cp.get(cfg_sec, 'clr_help_config_fg')
+        self.clr_help_config_bg      = cp.get(cfg_sec, 'clr_help_config_bg')
+        self.clr_help_descr_fg       = cp.get(cfg_sec, 'clr_help_descr_fg')
+        self.clr_help_descr_bg       = cp.get(cfg_sec, 'clr_help_descr_bg')
 
         self.keybinds = \
             {
@@ -145,7 +229,7 @@ class sncli:
         def list_get_note_titles():
             note_titles = []
             for n in self.all_notes:
-                note_titles.append(urwid.Text(('note_title', utils.get_note_title(n.note))))
+                note_titles.append(urwid.Text(('note_title_day', utils.get_note_title(n.note))))
             return note_titles
 
         def list_get_note_content(index, tabstop):
@@ -173,9 +257,9 @@ class sncli:
         class NoteTitles(urwid.ListBox):
             def __init__(self):
                 self.keybinds = get_config().keybinds
-                body = urwid.SimpleFocusListWalker( list_get_note_titles() )
+                body = urwid.SimpleFocusListWalker(list_get_note_titles())
                 super(NoteTitles, self).__init__(body)
-                self.focus.set_text(('note_title_focus', self.focus.text))
+                self.focus.set_text(('note_title_day_focus', self.focus.text))
 
             def keypress(self, size, key):
                 key = super(NoteTitles, self).keypress(size, key)
@@ -195,27 +279,27 @@ class sncli:
                     last = len(self.body.positions())
                     if self.focus_position == (last - 1):
                         return
-                    self.focus.set_text(('note_title', self.focus.text))
+                    self.focus.set_text(('note_title_day', self.focus.text))
                     self.focus_position = self.focus_position + 1
-                    self.focus.set_text(('note_title_focus', self.focus.text))
+                    self.focus.set_text(('note_title_day_focus', self.focus.text))
 
                 elif key == self.keybinds['up'][0]:
                     if self.focus_position == 0:
                         return
-                    self.focus.set_text(('note_title', self.focus.text))
+                    self.focus.set_text(('note_title_day', self.focus.text))
                     self.focus_position = self.focus_position - 1
-                    self.focus.set_text(('note_title_focus', self.focus.text))
+                    self.focus.set_text(('note_title_day_focus', self.focus.text))
 
                 elif key == self.keybinds['page_down'][0]:
                     last = len(self.body.positions())
                     next_focus = self.focus_position + size[1]
                     if next_focus >= last:
                         next_focus = last - 1
-                    self.focus.set_text(('note_title', self.focus.text))
+                    self.focus.set_text(('note_title_day', self.focus.text))
                     self.change_focus(size, next_focus,
                                       offset_inset=0,
                                       coming_from='above')
-                    self.focus.set_text(('note_title_focus', self.focus.text))
+                    self.focus.set_text(('note_title_day_focus', self.focus.text))
 
                 elif key == self.keybinds['page_up'][0]:
                     if 'bottom' in self.ends_visible(size):
@@ -225,22 +309,22 @@ class sncli:
                         next_focus = self.focus_position - size[1]
                     if next_focus < 0:
                         next_focus = 0
-                    self.focus.set_text(('note_title', self.focus.text))
+                    self.focus.set_text(('note_title_day', self.focus.text))
                     self.change_focus(size, next_focus,
                                       offset_inset=0,
                                       coming_from='below')
-                    self.focus.set_text(('note_title_focus', self.focus.text))
+                    self.focus.set_text(('note_title_day_focus', self.focus.text))
 
                 elif key == self.keybinds['half_page_down'][0]:
                     last = len(self.body.positions())
                     next_focus = self.focus_position + (size[1] / 2)
                     if next_focus >= last:
                         next_focus = last - 1
-                    self.focus.set_text(('note_title', self.focus.text))
+                    self.focus.set_text(('note_title_day', self.focus.text))
                     self.change_focus(size, next_focus,
                                       offset_inset=0,
                                       coming_from='above')
-                    self.focus.set_text(('note_title_focus', self.focus.text))
+                    self.focus.set_text(('note_title_day_focus', self.focus.text))
 
                 elif key == self.keybinds['half_page_up'][0]:
                     if 'bottom' in self.ends_visible(size):
@@ -250,11 +334,11 @@ class sncli:
                         next_focus = self.focus_position - (size[1] / 2)
                     if next_focus < 0:
                         next_focus = 0
-                    self.focus.set_text(('note_title', self.focus.text))
+                    self.focus.set_text(('note_title_day', self.focus.text))
                     self.change_focus(size, next_focus,
                                       offset_inset=0,
                                       coming_from='below')
-                    self.focus.set_text(('note_title_focus', self.focus.text))
+                    self.focus.set_text(('note_title_day_focus', self.focus.text))
 
                 elif key == self.keybinds['view_note'][0]:
                     push_last_view(self)
@@ -384,174 +468,74 @@ class sncli:
             def __init__(self):
                 self.keybinds = get_config().keybinds
 
-                col1_txt_common = \
-                  [
-                    urwid.Text(('help_column1',
-                                "'" + self.keybinds['quit'][0] + "'"),
-                               align='right'),
-                    urwid.Text(('help_column1',
-                                "'" + self.keybinds['down'][0] + "'"),
-                               align='right'),
-                    urwid.Text(('help_column1',
-                                "'" + self.keybinds['up'][0] + "'"),
-                                align='right'),
-                    urwid.Text(('help_column1',
-                                "'" + self.keybinds['page_down'][0] + "'"),
-                               align='right'),
-                    urwid.Text(('help_column1',
-                                "'" + self.keybinds['page_up'][0] + "'"),
-                               align='right')
-                  ]
+                lines = []
 
-                col1_txt_common2 = \
-                  [
-                    urwid.Text(('help_column1',
-                                "'" + self.keybinds['half_page_down'][0] + "'"),
-                               align='right'),
-                    urwid.Text(('help_column1',
-                                "'" + self.keybinds['half_page_up'][0] + "'"),
-                               align='right'),
-                    urwid.Text(('help_column1',
-                                "'" + self.keybinds['help'][0] + "'"),
-                               align='right'),
-                    urwid.Text(('help_column1',
-                                "'" + self.keybinds['view_log'][0] + "'"),
-                               align='right')
-                  ]
+                # NoteTitles keybinds
+                keys = [ 'help',
+                         'quit',
+                         'down',
+                         'up',
+                         'page_down',
+                         'page_up',
+                         'half_page_down',
+                         'half_page_up',
+                         'view_log',
+                         'view_note' ]
+                lines.extend(self.create_help_lines(u"Note List", keys))
 
-                col2_txt_common = \
-                  [
-                    urwid.Text(('help_column2', u'kb_quit')),
-                    urwid.Text(('help_column2', u'kb_down')),
-                    urwid.Text(('help_column2', u'kb_up')),
-                    urwid.Text(('help_column2', u'kb_page_down')),
-                    urwid.Text(('help_column2', u'kb_page_up'))
-                  ]
+                # NoteContent keybinds
+                keys = [ 'help',
+                         'quit',
+                         'down',
+                         'up',
+                         'page_down',
+                         'page_up',
+                         'half_page_down',
+                         'half_page_up',
+                         'view_log',
+                         'tabstop2',
+                         'tabstop4',
+                         'tabstop8' ]
+                lines.extend(self.create_help_lines(u"Note Content", keys))
 
-                col2_txt_common2 = \
-                  [
-                    urwid.Text(('help_column2', u'kb_half_page_down')),
-                    urwid.Text(('help_column2', u'kb_half_page_up')),
-                    urwid.Text(('help_column2', u'kb_help')),
-                    urwid.Text(('help_column2', u'kb_view_log'))
-                  ]
+                # ViewLog keybinds
+                keys = [ 'help',
+                         'quit',
+                         'down',
+                         'up',
+                         'page_down',
+                         'page_up',
+                         'half_page_down',
+                         'half_page_up' ]
+                lines.extend(self.create_help_lines(u"Log", keys))
 
-                col3_txt_common = \
-                  [
-                    urwid.Text(('help_column3', self.keybinds['quit'][1])),
-                    urwid.Text(('help_column3', self.keybinds['down'][1])),
-                    urwid.Text(('help_column3', self.keybinds['up'][1])),
-                    urwid.Text(('help_column3', self.keybinds['page_down'][1])),
-                    urwid.Text(('help_column3', self.keybinds['page_up'][1]))
-                  ]
+                # Help keybinds
+                keys = [ 'help',
+                         'quit',
+                         'down',
+                         'up',
+                         'page_down',
+                         'page_up' ]
+                lines.extend(self.create_help_lines(u"Help", keys))
 
-                col3_txt_common2 = \
-                  [
-                    urwid.Text(('help_column3', self.keybinds['half_page_down'][1])),
-                    urwid.Text(('help_column3', self.keybinds['half_page_up'][1])),
-                    urwid.Text(('help_column3', self.keybinds['help'][1])),
-                    urwid.Text(('help_column3', self.keybinds['view_log'][1]))
-                  ]
-
-                space = urwid.Text(('help_header', u""))
-
-                nl_hdr = urwid.Text(('help_header', u"Note List"))
-
-                nl_col1_txt = copy.copy(col1_txt_common)
-                nl_col1_txt.extend(copy.copy(col1_txt_common2))
-                nl_col1_txt.append(urwid.Text(('help_column1',
-                                               "'" + self.keybinds['view_note'][0] + "'"),
-                                              align='right'))
-
-                nl_col2_txt = copy.copy(col2_txt_common)
-                nl_col2_txt.extend(copy.copy(col2_txt_common2))
-                nl_col2_txt.append(urwid.Text(('help_column2', u'kb_view_note')))
-
-                nl_col3_txt = copy.copy(col3_txt_common)
-                nl_col3_txt.extend(copy.copy(col3_txt_common2))
-                nl_col3_txt.append(urwid.Text(('help_column3', self.keybinds['view_note'][1])))
-
-                nl_col1_pile = urwid.Pile(nl_col1_txt) 
-                nl_col2_pile = urwid.Pile(nl_col2_txt) 
-                nl_col3_pile = urwid.Pile(nl_col3_txt) 
-
-                nl_cols = urwid.Columns([ ('fixed', 16, nl_col1_pile),
-                                          ('fixed', 24, nl_col2_pile),
-                                          ('fixed', 32, nl_col3_pile) ],
-                                        3, focus_column=1)
-
-                nc_hdr = urwid.Text(('help_header', u"Note Content"))
-
-                nc_col1_txt = copy.copy(col1_txt_common)
-                nc_col1_txt.extend(copy.copy(col1_txt_common2))
-                nc_col1_txt.append(urwid.Text(('help_column1',
-                                               "'" + self.keybinds['tabstop2'][0] + "'"),
-                                              align='right'))
-                nc_col1_txt.append(urwid.Text(('help_column1',
-                                               "'" + self.keybinds['tabstop4'][0] + "'"),
-                                              align='right'))
-                nc_col1_txt.append(urwid.Text(('help_column1',
-                                               "'" + self.keybinds['tabstop8'][0] + "'"),
-                                              align='right'))
-
-                nc_col2_txt = copy.copy(col2_txt_common)
-                nc_col2_txt.extend(copy.copy(col2_txt_common2))
-                nc_col2_txt.append(urwid.Text(('help_column2', u'kb_tabstop2')))
-                nc_col2_txt.append(urwid.Text(('help_column2', u'kb_tabstop4')))
-                nc_col2_txt.append(urwid.Text(('help_column2', u'kb_tabstop8')))
-
-                nc_col3_txt = copy.copy(col3_txt_common)
-                nc_col3_txt.extend(copy.copy(col3_txt_common2))
-                nc_col3_txt.append(urwid.Text(('help_column3', self.keybinds['tabstop2'][1])))
-                nc_col3_txt.append(urwid.Text(('help_column3', self.keybinds['tabstop4'][1])))
-                nc_col3_txt.append(urwid.Text(('help_column3', self.keybinds['tabstop8'][1])))
-
-                nc_col1_pile = urwid.Pile(nc_col1_txt) 
-                nc_col2_pile = urwid.Pile(nc_col2_txt) 
-                nc_col3_pile = urwid.Pile(nc_col3_txt) 
-
-                nc_cols = urwid.Columns([ ('fixed', 16, nc_col1_pile),
-                                          ('fixed', 24, nc_col2_pile),
-                                          ('fixed', 32, nc_col3_pile) ],
-                                        3, focus_column=1)
-
-                log_hdr = urwid.Text(('help_header', u"Log"))
-
-                log_col1_txt = copy.copy(col1_txt_common)
-                log_col2_txt = copy.copy(col2_txt_common)
-                log_col3_txt = copy.copy(col3_txt_common)
-
-                log_col1_pile = urwid.Pile(log_col1_txt) 
-                log_col2_pile = urwid.Pile(log_col2_txt) 
-                log_col3_pile = urwid.Pile(log_col3_txt) 
-
-                log_cols = urwid.Columns([ ('fixed', 16, log_col1_pile),
-                                           ('fixed', 24, log_col2_pile),
-                                           ('fixed', 32, log_col3_pile) ],
-                                         3, focus_column=1)
-
-                help_hdr = urwid.Text(('help_header', u"Help"))
-
-                help_col1_txt = copy.copy(col1_txt_common)
-                help_col2_txt = copy.copy(col2_txt_common)
-                help_col3_txt = copy.copy(col3_txt_common)
-
-                help_col1_pile = urwid.Pile(help_col1_txt) 
-                help_col2_pile = urwid.Pile(help_col2_txt) 
-                help_col3_pile = urwid.Pile(help_col3_txt) 
-
-                help_cols = urwid.Columns([ ('fixed', 16, help_col1_pile),
-                                            ('fixed', 24, help_col2_pile),
-                                            ('fixed', 32, help_col3_pile) ],
-                                          3, focus_column=1)
-
-                help_pile = urwid.Pile( [ space, nl_hdr,   nl_cols,
-                                          space, nc_hdr,   nc_cols,
-                                          space, log_hdr,  log_cols,
-                                          space, help_hdr, help_cols ] )
-
-                body = urwid.SimpleFocusListWalker([help_pile])
+                body = urwid.SimpleFocusListWalker(lines)
                 super(Help, self).__init__(body)
+
+            def create_help_lines(self, header, keys):
+                lines = [ urwid.Text(('help_header', u'')) ]
+                lines.append(urwid.Text( [ u' ', ('help_header', header) ] ))
+                for k in keys:
+                    lines.append(
+                        urwid.Text(
+                          [
+                            ('help_key', '{:>20}'.format(u"'" + self.keybinds[k][0] + u"'")),
+                            '  ',
+                            ('help_config', '{:<20}'.format(u'kb_' + k)),
+                            '  ',
+                            ('help_descr', self.keybinds[k][1])
+                          ]
+                        ))
+                return lines
 
             def keypress(self, size, key):
                 key = super(Help, self).keypress(size, key)
@@ -575,27 +559,69 @@ class sncli:
                     ('default',
                         self.config.clr_default_fg,
                         self.config.clr_default_bg ),
-                    ('note_title',
-                        self.config.clr_note_title_fg,
-                        self.config.clr_note_title_bg ),
-                    ('note_title_focus',
-                        self.config.clr_note_title_focus_fg,
-                        self.config.clr_note_title_focus_bg ),
+                    ('note_title_day',
+                        self.config.clr_note_title_day_fg,
+                        self.config.clr_note_title_day_bg ),
+                    ('note_title_day_focus',
+                        self.config.clr_note_title_day_focus_fg,
+                        self.config.clr_note_title_day_focus_bg ),
+                    ('note_title_week',
+                        self.config.clr_note_title_week_fg,
+                        self.config.clr_note_title_week_bg ),
+                    ('note_title_week_focus',
+                        self.config.clr_note_title_week_focus_fg,
+                        self.config.clr_note_title_week_focus_bg ),
+                    ('note_title_month',
+                        self.config.clr_note_title_month_fg,
+                        self.config.clr_note_title_month_bg ),
+                    ('note_title_month_focus',
+                        self.config.clr_note_title_month_focus_fg,
+                        self.config.clr_note_title_month_focus_bg ),
+                    ('note_title_year',
+                        self.config.clr_note_title_year_fg,
+                        self.config.clr_note_title_year_bg ),
+                    ('note_title_year_focus',
+                        self.config.clr_note_title_year_focus_fg,
+                        self.config.clr_note_title_year_focus_bg ),
+                    ('note_title_ancient',
+                        self.config.clr_note_title_ancient_fg,
+                        self.config.clr_note_title_ancient_bg ),
+                    ('note_title_ancient_focus',
+                        self.config.clr_note_title_ancient_focus_fg,
+                        self.config.clr_note_title_ancient_focus_bg ),
+                    ('note_date',
+                        self.config.clr_note_date_fg,
+                        self.config.clr_note_date_bg ),
+                    ('note_date_focus',
+                        self.config.clr_note_date_focus_fg,
+                        self.config.clr_note_date_focus_bg ),
+                    ('note_flags',
+                        self.config.clr_note_flags_fg,
+                        self.config.clr_note_flags_bg ),
+                    ('note_flags_focus',
+                        self.config.clr_note_flags_focus_fg,
+                        self.config.clr_note_flags_focus_bg ),
+                    ('note_tags',
+                        self.config.clr_note_tags_fg,
+                        self.config.clr_note_tags_bg ),
+                    ('note_tags_focus',
+                        self.config.clr_note_tags_focus_fg,
+                        self.config.clr_note_tags_focus_bg ),
                     ('note_content',
                         self.config.clr_note_content_fg,
                         self.config.clr_note_content_bg ),
                     ('help_header',
                         self.config.clr_help_header_fg,
                         self.config.clr_help_header_bg ),
-                    ('help_column1',
-                        self.config.clr_help_column1_fg,
-                        self.config.clr_help_column1_bg ),
-                    ('help_column2',
-                        self.config.clr_help_column2_fg,
-                        self.config.clr_help_column2_bg ),
-                    ('help_column3',
-                        self.config.clr_help_column3_fg,
-                        self.config.clr_help_column3_bg )
+                    ('help_key',
+                        self.config.clr_help_key_fg,
+                        self.config.clr_help_key_bg ),
+                    ('help_config',
+                        self.config.clr_help_config_fg,
+                        self.config.clr_help_config_bg ),
+                    ('help_descr',
+                        self.config.clr_help_descr_fg,
+                        self.config.clr_help_descr_bg )
                   ]
 
         sncli_loop = urwid.MainLoop(NoteTitles(),
