@@ -245,7 +245,8 @@ class sncli:
             for l in self.all_notes[index].note['content'].split('\n'):
                 lines.append(
                     urwid.AttrMap(urwid.Text(l.replace('\t', ' ' * tabstop)),
-                                  'note_content', 'note_content_focus'))
+                                  'note_content',
+                                  'note_content_focus'))
             return lines
 
         def list_get_note_json(index):
@@ -385,8 +386,10 @@ class sncli:
                 f = open(get_logfile())
                 lines = []
                 for line in f:
-                    lines.append(urwid.AttrMap(urwid.Text(line.rstrip()),
-                                               'default', 'reverse'))
+                    lines.append(
+                        urwid.AttrMap(urwid.Text(line.rstrip()),
+                                      'note_content',
+                                      'note_content_focus'))
                 f.close()
                 body = urwid.SimpleFocusListWalker(lines)
                 super(ViewLog, self).__init__(body)
@@ -471,9 +474,6 @@ class sncli:
                     ('default',
                         self.config.clr_default_fg,
                         self.config.clr_default_bg ),
-                    ('reverse',
-                        'white',
-                        'black' ),
                     ('note_title_day',
                         self.config.clr_note_title_day_fg,
                         self.config.clr_note_title_day_bg ),
