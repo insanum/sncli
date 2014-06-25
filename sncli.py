@@ -31,6 +31,8 @@ class Config:
                     'kb_page_up'              : 'b',
                     'kb_half_page_down'       : 'ctrl d',
                     'kb_half_page_up'         : 'ctrl u',
+                    'kb_bottom'               : 'G',
+                    'kb_top'                  : 'g',
                     'kb_view_note'            : 'enter',
                     'kb_view_log'             : 'l',
                     'kb_tabstop2'             : '2',
@@ -184,6 +186,8 @@ class Config:
               'page_up'        : [ cp.get(cfg_sec, 'kb_page_up'),        'Page up' ],
               'half_page_down' : [ cp.get(cfg_sec, 'kb_half_page_down'), 'Half page down' ],
               'half_page_up'   : [ cp.get(cfg_sec, 'kb_half_page_up'),   'Half page up' ],
+              'bottom'         : [ cp.get(cfg_sec, 'kb_bottom'),         'Goto bottom' ],
+              'top'            : [ cp.get(cfg_sec, 'kb_top'),            'Goto top' ],
               'view_note'      : [ cp.get(cfg_sec, 'kb_view_note'),      'View note' ],
               'view_log'       : [ cp.get(cfg_sec, 'kb_view_log'),       'View log' ],
               'tabstop2'       : [ cp.get(cfg_sec, 'kb_tabstop2'),       'View with tabstop=2' ],
@@ -321,6 +325,16 @@ class sncli:
                                  offset_inset=0,
                                  coming_from='below')
 
+            elif key == self.config.keybinds['bottom'][0]:
+                obj.change_focus(size, (len(obj.body.positions()) - 1),
+                                 offset_inset=0,
+                                 coming_from='above')
+
+            elif key == self.config.keybinds['top'][0]:
+                obj.change_focus(size, 0,
+                                 offset_inset=0,
+                                 coming_from='below')
+
         class NoteTitles(urwid.ListBox):
             def __init__(self):
                 self.keybinds = get_config().keybinds
@@ -420,6 +434,8 @@ class sncli:
                          'page_up',
                          'half_page_down',
                          'half_page_up',
+                         'bottom',
+                         'top',
                          'view_log' ]
                 lines.extend(self.create_help_lines(u"Common", keys))
 
