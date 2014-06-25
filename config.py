@@ -82,6 +82,8 @@ class Config:
             'clr_note_content_focus_fg' : 'white',
             'clr_note_content_focus_bg' : 'light red',
 
+            'clr_help_focus_fg'  : 'white',
+            'clr_help_focus_bg'  : 'dark gray',
             'clr_help_header_fg' : 'dark blue',
             'clr_help_header_bg' : 'default',
             'clr_help_key_fg'    : 'default',
@@ -162,6 +164,8 @@ class Config:
         self.clr_note_content_focus_fg = cp.get(cfg_sec, 'clr_note_content_focus_fg')
         self.clr_note_content_focus_bg = cp.get(cfg_sec, 'clr_note_content_focus_bg')
 
+        self.clr_help_focus_fg  = cp.get(cfg_sec, 'clr_help_focus_fg')
+        self.clr_help_focus_bg  = cp.get(cfg_sec, 'clr_help_focus_bg')
         self.clr_help_header_fg = cp.get(cfg_sec, 'clr_help_header_fg')
         self.clr_help_header_bg = cp.get(cfg_sec, 'clr_help_header_bg')
         self.clr_help_key_fg    = cp.get(cfg_sec, 'clr_help_key_fg')

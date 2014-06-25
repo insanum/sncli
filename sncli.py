@@ -310,108 +310,113 @@ class sncli:
                 super(Help, self).__init__(body)
 
             def create_help_lines(self, header, keys):
-                lines = [ urwid.Text(('help_header', u'')) ]
-                lines.append(urwid.Text( [ u' ', ('help_header', header) ] ))
+                lines = [ urwid.AttrMap(urwid.Text(u''),
+                                        'help_header',
+                                        'help_focus') ]
+                lines.append(urwid.AttrMap(urwid.Text(u' ' + header),
+                                           'help_header',
+                                           'help_focus'))
                 for k in keys:
                     lines.append(
-                        urwid.Text(
-                          [
-                            ('help_key', '{:>20}  '.format(u"'" + self.keybinds[k][0] + u"'")),
-                            '  ',
-                            ('help_config', '{:<20}  '.format(u'kb_' + k)),
-                            '  ',
-                            ('help_descr', self.keybinds[k][1])
-                          ]
+                        urwid.AttrMap(
+                          urwid.Text(
+                            [
+                              ('help_key', '{:>20}  '.format(u"'" + self.keybinds[k][0] + u"'")),
+                              ('help_config', '{:<20}  '.format(u'kb_' + k)),
+                              ('help_descr', self.keybinds[k][1])
+                            ]
+                          ),
+                          attr_map = None,
+                          focus_map = {
+                                        'help_key'    : 'help_focus',
+                                        'help_config' : 'help_focus',
+                                        'help_descr'  : 'help_focus'
+                                      }
                         ))
                 return lines
 
             def keypress(self, size, key):
-
                 if key == self.keybinds['quit'][0]:
                     sncli_loop.widget = pop_last_view()
-
-                elif key == self.keybinds['down'][0]:
-                    key = super(Help, self).keypress(size, 'down')
-                    return
-
-                elif key == self.keybinds['up'][0]:
-                    key = super(Help, self).keypress(size, 'up')
-                    return
 
                 else:
                     handle_common_scroll_keybind(self, size, key)
 
-        palette = [
-                    ('default',
-                        self.config.clr_default_fg,
-                        self.config.clr_default_bg ),
-                    ('note_title_day',
-                        self.config.clr_note_title_day_fg,
-                        self.config.clr_note_title_day_bg ),
-                    ('note_title_day_focus',
-                        self.config.clr_note_title_day_focus_fg,
-                        self.config.clr_note_title_day_focus_bg ),
-                    ('note_title_week',
-                        self.config.clr_note_title_week_fg,
-                        self.config.clr_note_title_week_bg ),
-                    ('note_title_week_focus',
-                        self.config.clr_note_title_week_focus_fg,
-                        self.config.clr_note_title_week_focus_bg ),
-                    ('note_title_month',
-                        self.config.clr_note_title_month_fg,
-                        self.config.clr_note_title_month_bg ),
-                    ('note_title_month_focus',
-                        self.config.clr_note_title_month_focus_fg,
-                        self.config.clr_note_title_month_focus_bg ),
-                    ('note_title_year',
-                        self.config.clr_note_title_year_fg,
-                        self.config.clr_note_title_year_bg ),
-                    ('note_title_year_focus',
-                        self.config.clr_note_title_year_focus_fg,
-                        self.config.clr_note_title_year_focus_bg ),
-                    ('note_title_ancient',
-                        self.config.clr_note_title_ancient_fg,
-                        self.config.clr_note_title_ancient_bg ),
-                    ('note_title_ancient_focus',
-                        self.config.clr_note_title_ancient_focus_fg,
-                        self.config.clr_note_title_ancient_focus_bg ),
-                    ('note_date',
-                        self.config.clr_note_date_fg,
-                        self.config.clr_note_date_bg ),
-                    ('note_date_focus',
-                        self.config.clr_note_date_focus_fg,
-                        self.config.clr_note_date_focus_bg ),
-                    ('note_flags',
-                        self.config.clr_note_flags_fg,
-                        self.config.clr_note_flags_bg ),
-                    ('note_flags_focus',
-                        self.config.clr_note_flags_focus_fg,
-                        self.config.clr_note_flags_focus_bg ),
-                    ('note_tags',
-                        self.config.clr_note_tags_fg,
-                        self.config.clr_note_tags_bg ),
-                    ('note_tags_focus',
-                        self.config.clr_note_tags_focus_fg,
-                        self.config.clr_note_tags_focus_bg ),
-                    ('note_content',
-                        self.config.clr_note_content_fg,
-                        self.config.clr_note_content_bg ),
-                    ('note_content_focus',
-                        self.config.clr_note_content_focus_fg,
-                        self.config.clr_note_content_focus_bg ),
-                    ('help_header',
-                        self.config.clr_help_header_fg,
-                        self.config.clr_help_header_bg ),
-                    ('help_key',
-                        self.config.clr_help_key_fg,
-                        self.config.clr_help_key_bg ),
-                    ('help_config',
-                        self.config.clr_help_config_fg,
-                        self.config.clr_help_config_bg ),
-                    ('help_descr',
-                        self.config.clr_help_descr_fg,
-                        self.config.clr_help_descr_bg )
-                  ]
+        palette = \
+          [
+            ('default',
+                self.config.clr_default_fg,
+                self.config.clr_default_bg ),
+            ('note_title_day',
+                self.config.clr_note_title_day_fg,
+                self.config.clr_note_title_day_bg ),
+            ('note_title_day_focus',
+                self.config.clr_note_title_day_focus_fg,
+                self.config.clr_note_title_day_focus_bg ),
+            ('note_title_week',
+                self.config.clr_note_title_week_fg,
+                self.config.clr_note_title_week_bg ),
+            ('note_title_week_focus',
+                self.config.clr_note_title_week_focus_fg,
+                self.config.clr_note_title_week_focus_bg ),
+            ('note_title_month',
+                self.config.clr_note_title_month_fg,
+                self.config.clr_note_title_month_bg ),
+            ('note_title_month_focus',
+                self.config.clr_note_title_month_focus_fg,
+                self.config.clr_note_title_month_focus_bg ),
+            ('note_title_year',
+                self.config.clr_note_title_year_fg,
+                self.config.clr_note_title_year_bg ),
+            ('note_title_year_focus',
+                self.config.clr_note_title_year_focus_fg,
+                self.config.clr_note_title_year_focus_bg ),
+            ('note_title_ancient',
+                self.config.clr_note_title_ancient_fg,
+                self.config.clr_note_title_ancient_bg ),
+            ('note_title_ancient_focus',
+                self.config.clr_note_title_ancient_focus_fg,
+                self.config.clr_note_title_ancient_focus_bg ),
+            ('note_date',
+                self.config.clr_note_date_fg,
+                self.config.clr_note_date_bg ),
+            ('note_date_focus',
+                self.config.clr_note_date_focus_fg,
+                self.config.clr_note_date_focus_bg ),
+            ('note_flags',
+                self.config.clr_note_flags_fg,
+                self.config.clr_note_flags_bg ),
+            ('note_flags_focus',
+                self.config.clr_note_flags_focus_fg,
+                self.config.clr_note_flags_focus_bg ),
+            ('note_tags',
+                self.config.clr_note_tags_fg,
+                self.config.clr_note_tags_bg ),
+            ('note_tags_focus',
+                self.config.clr_note_tags_focus_fg,
+                self.config.clr_note_tags_focus_bg ),
+            ('note_content',
+                self.config.clr_note_content_fg,
+                self.config.clr_note_content_bg ),
+            ('note_content_focus',
+                self.config.clr_note_content_focus_fg,
+                self.config.clr_note_content_focus_bg ),
+            ('help_focus',
+                self.config.clr_help_focus_fg,
+                self.config.clr_help_focus_bg ),
+            ('help_header',
+                self.config.clr_help_header_fg,
+                self.config.clr_help_header_bg ),
+            ('help_key',
+                self.config.clr_help_key_fg,
+                self.config.clr_help_key_bg ),
+            ('help_config',
+                self.config.clr_help_config_fg,
+                self.config.clr_help_config_bg ),
+            ('help_descr',
+                self.config.clr_help_descr_fg,
+                self.config.clr_help_descr_bg )
+          ]
 
         sncli_loop = urwid.MainLoop(NoteTitles(),
                                     palette,
