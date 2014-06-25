@@ -80,8 +80,10 @@ class Config:
                     'clr_note_tags_focus_fg'  : 'white',
                     'clr_note_tags_focus_bg'  : 'default',
 
-                    'clr_note_content_fg'     : 'default',
-                    'clr_note_content_bg'     : 'default',
+                    'clr_note_content_fg'       : 'default',
+                    'clr_note_content_bg'       : 'default',
+                    'clr_note_content_focus_fg' : 'white',
+                    'clr_note_content_focus_bg' : 'light red',
 
                     'clr_help_header_fg'      : 'dark blue',
                     'clr_help_header_bg'      : 'default',
@@ -158,8 +160,10 @@ class Config:
         self.clr_note_tags_focus_fg  = cp.get(cfg_sec, 'clr_note_tags_focus_fg')
         self.clr_note_tags_focus_bg  = cp.get(cfg_sec, 'clr_note_tags_focus_bg')
 
-        self.clr_note_content_fg     = cp.get(cfg_sec, 'clr_note_content_fg')
-        self.clr_note_content_bg     = cp.get(cfg_sec, 'clr_note_content_bg')
+        self.clr_note_content_fg       = cp.get(cfg_sec, 'clr_note_content_fg')
+        self.clr_note_content_bg       = cp.get(cfg_sec, 'clr_note_content_bg')
+        self.clr_note_content_focus_fg = cp.get(cfg_sec, 'clr_note_content_focus_fg')
+        self.clr_note_content_focus_bg = cp.get(cfg_sec, 'clr_note_content_focus_bg')
 
         self.clr_help_header_fg      = cp.get(cfg_sec, 'clr_help_header_fg')
         self.clr_help_header_bg      = cp.get(cfg_sec, 'clr_help_header_bg')
@@ -214,8 +218,8 @@ class sncli:
         self.last_view = []
 
         # XXX
-        #self.all_notes, match_regex, self.all_notes_cnt = self.ndb.filter_notes()
-        #return
+        self.all_notes, match_regex, self.all_notes_cnt = self.ndb.filter_notes()
+        return
 
         self.ndb.add_observer('synced:note', self.observer_notes_db_synced_note)
         self.ndb.add_observer('change:note-status', self.observer_notes_db_change_note_status)
@@ -227,17 +231,22 @@ class sncli:
     def do_it(self):
 
         def list_get_note_titles():
-            note_titles = []
+            lines = []
             for n in self.all_notes:
-                note_titles.append(urwid.Text(('note_title_day', utils.get_note_title(n.note))))
-            return note_titles
+                #lines.append(
+                #    urwid.Text(('note_title_day', utils.get_note_title(n.note))))
+                lines.append(
+                    urwid.AttrMap(urwid.Text(utils.get_note_title(n.note)),
+                                  'note_title_day', 'note_title_day_focus'))
+            return lines
 
         def list_get_note_content(index, tabstop):
-            note_contents = []
+            lines = []
             for l in self.all_notes[index].note['content'].split('\n'):
-                note_contents.append(urwid.Text(('note_content',
-                                                 l.replace('\t', ' ' * tabstop))))
-            return note_contents
+                lines.append(
+                    urwid.AttrMap(urwid.Text(l.replace('\t', ' ' * tabstop)),
+                                  'note_content', 'note_content_focus'))
+            return lines
 
         def list_get_note_json(index):
             return self.all_notes[index].note
@@ -254,20 +263,74 @@ class sncli:
         def get_logfile():
             return self.logfile
 
+        def handle_common_scroll_keybind(obj, size, key):
+
+            if key == self.config.keybinds['down'][0]:
+                last = len(obj.body.positions())
+                if obj.focus_position == (last - 1):
+                    return
+                obj.focus_position += 1
+                obj.render(size)
+
+            elif key == self.config.keybinds['up'][0]:
+                if obj.focus_position == 0:
+                    return
+                obj.focus_position -= 1
+                obj.render(size)
+
+            elif key == self.config.keybinds['page_down'][0]:
+                last = len(obj.body.positions())
+                next_focus = obj.focus_position + size[1]
+                if next_focus >= last:
+                    next_focus = last - 1
+                obj.change_focus(size, next_focus,
+                                 offset_inset=0,
+                                 coming_from='above')
+
+            elif key == self.config.keybinds['page_up'][0]:
+                if 'bottom' in obj.ends_visible(size):
+                    last = len(obj.body.positions())
+                    next_focus = last - size[1] - size[1]
+                else:
+                    next_focus = obj.focus_position - size[1]
+                if next_focus < 0:
+                    next_focus = 0
+                obj.change_focus(size, next_focus,
+                                 offset_inset=0,
+                                 coming_from='below')
+
+            elif key == self.config.keybinds['half_page_down'][0]:
+                last = len(obj.body.positions())
+                next_focus = obj.focus_position + (size[1] / 2)
+                if next_focus >= last:
+                    next_focus = last - 1
+                obj.change_focus(size, next_focus,
+                                 offset_inset=0,
+                                 coming_from='above')
+
+            elif key == self.config.keybinds['half_page_up'][0]:
+                if 'bottom' in obj.ends_visible(size):
+                    last = len(obj.body.positions())
+                    next_focus = last - size[1] - (size[1] / 2)
+                else:
+                    next_focus = obj.focus_position - (size[1] / 2)
+                if next_focus < 0:
+                    next_focus = 0
+                obj.change_focus(size, next_focus,
+                                 offset_inset=0,
+                                 coming_from='below')
+
         class NoteTitles(urwid.ListBox):
             def __init__(self):
                 self.keybinds = get_config().keybinds
                 body = urwid.SimpleFocusListWalker(list_get_note_titles())
                 super(NoteTitles, self).__init__(body)
-                self.focus.set_text(('note_title_day_focus', self.focus.text))
 
             def keypress(self, size, key):
-                key = super(NoteTitles, self).keypress(size, key)
-
                 if key == self.keybinds['quit'][0]:
                     raise urwid.ExitMainLoop()
 
-                if key == self.keybinds['help'][0]:
+                elif key == self.keybinds['help'][0]:
                     push_last_view(self)
                     sncli_loop.widget = Help()
 
@@ -275,74 +338,12 @@ class sncli:
                     push_last_view(self)
                     sncli_loop.widget = ViewLog()
 
-                elif key == self.keybinds['down'][0]:
-                    last = len(self.body.positions())
-                    if self.focus_position == (last - 1):
-                        return
-                    self.focus.set_text(('note_title_day', self.focus.text))
-                    self.focus_position = self.focus_position + 1
-                    self.focus.set_text(('note_title_day_focus', self.focus.text))
-
-                elif key == self.keybinds['up'][0]:
-                    if self.focus_position == 0:
-                        return
-                    self.focus.set_text(('note_title_day', self.focus.text))
-                    self.focus_position = self.focus_position - 1
-                    self.focus.set_text(('note_title_day_focus', self.focus.text))
-
-                elif key == self.keybinds['page_down'][0]:
-                    last = len(self.body.positions())
-                    next_focus = self.focus_position + size[1]
-                    if next_focus >= last:
-                        next_focus = last - 1
-                    self.focus.set_text(('note_title_day', self.focus.text))
-                    self.change_focus(size, next_focus,
-                                      offset_inset=0,
-                                      coming_from='above')
-                    self.focus.set_text(('note_title_day_focus', self.focus.text))
-
-                elif key == self.keybinds['page_up'][0]:
-                    if 'bottom' in self.ends_visible(size):
-                        last = len(self.body.positions())
-                        next_focus = last - size[1] - size[1]
-                    else:
-                        next_focus = self.focus_position - size[1]
-                    if next_focus < 0:
-                        next_focus = 0
-                    self.focus.set_text(('note_title_day', self.focus.text))
-                    self.change_focus(size, next_focus,
-                                      offset_inset=0,
-                                      coming_from='below')
-                    self.focus.set_text(('note_title_day_focus', self.focus.text))
-
-                elif key == self.keybinds['half_page_down'][0]:
-                    last = len(self.body.positions())
-                    next_focus = self.focus_position + (size[1] / 2)
-                    if next_focus >= last:
-                        next_focus = last - 1
-                    self.focus.set_text(('note_title_day', self.focus.text))
-                    self.change_focus(size, next_focus,
-                                      offset_inset=0,
-                                      coming_from='above')
-                    self.focus.set_text(('note_title_day_focus', self.focus.text))
-
-                elif key == self.keybinds['half_page_up'][0]:
-                    if 'bottom' in self.ends_visible(size):
-                        last = len(self.body.positions())
-                        next_focus = last - size[1] - (size[1] / 2)
-                    else:
-                        next_focus = self.focus_position - (size[1] / 2)
-                    if next_focus < 0:
-                        next_focus = 0
-                    self.focus.set_text(('note_title_day', self.focus.text))
-                    self.change_focus(size, next_focus,
-                                      offset_inset=0,
-                                      coming_from='below')
-                    self.focus.set_text(('note_title_day_focus', self.focus.text))
-
                 elif key == self.keybinds['view_note'][0]:
                     push_last_view(self)
                     sncli_loop.widget = NoteContent(self.focus_position, get_config().tabstop)
+
+                else:
+                    handle_common_scroll_keybind(self, size, key)
 
         class NoteContent(urwid.ListBox):
             def __init__(self, nl_focus_index, tabstop):
@@ -355,8 +356,6 @@ class sncli:
                 super(NoteContent, self).__init__(body)
 
             def keypress(self, size, key):
-                key = super(NoteContent, self).keypress(size, key)
-
                 if key == self.keybinds['quit'][0]:
                     sncli_loop.widget = pop_last_view()
 
@@ -368,39 +367,6 @@ class sncli:
                     push_last_view(self)
                     sncli_loop.widget = ViewLog()
 
-                elif key == self.keybinds['down'][0]:
-                    key = super(NoteContent, self).keypress(size, 'down')
-
-                elif key == self.keybinds['up'][0]:
-                    key = super(NoteContent, self).keypress(size, 'up')
-
-                elif key == self.keybinds['page_down'][0]:
-                    key = super(NoteContent, self).keypress(size, 'page down')
-
-                elif key == self.keybinds['page_up'][0]:
-                    key = super(NoteContent, self).keypress(size, 'page up')
-
-                elif key == self.keybinds['half_page_down'][0]:
-                    last = len(self.body.positions())
-                    next_focus = self.focus_position + (size[1] / 2)
-                    if next_focus >= last:
-                        next_focus = last - 1
-                    self.change_focus(size, next_focus,
-                                      offset_inset=0,
-                                      coming_from='above')
-
-                elif key == self.keybinds['half_page_up'][0]:
-                    if 'bottom' in self.ends_visible(size):
-                        last = len(self.body.positions())
-                        next_focus = last - size[1] - (size[1] / 2)
-                    else:
-                        next_focus = self.focus_position - (size[1] / 2)
-                    if next_focus < 0:
-                        next_focus = 0
-                    self.change_focus(size, next_focus,
-                                      offset_inset=0,
-                                      coming_from='below')
-
                 elif key == self.keybinds['tabstop2'][0]:
                     sncli_loop.widget = NoteContent(self.nl_focus_index, 2)
 
@@ -410,59 +376,31 @@ class sncli:
                 elif key == self.keybinds['tabstop8'][0]:
                     sncli_loop.widget = NoteContent(self.nl_focus_index, 8)
 
+                else:
+                    handle_common_scroll_keybind(self, size, key)
+
         class ViewLog(urwid.ListBox):
             def __init__(self):
                 self.keybinds = get_config().keybinds
                 f = open(get_logfile())
                 lines = []
                 for line in f:
-                    lines.append(urwid.Text(('default', line.rstrip())))
+                    lines.append(urwid.AttrMap(urwid.Text(line.rstrip()),
+                                               'default', 'reverse'))
                 f.close()
                 body = urwid.SimpleFocusListWalker(lines)
                 super(ViewLog, self).__init__(body)
 
             def keypress(self, size, key):
-                key = super(ViewLog, self).keypress(size, key)
-
                 if key == self.keybinds['quit'][0]:
                     sncli_loop.widget = pop_last_view()
 
-                if key == self.keybinds['help'][0]:
+                elif key == self.keybinds['help'][0]:
                     push_last_view(self)
                     sncli_loop.widget = Help()
 
-                elif key == self.keybinds['down'][0]:
-                    key = super(ViewLog, self).keypress(size, 'down')
-
-                elif key == self.keybinds['up'][0]:
-                    key = super(ViewLog, self).keypress(size, 'up')
-
-                elif key == self.keybinds['page_down'][0]:
-                    key = super(ViewLog, self).keypress(size, 'page down')
-
-                elif key == self.keybinds['page_up'][0]:
-                    key = super(ViewLog, self).keypress(size, 'page up')
-
-                elif key == self.keybinds['half_page_down'][0]:
-                    last = len(self.body.positions())
-                    next_focus = self.focus_position + (size[1] / 2)
-                    if next_focus >= last:
-                        next_focus = last - 1
-                    self.change_focus(size, next_focus,
-                                      offset_inset=0,
-                                      coming_from='above')
-
-                elif key == self.keybinds['half_page_up'][0]:
-                    if 'bottom' in self.ends_visible(size):
-                        last = len(self.body.positions())
-                        next_focus = last - size[1] - (size[1] / 2)
-                    else:
-                        next_focus = self.focus_position - (size[1] / 2)
-                    if next_focus < 0:
-                        next_focus = 0
-                    self.change_focus(size, next_focus,
-                                      offset_inset=0,
-                                      coming_from='below')
+                else:
+                    handle_common_scroll_keybind(self, size, key)
 
         class Help(urwid.ListBox):
             def __init__(self):
@@ -470,7 +408,7 @@ class sncli:
 
                 lines = []
 
-                # NoteTitles keybinds
+                # Common keybinds
                 keys = [ 'help',
                          'quit',
                          'down',
@@ -479,44 +417,20 @@ class sncli:
                          'page_up',
                          'half_page_down',
                          'half_page_up',
-                         'view_log',
-                         'view_note' ]
+                         'view_log' ]
+                lines.extend(self.create_help_lines(u"Common", keys))
+
+                # NoteTitles keybinds
+                keys = [ 'view_note' ]
                 lines.extend(self.create_help_lines(u"Note List", keys))
 
                 # NoteContent keybinds
-                keys = [ 'help',
-                         'quit',
-                         'down',
-                         'up',
-                         'page_down',
-                         'page_up',
-                         'half_page_down',
-                         'half_page_up',
-                         'view_log',
-                         'tabstop2',
+                keys = [ 'tabstop2',
                          'tabstop4',
                          'tabstop8' ]
                 lines.extend(self.create_help_lines(u"Note Content", keys))
 
-                # ViewLog keybinds
-                keys = [ 'help',
-                         'quit',
-                         'down',
-                         'up',
-                         'page_down',
-                         'page_up',
-                         'half_page_down',
-                         'half_page_up' ]
-                lines.extend(self.create_help_lines(u"Log", keys))
-
-                # Help keybinds
-                keys = [ 'help',
-                         'quit',
-                         'down',
-                         'up',
-                         'page_down',
-                         'page_up' ]
-                lines.extend(self.create_help_lines(u"Help", keys))
+                lines.append(urwid.Text(('help_header', u'')))
 
                 body = urwid.SimpleFocusListWalker(lines)
                 super(Help, self).__init__(body)
@@ -528,9 +442,9 @@ class sncli:
                     lines.append(
                         urwid.Text(
                           [
-                            ('help_key', '{:>20}'.format(u"'" + self.keybinds[k][0] + u"'")),
+                            ('help_key', '{:>20}  '.format(u"'" + self.keybinds[k][0] + u"'")),
                             '  ',
-                            ('help_config', '{:<20}'.format(u'kb_' + k)),
+                            ('help_config', '{:<20}  '.format(u'kb_' + k)),
                             '  ',
                             ('help_descr', self.keybinds[k][1])
                           ]
@@ -538,27 +452,28 @@ class sncli:
                 return lines
 
             def keypress(self, size, key):
-                key = super(Help, self).keypress(size, key)
 
                 if key == self.keybinds['quit'][0]:
                     sncli_loop.widget = pop_last_view()
 
                 elif key == self.keybinds['down'][0]:
                     key = super(Help, self).keypress(size, 'down')
+                    return
 
                 elif key == self.keybinds['up'][0]:
                     key = super(Help, self).keypress(size, 'up')
+                    return
 
-                elif key == self.keybinds['page_down'][0]:
-                    key = super(Help, self).keypress(size, 'page down')
-
-                elif key == self.keybinds['page_up'][0]:
-                    key = super(Help, self).keypress(size, 'page up')
+                else:
+                    handle_common_scroll_keybind(self, size, key)
 
         palette = [
                     ('default',
                         self.config.clr_default_fg,
                         self.config.clr_default_bg ),
+                    ('reverse',
+                        'white',
+                        'black' ),
                     ('note_title_day',
                         self.config.clr_note_title_day_fg,
                         self.config.clr_note_title_day_bg ),
@@ -610,6 +525,9 @@ class sncli:
                     ('note_content',
                         self.config.clr_note_content_fg,
                         self.config.clr_note_content_bg ),
+                    ('note_content_focus',
+                        self.config.clr_note_content_focus_fg,
+                        self.config.clr_note_content_focus_bg ),
                     ('help_header',
                         self.config.clr_help_header_fg,
                         self.config.clr_help_header_bg ),
