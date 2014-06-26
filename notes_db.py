@@ -81,8 +81,8 @@ class NotesDB(utils.SubjectMixin):
 
         # initialise the simplenote instance we're going to use
         # this does not yet need network access
-        self.simplenote = Simplenote(config.get_config('sn_username'),
-                                     config.get_config('sn_password'))
+        self.simplenote = Simplenote(self.config.get_config('sn_username'),
+                                     self.config.get_config('sn_password'))
 
         # we'll use this to store which notes are currently being synced by
         # the background thread, so we don't add them anew if they're still

@@ -13,7 +13,6 @@ class sncli:
     def __init__(self):
         self.config = Config()
 
-        print self.config.get_config('db_path')
         if not os.path.exists(self.config.get_config('db_path')):
             os.mkdir(self.config.get_config('db_path'))
 
@@ -36,8 +35,8 @@ class sncli:
         self.last_view = []
 
         # XXX
-        self.all_notes, match_regex, self.all_notes_cnt = self.ndb.filter_notes()
-        return
+        #self.all_notes, match_regex, self.all_notes_cnt = self.ndb.filter_notes()
+        #return
 
         self.ndb.add_observer('synced:note', self.observer_notes_db_synced_note)
         self.ndb.add_observer('change:note-status', self.observer_notes_db_change_note_status)

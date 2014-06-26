@@ -77,9 +77,6 @@ class Config:
 
         if not cp.has_section(cfg_sec):
             cp.add_section(cfg_sec)
-            self.ok = False
-        else:
-            self.ok = True
 
         self.configs = \
         {
