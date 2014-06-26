@@ -16,7 +16,7 @@ class Config:
             'pinned_ontop'      : '1',
             'tabstop'           : '4',
             'format_strftime'   : '%Y/%m/%d',
-            'format_note_title' : '[%D] %F %N%>%T',
+            'format_note_title' : '[%D] %F %-N %T',
 
             'kb_help'           : 'h',
             'kb_quit'           : 'q',
@@ -37,45 +37,32 @@ class Config:
             'clr_default_fg' : 'default',
             'clr_default_bg' : 'default',
 
-            'clr_note_title_day_fg'       : 'dark blue',
-            'clr_note_title_day_bg'       : 'default',
-            'clr_note_title_day_focus_fg' : 'white',
-            'clr_note_title_day_focus_bg' : 'default',
+            'clr_note_focus_fg' : 'white',
+            'clr_note_focus_bg' : 'light red',
 
-            'clr_note_title_week_fg'       : 'dark blue',
-            'clr_note_title_week_bg'       : 'default',
-            'clr_note_title_week_focus_fg' : 'white',
-            'clr_note_title_week_focus_bg' : 'default',
+            'clr_note_title_day_fg' : 'light red',
+            'clr_note_title_day_bg' : 'default',
 
-            'clr_note_title_month_fg'       : 'dark blue',
-            'clr_note_title_month_bg'       : 'default',
-            'clr_note_title_month_focus_fg' : 'white',
-            'clr_note_title_month_focus_bg' : 'default',
+            'clr_note_title_week_fg' : 'light green',
+            'clr_note_title_week_bg' : 'default',
 
-            'clr_note_title_year_fg'       : 'dark blue',
-            'clr_note_title_year_bg'       : 'default',
-            'clr_note_title_year_focus_fg' : 'white',
-            'clr_note_title_year_focus_bg' : 'default',
+            'clr_note_title_month_fg' : 'brown',
+            'clr_note_title_month_bg' : 'default',
 
-            'clr_note_title_ancient_fg'       : 'dark blue',
-            'clr_note_title_ancient_bg'       : 'default',
-            'clr_note_title_ancient_focus_fg' : 'white',
-            'clr_note_title_ancient_focus_bg' : 'default',
+            'clr_note_title_year_fg' : 'light blue',
+            'clr_note_title_year_bg' : 'default',
 
-            'clr_note_date_fg'        : 'dark blue',
-            'clr_note_date_bg'        : 'default',
-            'clr_note_date_focus_fg'  : 'white',
-            'clr_note_date_focus_bg'  : 'default',
+            'clr_note_title_ancient_fg' : 'light blue',
+            'clr_note_title_ancient_bg' : 'default',
 
-            'clr_note_flags_fg'       : 'dark blue',
-            'clr_note_flags_bg'       : 'default',
-            'clr_note_flags_focus_fg' : 'white',
-            'clr_note_flags_focus_bg' : 'default',
+            'clr_note_date_fg' : 'dark blue',
+            'clr_note_date_bg' : 'default',
 
-            'clr_note_tags_fg'        : 'dark blue',
-            'clr_note_tags_bg'        : 'default',
-            'clr_note_tags_focus_fg'  : 'white',
-            'clr_note_tags_focus_bg'  : 'default',
+            'clr_note_flags_fg' : 'dark magenta',
+            'clr_note_flags_bg' : 'default',
+
+            'clr_note_tags_fg' : 'dark red',
+            'clr_note_tags_bg' : 'default',
 
             'clr_note_content_fg'       : 'default',
             'clr_note_content_bg'       : 'default',
@@ -119,45 +106,32 @@ class Config:
         self.clr_default_fg = cp.get(cfg_sec, 'clr_default_fg')
         self.clr_default_bg = cp.get(cfg_sec, 'clr_default_bg')
 
-        self.clr_note_title_day_fg       = cp.get(cfg_sec, 'clr_note_title_day_fg')
-        self.clr_note_title_day_bg       = cp.get(cfg_sec, 'clr_note_title_day_bg')
-        self.clr_note_title_day_focus_fg = cp.get(cfg_sec, 'clr_note_title_day_focus_fg')
-        self.clr_note_title_day_focus_bg = cp.get(cfg_sec, 'clr_note_title_day_focus_bg')
+        self.clr_note_focus_fg = cp.get(cfg_sec, 'clr_note_focus_fg')
+        self.clr_note_focus_bg = cp.get(cfg_sec, 'clr_note_focus_bg')
 
-        self.clr_note_title_week_fg       = cp.get(cfg_sec, 'clr_note_title_week_fg')
-        self.clr_note_title_week_bg       = cp.get(cfg_sec, 'clr_note_title_week_bg')
-        self.clr_note_title_week_focus_fg = cp.get(cfg_sec, 'clr_note_title_week_focus_fg')
-        self.clr_note_title_week_focus_bg = cp.get(cfg_sec, 'clr_note_title_week_focus_bg')
+        self.clr_note_title_day_fg = cp.get(cfg_sec, 'clr_note_title_day_fg')
+        self.clr_note_title_day_bg = cp.get(cfg_sec, 'clr_note_title_day_bg')
 
-        self.clr_note_title_month_fg       = cp.get(cfg_sec, 'clr_note_title_month_fg')
-        self.clr_note_title_month_bg       = cp.get(cfg_sec, 'clr_note_title_month_bg')
-        self.clr_note_title_month_focus_fg = cp.get(cfg_sec, 'clr_note_title_month_focus_fg')
-        self.clr_note_title_month_focus_bg = cp.get(cfg_sec, 'clr_note_title_month_focus_bg')
+        self.clr_note_title_week_fg = cp.get(cfg_sec, 'clr_note_title_week_fg')
+        self.clr_note_title_week_bg = cp.get(cfg_sec, 'clr_note_title_week_bg')
 
-        self.clr_note_title_year_fg       = cp.get(cfg_sec, 'clr_note_title_year_fg')
-        self.clr_note_title_year_bg       = cp.get(cfg_sec, 'clr_note_title_year_bg')
-        self.clr_note_title_year_focus_fg = cp.get(cfg_sec, 'clr_note_title_year_focus_fg')
-        self.clr_note_title_year_focus_bg = cp.get(cfg_sec, 'clr_note_title_year_focus_bg')
+        self.clr_note_title_month_fg = cp.get(cfg_sec, 'clr_note_title_month_fg')
+        self.clr_note_title_month_bg = cp.get(cfg_sec, 'clr_note_title_month_bg')
 
-        self.clr_note_title_ancient_fg       = cp.get(cfg_sec, 'clr_note_title_ancient_fg')
-        self.clr_note_title_ancient_bg       = cp.get(cfg_sec, 'clr_note_title_ancient_bg')
-        self.clr_note_title_ancient_focus_fg = cp.get(cfg_sec, 'clr_note_title_ancient_focus_fg')
-        self.clr_note_title_ancient_focus_bg = cp.get(cfg_sec, 'clr_note_title_ancient_focus_bg')
+        self.clr_note_title_year_fg = cp.get(cfg_sec, 'clr_note_title_year_fg')
+        self.clr_note_title_year_bg = cp.get(cfg_sec, 'clr_note_title_year_bg')
 
-        self.clr_note_date_fg        = cp.get(cfg_sec, 'clr_note_date_fg')
-        self.clr_note_date_bg        = cp.get(cfg_sec, 'clr_note_date_bg')
-        self.clr_note_date_focus_fg  = cp.get(cfg_sec, 'clr_note_date_focus_fg')
-        self.clr_note_date_focus_bg  = cp.get(cfg_sec, 'clr_note_date_focus_bg')
+        self.clr_note_title_ancient_fg = cp.get(cfg_sec, 'clr_note_title_ancient_fg')
+        self.clr_note_title_ancient_bg = cp.get(cfg_sec, 'clr_note_title_ancient_bg')
 
-        self.clr_note_flags_fg       = cp.get(cfg_sec, 'clr_note_flags_fg')
-        self.clr_note_flags_bg       = cp.get(cfg_sec, 'clr_note_flags_bg')
-        self.clr_note_flags_focus_fg = cp.get(cfg_sec, 'clr_note_flags_focus_fg')
-        self.clr_note_flags_focus_bg = cp.get(cfg_sec, 'clr_note_flags_focus_bg')
+        self.clr_note_date_fg = cp.get(cfg_sec, 'clr_note_date_fg')
+        self.clr_note_date_bg = cp.get(cfg_sec, 'clr_note_date_bg')
 
-        self.clr_note_tags_fg        = cp.get(cfg_sec, 'clr_note_tags_fg')
-        self.clr_note_tags_bg        = cp.get(cfg_sec, 'clr_note_tags_bg')
-        self.clr_note_tags_focus_fg  = cp.get(cfg_sec, 'clr_note_tags_focus_fg')
-        self.clr_note_tags_focus_bg  = cp.get(cfg_sec, 'clr_note_tags_focus_bg')
+        self.clr_note_flags_fg = cp.get(cfg_sec, 'clr_note_flags_fg')
+        self.clr_note_flags_bg = cp.get(cfg_sec, 'clr_note_flags_bg')
+
+        self.clr_note_tags_fg = cp.get(cfg_sec, 'clr_note_tags_fg')
+        self.clr_note_tags_bg = cp.get(cfg_sec, 'clr_note_tags_bg')
 
         self.clr_note_content_fg       = cp.get(cfg_sec, 'clr_note_content_fg')
         self.clr_note_content_bg       = cp.get(cfg_sec, 'clr_note_content_bg')
