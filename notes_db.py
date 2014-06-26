@@ -41,10 +41,8 @@ class NotesDB(utils.SubjectMixin):
         self.config = config
 
         # create db dir if it does not exist
-        if not os.path.exists(config.db_path):
-            os.mkdir(config.db_path)
-
-        self.db_path = config.db_path
+        if not os.path.exists(self.config.get_config('db_path')):
+            os.mkdir(self.config.get_config('db_path'))
 
         now = time.time()
         # now read all .json files from disk
@@ -83,7 +81,8 @@ class NotesDB(utils.SubjectMixin):
 
         # initialise the simplenote instance we're going to use
         # this does not yet need network access
-        self.simplenote = Simplenote(config.sn_username, config.sn_password)
+        self.simplenote = Simplenote(config.get_config('sn_username'),
+                                     config.get_config('sn_password'))
 
         # we'll use this to store which notes are currently being synced by
         # the background thread, so we don't add them anew if they're still
@@ -145,20 +144,20 @@ class NotesDB(utils.SubjectMixin):
         total number of notes in memory.
         """
 
-        if self.config.search_mode == 'regexp':
+        if self.config.get_config('search_mode') == 'regexp':
             filtered_notes, match_regexp, active_notes = self.filter_notes_regexp(search_string)
         else:
             filtered_notes, match_regexp, active_notes = self.filter_notes_gstyle(search_string)
 
-        if self.config.sort_mode == 0:
-            if self.config.pinned_ontop == 0:
+        if self.config.get_config('sort_mode') == 'alpha':
+            if self.config.get_config('pinned_ontop') == 'yes':
                 # sort alphabetically on title
                 filtered_notes.sort(key=lambda o: utils.get_note_title(o.note))
             else:
                 filtered_notes.sort(utils.sort_by_title_pinned)
 
         else:
-            if self.config.pinned_ontop == 0:
+            if self.config.get_config('pinned_ontop') == 'yes':
                 # last modified on top
                 filtered_notes.sort(key=lambda o: -float(o.note.get('modifydate', 0)))
             else:
@@ -303,7 +302,7 @@ class NotesDB(utils.SubjectMixin):
             active_notes += 1
 
             c = n.get('content')
-            if self.config.search_tags == 1:
+            if self.config.search_tags == 'yes':
                 t = n.get('tags')
                 if sspat:
                     # this used to use a filter(), but that would by definition
@@ -364,7 +363,7 @@ class NotesDB(utils.SubjectMixin):
         return self.q_sync.qsize()
 
     def helper_key_to_fname(self, k):
-            return os.path.join(self.db_path, k) + '.json'
+            return os.path.join(self.config.get_config('db_path'), k) + '.json'
 
     def helper_save_note(self, k, note):
         """Save a single note to disc.

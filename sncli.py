@@ -13,11 +13,12 @@ class sncli:
     def __init__(self):
         self.config = Config()
 
-        if not os.path.exists(self.config.db_path):
-            os.mkdir(self.config.db_path)
+        print self.config.get_config('db_path')
+        if not os.path.exists(self.config.get_config('db_path')):
+            os.mkdir(self.config.get_config('db_path'))
 
         # configure the logging module
-        self.logfile = os.path.join(self.config.db_path, 'sncli.log')
+        self.logfile = os.path.join(self.config.get_config('db_path'), 'sncli.log')
         self.loghandler = RotatingFileHandler(self.logfile, maxBytes=100000, backupCount=1)
         self.loghandler.setLevel(logging.DEBUG)
         self.loghandler.setFormatter(logging.Formatter(fmt='%(asctime)s [%(levelname)s] %(message)s'))
@@ -119,7 +120,7 @@ class sncli:
 
             # format the note modification date
             t = time.localtime(float(note['modifydate']))
-            mod_time = time.strftime(self.config.format_strftime, t)
+            mod_time = time.strftime(self.config.get_config('format_strftime'), t)
 
             # get the age of the note
             dt = datetime.datetime.fromtimestamp(time.mktime(t))
@@ -189,7 +190,7 @@ class sncli:
                 return tmp
 
             # convert the format string into the actual note title line
-            title_line = recursive_format(self.config.format_note_title)
+            title_line = recursive_format(self.config.get_config('format_note_title'))
             return urwid.Columns(title_line)
 
         def list_get_note_titles():
@@ -235,20 +236,20 @@ class sncli:
 
         def handle_common_scroll_keybind(obj, size, key):
 
-            if key == self.config.keybinds['down'][0]:
+            if key == self.config.get_keybind('down'):
                 last = len(obj.body.positions())
                 if obj.focus_position == (last - 1):
                     return
                 obj.focus_position += 1
                 obj.render(size)
 
-            elif key == self.config.keybinds['up'][0]:
+            elif key == self.config.get_keybind('up'):
                 if obj.focus_position == 0:
                     return
                 obj.focus_position -= 1
                 obj.render(size)
 
-            elif key == self.config.keybinds['page_down'][0]:
+            elif key == self.config.get_keybind('page_down'):
                 last = len(obj.body.positions())
                 next_focus = obj.focus_position + size[1]
                 if next_focus >= last:
@@ -257,7 +258,7 @@ class sncli:
                                  offset_inset=0,
                                  coming_from='above')
 
-            elif key == self.config.keybinds['page_up'][0]:
+            elif key == self.config.get_keybind('page_up'):
                 if 'bottom' in obj.ends_visible(size):
                     last = len(obj.body.positions())
                     next_focus = last - size[1] - size[1]
@@ -269,7 +270,7 @@ class sncli:
                                  offset_inset=0,
                                  coming_from='below')
 
-            elif key == self.config.keybinds['half_page_down'][0]:
+            elif key == self.config.get_keybind('half_page_down'):
                 last = len(obj.body.positions())
                 next_focus = obj.focus_position + (size[1] / 2)
                 if next_focus >= last:
@@ -278,7 +279,7 @@ class sncli:
                                  offset_inset=0,
                                  coming_from='above')
 
-            elif key == self.config.keybinds['half_page_up'][0]:
+            elif key == self.config.get_keybind('half_page_up'):
                 if 'bottom' in obj.ends_visible(size):
                     last = len(obj.body.positions())
                     next_focus = last - size[1] - (size[1] / 2)
@@ -290,44 +291,45 @@ class sncli:
                                  offset_inset=0,
                                  coming_from='below')
 
-            elif key == self.config.keybinds['bottom'][0]:
+            elif key == self.config.get_keybind('bottom'):
                 obj.change_focus(size, (len(obj.body.positions()) - 1),
                                  offset_inset=0,
                                  coming_from='above')
 
-            elif key == self.config.keybinds['top'][0]:
+            elif key == self.config.get_keybind('top'):
                 obj.change_focus(size, 0,
                                  offset_inset=0,
                                  coming_from='below')
 
         class NoteTitles(urwid.ListBox):
             def __init__(self):
-                self.keybinds = get_config().keybinds
+                self.config = get_config()
                 body = urwid.SimpleFocusListWalker(list_get_note_titles())
                 super(NoteTitles, self).__init__(body)
 
             def keypress(self, size, key):
-                if key == self.keybinds['quit'][0]:
+                if key == self.config.get_keybind('quit'):
                     raise urwid.ExitMainLoop()
 
-                elif key == self.keybinds['help'][0]:
+                elif key == self.config.get_keybind('help'):
                     push_last_view(self)
                     sncli_loop.widget = Help()
 
-                elif key == self.keybinds['view_log'][0]:
+                elif key == self.config.get_keybind('view_log'):
                     push_last_view(self)
                     sncli_loop.widget = ViewLog()
 
-                elif key == self.keybinds['view_note'][0]:
+                elif key == self.config.get_keybind('view_note'):
                     push_last_view(self)
-                    sncli_loop.widget = NoteContent(self.focus_position, get_config().tabstop)
+                    sncli_loop.widget = NoteContent(self.focus_position,
+                                                    int(get_config().get_config('tabstop')))
 
                 else:
                     handle_common_scroll_keybind(self, size, key)
 
         class NoteContent(urwid.ListBox):
             def __init__(self, nl_focus_index, tabstop):
-                self.keybinds = get_config().keybinds
+                self.config = get_config()
                 self.nl_focus_index = nl_focus_index
                 body = \
                     urwid.SimpleFocusListWalker(
@@ -336,24 +338,24 @@ class sncli:
                 super(NoteContent, self).__init__(body)
 
             def keypress(self, size, key):
-                if key == self.keybinds['quit'][0]:
+                if key == self.config.get_keybind('quit'):
                     sncli_loop.widget = pop_last_view()
 
-                elif key == self.keybinds['help'][0]:
+                elif key == self.config.get_keybind('help'):
                     push_last_view(self)
                     sncli_loop.widget = Help()
 
-                elif key == self.keybinds['view_log'][0]:
+                elif key == self.config.get_keybind('view_log'):
                     push_last_view(self)
                     sncli_loop.widget = ViewLog()
 
-                elif key == self.keybinds['tabstop2'][0]:
+                elif key == self.config.get_keybind('tabstop2'):
                     sncli_loop.widget = NoteContent(self.nl_focus_index, 2)
 
-                elif key == self.keybinds['tabstop4'][0]:
+                elif key == self.config.get_keybind('tabstop4'):
                     sncli_loop.widget = NoteContent(self.nl_focus_index, 4)
 
-                elif key == self.keybinds['tabstop8'][0]:
+                elif key == self.config.get_keybind('tabstop8'):
                     sncli_loop.widget = NoteContent(self.nl_focus_index, 8)
 
                 else:
@@ -361,7 +363,7 @@ class sncli:
 
         class ViewLog(urwid.ListBox):
             def __init__(self):
-                self.keybinds = get_config().keybinds
+                self.config = get_config()
                 f = open(get_logfile())
                 lines = []
                 for line in f:
@@ -374,10 +376,10 @@ class sncli:
                 super(ViewLog, self).__init__(body)
 
             def keypress(self, size, key):
-                if key == self.keybinds['quit'][0]:
+                if key == self.config.get_keybind('quit'):
                     sncli_loop.widget = pop_last_view()
 
-                elif key == self.keybinds['help'][0]:
+                elif key == self.config.get_keybind('help'):
                     push_last_view(self)
                     sncli_loop.widget = Help()
 
@@ -386,7 +388,7 @@ class sncli:
 
         class Help(urwid.ListBox):
             def __init__(self):
-                self.keybinds = get_config().keybinds
+                self.config = get_config()
 
                 lines = []
 
@@ -402,51 +404,111 @@ class sncli:
                          'bottom',
                          'top',
                          'view_log' ]
-                lines.extend(self.create_help_lines(u"Common", keys))
+                lines.extend(self.create_kb_help_lines(u"Keybinds Common", keys))
 
                 # NoteTitles keybinds
                 keys = [ 'view_note' ]
-                lines.extend(self.create_help_lines(u"Note List", keys))
+                lines.extend(self.create_kb_help_lines(u"Keybinds Note List", keys))
 
                 # NoteContent keybinds
                 keys = [ 'tabstop2',
                          'tabstop4',
                          'tabstop8' ]
-                lines.extend(self.create_help_lines(u"Note Content", keys))
+                lines.extend(self.create_kb_help_lines(u"Keybinds Note Content", keys))
+
+                lines.extend(self.create_config_help_lines())
+                lines.extend(self.create_color_help_lines())
 
                 lines.append(urwid.Text(('help_header', u'')))
 
                 body = urwid.SimpleFocusListWalker(lines)
                 super(Help, self).__init__(body)
 
-            def create_help_lines(self, header, keys):
+            def create_kb_help_lines(self, header, keys):
                 lines = [ urwid.AttrMap(urwid.Text(u''),
                                         'help_header',
                                         'help_focus') ]
                 lines.append(urwid.AttrMap(urwid.Text(u' ' + header),
                                            'help_header',
                                            'help_focus'))
-                for k in keys:
+                for c in keys:
                     lines.append(
                         urwid.AttrMap(
                           urwid.Text(
                             [
-                              ('help_key', '{:>20}  '.format(u"'" + self.keybinds[k][0] + u"'")),
-                              ('help_config', '{:<20}  '.format(u'kb_' + k)),
-                              ('help_descr', self.keybinds[k][1])
+                              ('help_descr',  '{:>24}  '.format(self.config.get_keybind_descr(c))),
+                              ('help_config', '{:>25}  '.format(u'kb_' + c)),
+                              ('help_value',  u"'" + self.config.get_keybind(c) + u"'")
                             ]
                           ),
                           attr_map = None,
                           focus_map = {
-                                        'help_key'    : 'help_focus',
+                                        'help_value'  : 'help_focus',
                                         'help_config' : 'help_focus',
                                         'help_descr'  : 'help_focus'
                                       }
                         ))
                 return lines
 
+            def create_config_help_lines(self):
+                lines = [ urwid.AttrMap(urwid.Text(u''),
+                                        'help_header',
+                                        'help_focus') ]
+                lines.append(urwid.AttrMap(urwid.Text(u' Configuration'),
+                                           'help_header',
+                                           'help_focus'))
+                for c in sorted(self.config.configs):
+                    if c in [ 'sn_username', 'sn_password' ]: continue
+                    lines.append(
+                        urwid.AttrMap(
+                          urwid.Text(
+                            [
+                              ('help_descr',  '{:>24}  '.format(self.config.get_config_descr(c))),
+                              ('help_config', '{:>25}  '.format(u'cfg_' + c)),
+                              ('help_value',  u"'" + self.config.get_config(c) + u"'")
+                            ]
+                          ),
+                          attr_map = None,
+                          focus_map = {
+                                        'help_value'  : 'help_focus',
+                                        'help_config' : 'help_focus',
+                                        'help_descr'  : 'help_focus'
+                                      }
+                        ))
+                return lines
+
+            def create_color_help_lines(self):
+                lines = [ urwid.AttrMap(urwid.Text(u''),
+                                        'help_header',
+                                        'help_focus') ]
+                lines.append(urwid.AttrMap(urwid.Text(u' Colors'),
+                                           'help_header',
+                                           'help_focus'))
+                fmap = {}
+                for c in sorted(self.config.colors):
+                    fmap[re.search("^(.*)(_fg|_bg)$", c).group(1)] = 'help_focus'
+                for c in sorted(self.config.colors):
+                    lines.append(
+                        urwid.AttrMap(
+                          urwid.Text(
+                            [
+                              ('help_descr',  '{:>24}  '.format(self.config.get_color_descr(c))),
+                              ('help_config', '{:>25}  '.format(u'clr_' + c)),
+                              (re.search("^(.*)(_fg|_bg)$", c).group(1),  u"'" + self.config.get_color(c) + u"'")
+                            ]
+                          ),
+                          attr_map = None,
+                          focus_map = fmap
+                          #focus_map = {
+                          #              'help_value'  : 'help_focus',
+                          #              'help_config' : 'help_focus',
+                          #              'help_descr'  : 'help_focus'
+                          #            }
+                        ))
+                return lines
+
             def keypress(self, size, key):
-                if key == self.keybinds['quit'][0]:
+                if key == self.config.get_keybind('quit'):
                     sncli_loop.widget = pop_last_view()
 
                 else:
@@ -455,56 +517,56 @@ class sncli:
         palette = \
           [
             ('default',
-                self.config.clr_default_fg,
-                self.config.clr_default_bg ),
+                self.config.get_color('default_fg'),
+                self.config.get_color('default_bg') ),
             ('note_focus',
-                self.config.clr_note_focus_fg,
-                self.config.clr_note_focus_bg ),
+                self.config.get_color('note_focus_fg'),
+                self.config.get_color('note_focus_bg') ),
             ('note_title_day',
-                self.config.clr_note_title_day_fg,
-                self.config.clr_note_title_day_bg ),
+                self.config.get_color('note_title_day_fg'),
+                self.config.get_color('note_title_day_bg') ),
             ('note_title_week',
-                self.config.clr_note_title_week_fg,
-                self.config.clr_note_title_week_bg ),
+                self.config.get_color('note_title_week_fg'),
+                self.config.get_color('note_title_week_bg') ),
             ('note_title_month',
-                self.config.clr_note_title_month_fg,
-                self.config.clr_note_title_month_bg ),
+                self.config.get_color('note_title_month_fg'),
+                self.config.get_color('note_title_month_bg') ),
             ('note_title_year',
-                self.config.clr_note_title_year_fg,
-                self.config.clr_note_title_year_bg ),
+                self.config.get_color('note_title_year_fg'),
+                self.config.get_color('note_title_year_bg') ),
             ('note_title_ancient',
-                self.config.clr_note_title_ancient_fg,
-                self.config.clr_note_title_ancient_bg ),
+                self.config.get_color('note_title_ancient_fg'),
+                self.config.get_color('note_title_ancient_bg') ),
             ('note_date',
-                self.config.clr_note_date_fg,
-                self.config.clr_note_date_bg ),
+                self.config.get_color('note_date_fg'),
+                self.config.get_color('note_date_bg') ),
             ('note_flags',
-                self.config.clr_note_flags_fg,
-                self.config.clr_note_flags_bg ),
+                self.config.get_color('note_flags_fg'),
+                self.config.get_color('note_flags_bg') ),
             ('note_tags',
-                self.config.clr_note_tags_fg,
-                self.config.clr_note_tags_bg ),
+                self.config.get_color('note_tags_fg'),
+                self.config.get_color('note_tags_bg') ),
             ('note_content',
-                self.config.clr_note_content_fg,
-                self.config.clr_note_content_bg ),
+                self.config.get_color('note_content_fg'),
+                self.config.get_color('note_content_bg') ),
             ('note_content_focus',
-                self.config.clr_note_content_focus_fg,
-                self.config.clr_note_content_focus_bg ),
+                self.config.get_color('note_content_focus_fg'),
+                self.config.get_color('note_content_focus_bg') ),
             ('help_focus',
-                self.config.clr_help_focus_fg,
-                self.config.clr_help_focus_bg ),
+                self.config.get_color('help_focus_fg'),
+                self.config.get_color('help_focus_bg') ),
             ('help_header',
-                self.config.clr_help_header_fg,
-                self.config.clr_help_header_bg ),
-            ('help_key',
-                self.config.clr_help_key_fg,
-                self.config.clr_help_key_bg ),
+                self.config.get_color('help_header_fg'),
+                self.config.get_color('help_header_bg') ),
             ('help_config',
-                self.config.clr_help_config_fg,
-                self.config.clr_help_config_bg ),
+                self.config.get_color('help_config_fg'),
+                self.config.get_color('help_config_bg') ),
+            ('help_value',
+                self.config.get_color('help_value_fg'),
+                self.config.get_color('help_value_bg') ),
             ('help_descr',
-                self.config.clr_help_descr_fg,
-                self.config.clr_help_descr_bg )
+                self.config.get_color('help_descr_fg'),
+                self.config.get_color('help_descr_bg') )
           ]
 
         sncli_loop = urwid.MainLoop(NoteTitles(),
