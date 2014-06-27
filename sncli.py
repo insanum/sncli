@@ -303,17 +303,17 @@ class sncli:
                                 coming_from='below')
 
             elif key == self.config.get_keybind('status'):
-                if obj.status_location in [ 'header', 'footer' ]:
-                    obj.status_location = 'none'
+                if obj.status_bar == 'yes':
+                    obj.status_bar = 'no'
                 else:
-                    obj.status_location = obj.config.get_config('status_location')
-
+                    obj.status_bar = obj.config.get_config('status_bar')
 
         class NoteTitles(urwid.Frame):
             def __init__(self):
                 self.config = get_config()
-                self.status_location = self.config.get_config('status_location')
+                self.status_bar = self.config.get_config('status_bar')
                 self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker(list_get_note_titles()))
+                self.listbox.keypress = self.note_title_listbox_keypress
                 super(NoteTitles, self).__init__(body=self.listbox,
                                                  header=None,
                                                  footer=None,
@@ -321,7 +321,7 @@ class sncli:
                 self.update_status()
 
             def update_status(self):
-                if self.status_location in [ 'header', 'footer' ]:
+                if self.status_bar == 'yes':
                     status_title = \
                         urwid.AttrMap(urwid.Text(
                                             u'Simplenote',
@@ -337,12 +337,11 @@ class sncli:
                     self.status = \
                         urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
                                       'status_bar')
-                    self.contents[self.status_location] = ( self.status, None )
+                    self.contents['header'] = ( self.status, None )
                 else:
                     self.contents['header'] = ( None, None )
-                    self.contents['footer'] = ( None, None )
 
-            def keypress(self, size, key):
+            def note_title_listbox_keypress(self, size, key):
                 if key == self.config.get_keybind('quit'):
                     raise urwid.ExitMainLoop()
 
@@ -359,19 +358,39 @@ class sncli:
                     sncli_loop.widget = NoteContent(self.listbox.focus_position,
                                                     int(get_config().get_config('tabstop')))
 
+                elif key == self.config.get_keybind('search'):
+                    self.contents['footer'] = \
+                        ( urwid.AttrMap(SearchKey(key, self), 'status_bar'), None )
+                    self.focus_position = 'footer'
+
                 else:
                     handle_common_scroll_keybind(self, size, key)
                     self.update_status()
 
+        class SearchKey(urwid.Edit):
+            def __init__(self, key, notelist):
+                self.notelist = notelist
+                super(SearchKey, self).__init__(key)
+
+            def keypress(self, size, key):
+                if key == 'esc':
+                    self.notelist.contents['footer'] = ( None, None );
+                elif key == 'enter':
+                    super(SearchKey, self).keypress(size, key)
+                else:
+                    return super(SearchKey, self).keypress(size, key)
+                return None
+
         class NoteContent(urwid.Frame):
             def __init__(self, nl_focus_index, tabstop):
                 self.config = get_config()
-                self.status_location = self.config.get_config('status_location')
+                self.status_bar = self.config.get_config('status_bar')
                 self.nl_focus_index = nl_focus_index
                 self.note = list_get_note_json(self.nl_focus_index)
                 self.listbox = \
                     urwid.ListBox(urwid.SimpleFocusListWalker(
                             list_get_note_content(self.nl_focus_index, tabstop)))
+                self.listbox.keypress = self.note_content_listbox_keypress
                 super(NoteContent, self).__init__(body=self.listbox,
                                                   header=None,
                                                   footer=None,
@@ -379,7 +398,7 @@ class sncli:
                 self.update_status()
 
             def update_status(self):
-                if self.status_location in [ 'header', 'footer' ]:
+                if self.status_bar == 'yes':
                     t = time.localtime(float(self.note['modifydate']))
                     mod_time = time.strftime('%a, %d %b %Y %H:%M:%S', t)
                     tags = '%s' % ','.join(self.note['tags'])
@@ -411,12 +430,11 @@ class sncli:
                     self.status = \
                         urwid.AttrMap(urwid.Pile([ pile_top, pile_bottom ]),
                                       'status_bar')
-                    self.contents[self.status_location] = ( self.status, None )
+                    self.contents['header'] = ( self.status, None )
                 else:
                     self.contents['header'] = ( None, None )
-                    self.contents['footer'] = ( None, None )
 
-            def keypress(self, size, key):
+            def note_content_listbox_keypress(self, size, key):
                 if key == self.config.get_keybind('quit'):
                     sncli_loop.widget = pop_last_view()
 
@@ -444,7 +462,7 @@ class sncli:
         class ViewLog(urwid.Frame):
             def __init__(self):
                 self.config = get_config()
-                self.status_location = self.config.get_config('status_location')
+                self.status_bar = self.config.get_config('status_bar')
                 f = open(get_logfile())
                 lines = []
                 for line in f:
@@ -454,6 +472,7 @@ class sncli:
                                       'note_content_focus'))
                 f.close()
                 self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker(lines))
+                self.listbox.keypress = self.view_log_listbox_keypress
                 super(ViewLog, self).__init__(body=self.listbox,
                                               header=None,
                                               footer=None,
@@ -461,7 +480,7 @@ class sncli:
                 self.update_status()
 
             def update_status(self):
-                if self.status_location in [ 'header', 'footer' ]:
+                if self.status_bar == 'yes':
                     status_title = \
                         urwid.AttrMap(urwid.Text(
                                             u'Sync Log',
@@ -477,12 +496,11 @@ class sncli:
                     self.status = \
                         urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
                                       'status_bar')
-                    self.contents[self.status_location] = ( self.status, None )
+                    self.contents['header'] = ( self.status, None )
                 else:
                     self.contents['header'] = ( None, None )
-                    self.contents['footer'] = ( None, None )
 
-            def keypress(self, size, key):
+            def view_log_listbox_keypress(self, size, key):
                 if key == self.config.get_keybind('quit'):
                     sncli_loop.widget = pop_last_view()
 
@@ -497,7 +515,7 @@ class sncli:
         class Help(urwid.Frame):
             def __init__(self):
                 self.config = get_config()
-                self.status_location = self.config.get_config('status_location')
+                self.status_bar = self.config.get_config('status_bar')
 
                 lines = []
 
@@ -517,7 +535,8 @@ class sncli:
                 lines.extend(self.create_kb_help_lines(u"Keybinds Common", keys))
 
                 # NoteTitles keybinds
-                keys = [ 'view_note' ]
+                keys = [ 'search',
+                         'view_note' ]
                 lines.extend(self.create_kb_help_lines(u"Keybinds Note List", keys))
 
                 # NoteContent keybinds
@@ -532,6 +551,7 @@ class sncli:
                 lines.append(urwid.Text(('help_header', u'')))
 
                 self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker(lines))
+                self.listbox.keypress = self.help_listbox_keypress
                 super(Help, self).__init__(body=self.listbox,
                                            header=None,
                                            footer=None,
@@ -539,7 +559,7 @@ class sncli:
                 self.update_status()
 
             def update_status(self):
-                if self.status_location in [ 'header', 'footer' ]:
+                if self.status_bar == 'yes':
                     status_title = \
                         urwid.AttrMap(urwid.Text(
                                             u'Help',
@@ -555,10 +575,9 @@ class sncli:
                     self.status = \
                         urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
                                       'status_bar')
-                    self.contents[self.status_location] = ( self.status, None )
+                    self.contents['header'] = ( self.status, None )
                 else:
                     self.contents['header'] = ( None, None )
-                    self.contents['footer'] = ( None, None )
 
             def create_kb_help_lines(self, header, keys):
                 lines = [ urwid.AttrMap(urwid.Text(u''),
@@ -639,7 +658,7 @@ class sncli:
                         ))
                 return lines
 
-            def keypress(self, size, key):
+            def help_listbox_keypress(self, size, key):
                 if key == self.config.get_keybind('quit'):
                     sncli_loop.widget = pop_last_view()
 

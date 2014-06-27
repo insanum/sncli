@@ -17,7 +17,7 @@ class Config:
             'cfg_tabstop'           : '4',
             'cfg_format_strftime'   : '%Y/%m/%d',
             'cfg_format_note_title' : '[%D] %F %-N %T',
-            'cfg_status_location'   : 'header', # header/footer/none
+            'cfg_status_bar'        : 'yes',
 
             'kb_help'           : 'h',
             'kb_quit'           : 'q',
@@ -35,6 +35,7 @@ class Config:
             'kb_tabstop2'       : '2',
             'kb_tabstop4'       : '4',
             'kb_tabstop8'       : '8',
+            'kb_search'         : '/',
 
             'clr_default_fg'            : 'default',
             'clr_default_bg'            : 'default',
@@ -94,7 +95,7 @@ class Config:
         'tabstop'           : [ cp.get(cfg_sec, 'cfg_tabstop'),                     'Tabstop spaces' ],
         'format_strftime'   : [ cp.get(cfg_sec, 'cfg_format_strftime', raw=True),   'Date strftime format' ],
         'format_note_title' : [ cp.get(cfg_sec, 'cfg_format_note_title', raw=True), 'Note title format' ],
-        'status_location'   : [ cp.get(cfg_sec, 'cfg_status_location'),             'Status bar location' ]
+        'status_bar'        : [ cp.get(cfg_sec, 'cfg_status_bar'),                  'Status bar location' ]
         }
 
         self.keybinds = \
@@ -114,7 +115,8 @@ class Config:
         'view_log'       : [ cp.get(cfg_sec, 'kb_view_log'),       'View log' ],
         'tabstop2'       : [ cp.get(cfg_sec, 'kb_tabstop2'),       'View with tabstop=2' ],
         'tabstop4'       : [ cp.get(cfg_sec, 'kb_tabstop4'),       'View with tabstop=4' ],
-        'tabstop8'       : [ cp.get(cfg_sec, 'kb_tabstop8'),       'View with tabstop=8' ]
+        'tabstop8'       : [ cp.get(cfg_sec, 'kb_tabstop8'),       'View with tabstop=8' ],
+        'search'         : [ cp.get(cfg_sec, 'kb_search'),         'Search notes' ]
         }
 
         self.colors = \
