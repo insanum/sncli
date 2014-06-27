@@ -215,6 +215,9 @@ class sncli:
                 self.all_notes, match_regex, self.all_notes_cnt = \
                     self.ndb.filter_notes(self.search_string)
 
+        def get_search_string():
+            return self.search_string
+
         def list_get_note_content(index, tabstop):
             lines = []
             for l in self.all_notes[index].note['content'].split('\n'):
@@ -379,9 +382,13 @@ class sncli:
                     cur   = self.listbox.focus_position
                     total = len(self.listbox.body.positions())
 
+                hdr = u'Simplenote'
+                if get_search_string() != None:
+                    hdr += ' - Search: ' + get_search_string()
+
                 status_title = \
                     urwid.AttrMap(urwid.Text(
-                                        u'Simplenote',
+                                        hdr,
                                         wrap='clip'),
                                   'status_bar')
                 status_index = \
