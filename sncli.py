@@ -10,7 +10,7 @@ from logging.handlers import RotatingFileHandler
 
 class sncli:
 
-    def __init__(self):
+    def __init__(self, do_sync):
         self.config = Config()
 
         if not os.path.exists(self.config.get_config('db_path')):
@@ -34,16 +34,16 @@ class sncli:
 
         self.last_view = []
 
-        # XXX
-        #self.all_notes, match_regex, self.all_notes_cnt = self.ndb.filter_notes()
-        #return
-
         self.ndb.add_observer('synced:note', self.observer_notes_db_synced_note)
         self.ndb.add_observer('change:note-status', self.observer_notes_db_change_note_status)
         self.ndb.add_observer('progress:sync_full', self.observer_notes_db_sync_full)
-        self.sync_full()
 
-        self.all_notes, match_regex, self.all_notes_cnt = self.ndb.filter_notes()
+        if do_sync:
+            self.sync_full()
+
+        self.search_string = None
+        self.all_notes, match_regex, self.all_notes_cnt = \
+            self.ndb.filter_notes(self.search_string)
 
     def sync_full(self):
         try:
@@ -209,6 +209,12 @@ class sncli:
                                     'note_tags'          : 'note_focus' }))
             return lines
 
+        def filter_notes(search_string=None):
+            if self.search_string != search_string:
+                self.search_string = search_string
+                self.all_notes, match_regex, self.all_notes_cnt = \
+                    self.ndb.filter_notes(self.search_string)
+
         def list_get_note_content(index, tabstop):
             lines = []
             for l in self.all_notes[index].note['content'].split('\n'):
@@ -238,6 +244,8 @@ class sncli:
             lb = obj.listbox
 
             if key == self.config.get_keybind('down'):
+                if len(lb.body.positions()) <= 0:
+                    return
                 last = len(lb.body.positions())
                 if lb.focus_position == (last - 1):
                     return
@@ -245,12 +253,16 @@ class sncli:
                 lb.render(size)
 
             elif key == self.config.get_keybind('up'):
+                if len(lb.body.positions()) <= 0:
+                    return
                 if lb.focus_position == 0:
                     return
                 lb.focus_position -= 1
                 lb.render(size)
 
             elif key == self.config.get_keybind('page_down'):
+                if len(lb.body.positions()) <= 0:
+                    return
                 last = len(lb.body.positions())
                 next_focus = lb.focus_position + size[1]
                 if next_focus >= last:
@@ -260,6 +272,8 @@ class sncli:
                                 coming_from='above')
 
             elif key == self.config.get_keybind('page_up'):
+                if len(lb.body.positions()) <= 0:
+                    return
                 if 'bottom' in lb.ends_visible(size):
                     last = len(lb.body.positions())
                     next_focus = last - size[1] - size[1]
@@ -272,6 +286,8 @@ class sncli:
                                 coming_from='below')
 
             elif key == self.config.get_keybind('half_page_down'):
+                if len(lb.body.positions()) <= 0:
+                    return
                 last = len(lb.body.positions())
                 next_focus = lb.focus_position + (size[1] / 2)
                 if next_focus >= last:
@@ -281,6 +297,8 @@ class sncli:
                                 coming_from='above')
 
             elif key == self.config.get_keybind('half_page_up'):
+                if len(lb.body.positions()) <= 0:
+                    return
                 if 'bottom' in lb.ends_visible(size):
                     last = len(lb.body.positions())
                     next_focus = last - size[1] - (size[1] / 2)
@@ -293,11 +311,15 @@ class sncli:
                                 coming_from='below')
 
             elif key == self.config.get_keybind('bottom'):
+                if len(lb.body.positions()) <= 0:
+                    return
                 lb.change_focus(size, (len(lb.body.positions()) - 1),
                                 offset_inset=0,
                                 coming_from='above')
 
             elif key == self.config.get_keybind('top'):
+                if len(lb.body.positions()) <= 0:
+                    return
                 lb.change_focus(size, 0,
                                 offset_inset=0,
                                 coming_from='below')
@@ -308,38 +330,71 @@ class sncli:
                 else:
                     obj.status_bar = obj.config.get_config('status_bar')
 
+        class SearchNotes(urwid.Edit):
+            def __init__(self, key, note_titles):
+                self.note_titles = note_titles
+                super(SearchNotes, self).__init__(key)
+
+            def keypress(self, size, key):
+                if key == 'esc':
+                    self.note_titles.remove_search_bar()
+                elif key == 'enter':
+                    self.note_titles.update_note_titles(self.get_edit_text())
+                else:
+                    return super(SearchNotes, self).keypress(size, key)
+                return None
+
         class NoteTitles(urwid.Frame):
             def __init__(self):
                 self.config = get_config()
                 self.status_bar = self.config.get_config('status_bar')
-                self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker(list_get_note_titles()))
-                self.listbox.keypress = self.note_title_listbox_keypress
-                super(NoteTitles, self).__init__(body=self.listbox,
+                super(NoteTitles, self).__init__(body=None,
                                                  header=None,
                                                  footer=None,
                                                  focus_part='body')
+                self.update_note_titles(None)
+
+            def remove_status_bar(self):
+                self.contents['header'] = ( None, None )
+
+            def remove_search_bar(self):
+                self.contents['footer'] = ( None, None )
+
+            def update_note_titles(self, search_string):
+                filter_notes(search_string)
+                self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker(list_get_note_titles()))
+                self.listbox.keypress = self.note_title_listbox_keypress
+                self.contents['body']   = ( self.listbox, None );
+                self.contents['footer'] = ( None, None );
                 self.update_status()
 
             def update_status(self):
-                if self.status_bar == 'yes':
-                    status_title = \
-                        urwid.AttrMap(urwid.Text(
-                                            u'Simplenote',
-                                            wrap='clip'),
-                                      'status_bar')
-                    status_index = \
-                        ('pack', urwid.AttrMap(urwid.Text(
-                                                     u' ' +
-                                                     str(self.listbox.focus_position + 1) +
-                                                     u'/' +
-                                                     str(len(self.listbox.body.positions()))),
-                                               'status_bar'))
-                    self.status = \
-                        urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
-                                      'status_bar')
-                    self.contents['header'] = ( self.status, None )
-                else:
-                    self.contents['header'] = ( None, None )
+                if self.status_bar != 'yes':
+                    self.remove_status_bar()
+                    return
+
+                cur   = -1
+                total = 0
+                if len(self.listbox.body.positions()) > 0:
+                    cur   = self.listbox.focus_position
+                    total = len(self.listbox.body.positions())
+
+                status_title = \
+                    urwid.AttrMap(urwid.Text(
+                                        u'Simplenote',
+                                        wrap='clip'),
+                                  'status_bar')
+                status_index = \
+                    ('pack', urwid.AttrMap(urwid.Text(
+                                                 u' ' +
+                                                 str(cur + 1) +
+                                                 u'/' +
+                                                 str(total)),
+                                           'status_bar'))
+                self.status = \
+                    urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
+                                  'status_bar')
+                self.contents['header'] = ( self.status, None )
 
             def note_title_listbox_keypress(self, size, key):
                 if key == self.config.get_keybind('quit'):
@@ -354,32 +409,22 @@ class sncli:
                     sncli_loop.widget = ViewLog()
 
                 elif key == self.config.get_keybind('view_note'):
-                    push_last_view(self)
-                    sncli_loop.widget = NoteContent(self.listbox.focus_position,
-                                                    int(get_config().get_config('tabstop')))
+                    if len(self.listbox.body.positions()) > 0:
+                        push_last_view(self)
+                        sncli_loop.widget = NoteContent(self.listbox.focus_position,
+                                                        int(get_config().get_config('tabstop')))
 
                 elif key == self.config.get_keybind('search'):
                     self.contents['footer'] = \
-                        ( urwid.AttrMap(SearchKey(key, self), 'status_bar'), None )
+                        ( urwid.AttrMap(SearchNotes(key, self), 'search_bar'), None )
                     self.focus_position = 'footer'
+
+                elif key == self.config.get_keybind('clear_search'):
+                    self.update_note_titles(None)
 
                 else:
                     handle_common_scroll_keybind(self, size, key)
                     self.update_status()
-
-        class SearchKey(urwid.Edit):
-            def __init__(self, key, notelist):
-                self.notelist = notelist
-                super(SearchKey, self).__init__(key)
-
-            def keypress(self, size, key):
-                if key == 'esc':
-                    self.notelist.contents['footer'] = ( None, None );
-                elif key == 'enter':
-                    super(SearchKey, self).keypress(size, key)
-                else:
-                    return super(SearchKey, self).keypress(size, key)
-                return None
 
         class NoteContent(urwid.Frame):
             def __init__(self, nl_focus_index, tabstop):
@@ -398,41 +443,48 @@ class sncli:
                 self.update_status()
 
             def update_status(self):
-                if self.status_bar == 'yes':
-                    t = time.localtime(float(self.note['modifydate']))
-                    mod_time = time.strftime('%a, %d %b %Y %H:%M:%S', t)
-                    tags = '%s' % ','.join(self.note['tags'])
-                    status_title = \
-                        urwid.AttrMap(urwid.Text(
-                                            u'Title: ' +
-                                            utils.get_note_title(self.note),
-                                            wrap='clip'),
-                                      'status_bar')
-                    status_index = \
-                        ('pack', urwid.AttrMap(urwid.Text(
-                                                     u' ' +
-                                                     str(self.listbox.focus_position + 1) +
-                                                     u'/' +
-                                                     str(len(self.listbox.body.positions()))),
-                                               'status_bar'))
-                    status_date = \
-                        urwid.AttrMap(urwid.Text(
-                                            u'Date: ' +
-                                            mod_time,
-                                            wrap='clip'),
-                                      'status_bar')
-                    status_tags = \
-                        ('pack', urwid.AttrMap(urwid.Text(
-                                                     u'[' + tags + u']'),
-                                               'status_bar'))
-                    pile_top = urwid.Columns([ status_title, status_index ])
-                    pile_bottom = urwid.Columns([ status_date, status_tags ])
-                    self.status = \
-                        urwid.AttrMap(urwid.Pile([ pile_top, pile_bottom ]),
-                                      'status_bar')
-                    self.contents['header'] = ( self.status, None )
-                else:
+                if self.status_bar != 'yes':
                     self.contents['header'] = ( None, None )
+                    return
+
+                cur   = -1
+                total = 0
+                if len(self.listbox.body.positions()) > 0:
+                    cur   = self.listbox.focus_position
+                    total = len(self.listbox.body.positions())
+
+                t = time.localtime(float(self.note['modifydate']))
+                mod_time = time.strftime('%a, %d %b %Y %H:%M:%S', t)
+                tags = '%s' % ','.join(self.note['tags'])
+                status_title = \
+                    urwid.AttrMap(urwid.Text(
+                                        u'Title: ' +
+                                        utils.get_note_title(self.note),
+                                        wrap='clip'),
+                                  'status_bar')
+                status_index = \
+                    ('pack', urwid.AttrMap(urwid.Text(
+                                                 u' ' +
+                                                 str(cur + 1) +
+                                                 u'/' +
+                                                 str(total)),
+                                           'status_bar'))
+                status_date = \
+                    urwid.AttrMap(urwid.Text(
+                                        u'Date: ' +
+                                        mod_time,
+                                        wrap='clip'),
+                                  'status_bar')
+                status_tags = \
+                    ('pack', urwid.AttrMap(urwid.Text(
+                                                 u'[' + tags + u']'),
+                                           'status_bar'))
+                pile_top = urwid.Columns([ status_title, status_index ])
+                pile_bottom = urwid.Columns([ status_date, status_tags ])
+                self.status = \
+                    urwid.AttrMap(urwid.Pile([ pile_top, pile_bottom ]),
+                                  'status_bar')
+                self.contents['header'] = ( self.status, None )
 
             def note_content_listbox_keypress(self, size, key):
                 if key == self.config.get_keybind('quit'):
@@ -480,25 +532,32 @@ class sncli:
                 self.update_status()
 
             def update_status(self):
-                if self.status_bar == 'yes':
-                    status_title = \
-                        urwid.AttrMap(urwid.Text(
-                                            u'Sync Log',
-                                            wrap='clip'),
-                                      'status_bar')
-                    status_index = \
-                        ('pack', urwid.AttrMap(urwid.Text(
-                                                     u' ' +
-                                                     str(self.listbox.focus_position + 1) +
-                                                     u'/' +
-                                                     str(len(self.listbox.body.positions()))),
-                                               'status_bar'))
-                    self.status = \
-                        urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
-                                      'status_bar')
-                    self.contents['header'] = ( self.status, None )
-                else:
+                if self.status_bar != 'yes':
                     self.contents['header'] = ( None, None )
+                    return
+
+                cur   = -1
+                total = 0
+                if len(self.listbox.body.positions()) > 0:
+                    cur   = self.listbox.focus_position
+                    total = len(self.listbox.body.positions())
+
+                status_title = \
+                    urwid.AttrMap(urwid.Text(
+                                        u'Sync Log',
+                                        wrap='clip'),
+                                  'status_bar')
+                status_index = \
+                    ('pack', urwid.AttrMap(urwid.Text(
+                                                 u' ' +
+                                                 str(cur + 1) +
+                                                 u'/' +
+                                                 str(total)),
+                                           'status_bar'))
+                self.status = \
+                    urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
+                                  'status_bar')
+                self.contents['header'] = ( self.status, None )
 
             def view_log_listbox_keypress(self, size, key):
                 if key == self.config.get_keybind('quit'):
@@ -536,6 +595,7 @@ class sncli:
 
                 # NoteTitles keybinds
                 keys = [ 'search',
+                         'clear_search',
                          'view_note' ]
                 lines.extend(self.create_kb_help_lines(u"Keybinds Note List", keys))
 
@@ -559,25 +619,32 @@ class sncli:
                 self.update_status()
 
             def update_status(self):
-                if self.status_bar == 'yes':
-                    status_title = \
-                        urwid.AttrMap(urwid.Text(
-                                            u'Help',
-                                            wrap='clip'),
-                                      'status_bar')
-                    status_index = \
-                        ('pack', urwid.AttrMap(urwid.Text(
-                                                     u' ' +
-                                                     str(self.listbox.focus_position + 1) +
-                                                     u'/' +
-                                                     str(len(self.listbox.body.positions()))),
-                                               'status_bar'))
-                    self.status = \
-                        urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
-                                      'status_bar')
-                    self.contents['header'] = ( self.status, None )
-                else:
+                if self.status_bar != 'yes':
                     self.contents['header'] = ( None, None )
+                    return
+
+                cur   = -1
+                total = 0
+                if len(self.listbox.body.positions()) > 0:
+                    cur   = self.listbox.focus_position
+                    total = len(self.listbox.body.positions())
+
+                status_title = \
+                    urwid.AttrMap(urwid.Text(
+                                        u'Help',
+                                        wrap='clip'),
+                                  'status_bar')
+                status_index = \
+                    ('pack', urwid.AttrMap(urwid.Text(
+                                                 u' ' +
+                                                 str(cur + 1) +
+                                                 u'/' +
+                                                 str(total)),
+                                           'status_bar'))
+                self.status = \
+                    urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
+                                  'status_bar')
+                self.contents['header'] = ( self.status, None )
 
             def create_kb_help_lines(self, header, keys):
                 lines = [ urwid.AttrMap(urwid.Text(u''),
@@ -674,6 +741,9 @@ class sncli:
             ('status_bar',
                 self.config.get_color('status_bar_fg'),
                 self.config.get_color('status_bar_bg') ),
+            ('search_bar',
+                self.config.get_color('search_bar_fg'),
+                self.config.get_color('search_bar_bg') ),
             ('note_focus',
                 self.config.get_color('note_focus_fg'),
                 self.config.get_color('note_focus_bg') ),
@@ -737,7 +807,7 @@ def SIGINT_handler(signum, frame):
 signal.signal(signal.SIGINT, SIGINT_handler)
 
 def main():
-    sncli().ba_bam_what()
+    sncli(True if len(sys.argv) > 1 else False).ba_bam_what()
 
 if __name__ == '__main__':
     main()

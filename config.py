@@ -36,11 +36,14 @@ class Config:
             'kb_tabstop4'       : '4',
             'kb_tabstop8'       : '8',
             'kb_search'         : '/',
+            'kb_clear_search'   : 'a',
 
             'clr_default_fg'            : 'default',
             'clr_default_bg'            : 'default',
             'clr_status_bar_fg'         : 'dark gray',
             'clr_status_bar_bg'         : 'light gray',
+            'clr_search_bar_fg'         : 'white',
+            'clr_search_bar_bg'         : 'light red',
             'clr_note_focus_fg'         : 'white',
             'clr_note_focus_bg'         : 'light red',
             'clr_note_title_day_fg'     : 'light red',
@@ -116,7 +119,8 @@ class Config:
         'tabstop2'       : [ cp.get(cfg_sec, 'kb_tabstop2'),       'View with tabstop=2' ],
         'tabstop4'       : [ cp.get(cfg_sec, 'kb_tabstop4'),       'View with tabstop=4' ],
         'tabstop8'       : [ cp.get(cfg_sec, 'kb_tabstop8'),       'View with tabstop=8' ],
-        'search'         : [ cp.get(cfg_sec, 'kb_search'),         'Search notes' ]
+        'search'         : [ cp.get(cfg_sec, 'kb_search'),         'Search notes' ],
+        'clear_search'   : [ cp.get(cfg_sec, 'kb_clear_search'),   'Show all notes' ]
         }
 
         self.colors = \
@@ -125,6 +129,8 @@ class Config:
         'default_bg'            : [ cp.get(cfg_sec, 'clr_default_bg'),            'Default bg' ],
         'status_bar_fg'         : [ cp.get(cfg_sec, 'clr_status_bar_fg'),         'Status bar fg' ],
         'status_bar_bg'         : [ cp.get(cfg_sec, 'clr_status_bar_bg'),         'Status bar bg' ],
+        'search_bar_fg'         : [ cp.get(cfg_sec, 'clr_search_bar_fg'),         'Search bar fg' ],
+        'search_bar_bg'         : [ cp.get(cfg_sec, 'clr_search_bar_bg'),         'Search bar bg' ],
         'note_focus_fg'         : [ cp.get(cfg_sec, 'clr_note_focus_fg'),         'Note title focus fg' ],
         'note_focus_bg'         : [ cp.get(cfg_sec, 'clr_note_focus_bg'),         'Note title focus bg' ],
         'note_title_day_fg'     : [ cp.get(cfg_sec, 'clr_note_title_day_fg'),     'Day old note title fg' ],
