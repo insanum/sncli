@@ -35,8 +35,8 @@ class sncli:
         self.last_view = []
 
         # XXX
-        self.all_notes, match_regex, self.all_notes_cnt = self.ndb.filter_notes()
-        return
+        #self.all_notes, match_regex, self.all_notes_cnt = self.ndb.filter_notes()
+        #return
 
         self.ndb.add_observer('synced:note', self.observer_notes_db_synced_note)
         self.ndb.add_observer('change:note-status', self.observer_notes_db_change_note_status)
@@ -630,16 +630,12 @@ class sncli:
                             [
                               ('help_descr',  '{:>24}  '.format(self.config.get_color_descr(c))),
                               ('help_config', '{:>25}  '.format(u'clr_' + c)),
-                              (re.search("^(.*)(_fg|_bg)$", c).group(1),  u"'" + self.config.get_color(c) + u"'")
+                              (re.search("^(.*)(_fg|_bg)$", c).group(1),
+                                   u"'" + self.config.get_color(c) + u"'")
                             ]
                           ),
                           attr_map = None,
                           focus_map = fmap
-                          #focus_map = {
-                          #              'help_value'  : 'help_focus',
-                          #              'help_config' : 'help_focus',
-                          #              'help_descr'  : 'help_focus'
-                          #            }
                         ))
                 return lines
 
