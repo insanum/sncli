@@ -322,14 +322,20 @@ class sncli:
 
             def update_status(self):
                 if self.status_location in [ 'header', 'footer' ]:
-                    self.status = \
+                    status_title = \
                         urwid.AttrMap(urwid.Text(
-                                      [
-                                        u' ' +
-                                        str(self.listbox.focus_position + 1) +
-                                        u'/' +
-                                        str(len(self.listbox.body.positions())),
-                                      ]),
+                                            u'Simplenote',
+                                            wrap='clip'),
+                                      'status_bar')
+                    status_index = \
+                        ('pack', urwid.AttrMap(urwid.Text(
+                                                     u' ' +
+                                                     str(self.listbox.focus_position + 1) +
+                                                     u'/' +
+                                                     str(len(self.listbox.body.positions()))),
+                                               'status_bar'))
+                    self.status = \
+                        urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
                                       'status_bar')
                     self.contents[self.status_location] = ( self.status, None )
                 else:
@@ -374,14 +380,36 @@ class sncli:
 
             def update_status(self):
                 if self.status_location in [ 'header', 'footer' ]:
-                    self.status = \
+                    t = time.localtime(float(self.note['modifydate']))
+                    mod_time = time.strftime('%a, %d %b %Y %H:%M:%S', t)
+                    tags = '%s' % ','.join(self.note['tags'])
+                    status_title = \
                         urwid.AttrMap(urwid.Text(
-                                      [
-                                        u' ' +
-                                        str(self.listbox.focus_position + 1) +
-                                        u'/' +
-                                        str(len(self.listbox.body.positions())),
-                                      ]),
+                                            u'Title: ' +
+                                            utils.get_note_title(self.note),
+                                            wrap='clip'),
+                                      'status_bar')
+                    status_index = \
+                        ('pack', urwid.AttrMap(urwid.Text(
+                                                     u' ' +
+                                                     str(self.listbox.focus_position + 1) +
+                                                     u'/' +
+                                                     str(len(self.listbox.body.positions()))),
+                                               'status_bar'))
+                    status_date = \
+                        urwid.AttrMap(urwid.Text(
+                                            u'Date: ' +
+                                            mod_time,
+                                            wrap='clip'),
+                                      'status_bar')
+                    status_tags = \
+                        ('pack', urwid.AttrMap(urwid.Text(
+                                                     u'[' + tags + u']'),
+                                               'status_bar'))
+                    pile_top = urwid.Columns([ status_title, status_index ])
+                    pile_bottom = urwid.Columns([ status_date, status_tags ])
+                    self.status = \
+                        urwid.AttrMap(urwid.Pile([ pile_top, pile_bottom ]),
                                       'status_bar')
                     self.contents[self.status_location] = ( self.status, None )
                 else:
@@ -434,14 +462,20 @@ class sncli:
 
             def update_status(self):
                 if self.status_location in [ 'header', 'footer' ]:
-                    self.status = \
+                    status_title = \
                         urwid.AttrMap(urwid.Text(
-                                      [
-                                        u' ' +
-                                        str(self.listbox.focus_position + 1) +
-                                        u'/' +
-                                        str(len(self.listbox.body.positions())),
-                                      ]),
+                                            u'Sync Log',
+                                            wrap='clip'),
+                                      'status_bar')
+                    status_index = \
+                        ('pack', urwid.AttrMap(urwid.Text(
+                                                     u' ' +
+                                                     str(self.listbox.focus_position + 1) +
+                                                     u'/' +
+                                                     str(len(self.listbox.body.positions()))),
+                                               'status_bar'))
+                    self.status = \
+                        urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
                                       'status_bar')
                     self.contents[self.status_location] = ( self.status, None )
                 else:
@@ -506,14 +540,20 @@ class sncli:
 
             def update_status(self):
                 if self.status_location in [ 'header', 'footer' ]:
-                    self.status = \
+                    status_title = \
                         urwid.AttrMap(urwid.Text(
-                                      [
-                                        u' ' +
-                                        str(self.listbox.focus_position + 1) +
-                                        u'/' +
-                                        str(len(self.listbox.body.positions())),
-                                      ]),
+                                            u'Help',
+                                            wrap='clip'),
+                                      'status_bar')
+                    status_index = \
+                        ('pack', urwid.AttrMap(urwid.Text(
+                                                     u' ' +
+                                                     str(self.listbox.focus_position + 1) +
+                                                     u'/' +
+                                                     str(len(self.listbox.body.positions()))),
+                                               'status_bar'))
+                    self.status = \
+                        urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
                                       'status_bar')
                     self.contents[self.status_location] = ( self.status, None )
                 else:
