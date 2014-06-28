@@ -18,6 +18,7 @@ class Config:
             'cfg_format_strftime'   : '%Y/%m/%d',
             'cfg_format_note_title' : '[%D] %F %-N %T',
             'cfg_status_bar'        : 'yes',
+            'cfg_pager'             : 'less -c',
 
             'kb_help'           : 'h',
             'kb_quit'           : 'q',
@@ -31,6 +32,7 @@ class Config:
             'kb_top'            : 'g',
             'kb_status'         : 's',
             'kb_view_note'      : 'enter',
+            'kb_view_note_ext'  : 'meta enter',
             'kb_view_log'       : 'l',
             'kb_tabstop2'       : '2',
             'kb_tabstop4'       : '4',
@@ -98,7 +100,8 @@ class Config:
         'tabstop'           : [ cp.get(cfg_sec, 'cfg_tabstop'),                     'Tabstop spaces' ],
         'format_strftime'   : [ cp.get(cfg_sec, 'cfg_format_strftime', raw=True),   'Date strftime format' ],
         'format_note_title' : [ cp.get(cfg_sec, 'cfg_format_note_title', raw=True), 'Note title format' ],
-        'status_bar'        : [ cp.get(cfg_sec, 'cfg_status_bar'),                  'Status bar location' ]
+        'status_bar'        : [ cp.get(cfg_sec, 'cfg_status_bar'),                  'Status bar location' ],
+        'pager'             : [ cp.get(cfg_sec, 'cfg_pager'),                       'External pager' ]
         }
 
         self.keybinds = \
@@ -115,6 +118,7 @@ class Config:
         'top'            : [ cp.get(cfg_sec, 'kb_top'),            'Goto top' ],
         'status'         : [ cp.get(cfg_sec, 'kb_status'),         'Toggle status bar' ],
         'view_note'      : [ cp.get(cfg_sec, 'kb_view_note'),      'View note' ],
+        'view_note_ext'  : [ cp.get(cfg_sec, 'kb_view_note_ext'),  'View note with pager' ],
         'view_log'       : [ cp.get(cfg_sec, 'kb_view_log'),       'View log' ],
         'tabstop2'       : [ cp.get(cfg_sec, 'kb_tabstop2'),       'View with tabstop=2' ],
         'tabstop4'       : [ cp.get(cfg_sec, 'kb_tabstop4'),       'View with tabstop=4' ],

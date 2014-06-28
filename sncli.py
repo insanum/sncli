@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 import os, sys, re, signal, time, datetime, logging
-import copy, json, urwid, datetime
+import copy, json, urwid, datetime, tempfile
 import utils
 from config import Config
 from simplenote import Simplenote
@@ -421,6 +421,42 @@ class sncli:
                         sncli_loop.widget = NoteContent(self.listbox.focus_position,
                                                         int(get_config().get_config('tabstop')))
 
+                elif key == 'meta enter':
+                    pager = None
+                    if self.config.get_config('pager'):
+                        pager = self.config.get_config('pager')
+                    if not pager and os.environ['PAGER']:
+                        pager = os.environ['PAGER']
+                    if not pager:
+                        # XXX bottom status message no external pager configured
+                        return
+
+                    # XXX bottom status message showing pager string
+
+                    note = list_get_note_json(self.listbox.focus_position)
+                    ext = ".mkd" if 'markdown' in note['systemtags'] else ".txt"
+                    f = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
+                    f.write(note['content'])
+                    f.flush()
+
+                    saveb = self.contents['body'][0]
+                    saveh = self.contents['header'][0]
+                    #savef = self.contents['footer'][0]
+
+                    try:
+                        os.system(pager + u' ' + f.name)
+                    except OSError, e:
+                        # XXX bottom status message pager error
+                        raise
+
+                    self.contents['body']   = ( saveb, None )
+                    self.contents['header'] = ( saveh, None )
+                    #self.contents['footer'] = ( savef, None )
+
+                    # XXX check if modified, if so update it
+
+                    os.unlink(f.name)
+
                 elif key == self.config.get_keybind('search'):
                     self.contents['footer'] = \
                         ( urwid.AttrMap(SearchNotes(key, self), 'search_bar'), None )
@@ -603,7 +639,8 @@ class sncli:
                 # NoteTitles keybinds
                 keys = [ 'search',
                          'clear_search',
-                         'view_note' ]
+                         'view_note',
+                         'view_note_ext' ]
                 lines.extend(self.create_kb_help_lines(u"Keybinds Note List", keys))
 
                 # NoteContent keybinds
