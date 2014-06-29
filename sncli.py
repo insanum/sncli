@@ -16,6 +16,8 @@ class sncli:
         if not os.path.exists(self.config.get_config('db_path')):
             os.mkdir(self.config.get_config('db_path'))
 
+        self.tempfile = None
+
         # configure the logging module
         self.logfile = os.path.join(self.config.get_config('db_path'), 'sncli.log')
         self.loghandler = RotatingFileHandler(self.logfile, maxBytes=100000, backupCount=1)
@@ -242,6 +244,27 @@ class sncli:
         def pop_last_view():
             return self.last_view.pop()
 
+        def tempfile_name():
+            if self.tempfile:
+                return self.tempfile.name
+            return ''
+
+        def tempfile_create(note):
+            tempfile_delete()
+            ext = '.txt'
+            if note and 'markdown' in note['systemtags']:
+                ext = '.mkd'
+            self.tempfile = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
+            if note:
+                self.tempfile.write(note['content'])
+            self.tempfile.flush()
+            return self.tempfile
+
+        def tempfile_delete():
+            if self.tempfile:
+                os.unlink(self.tempfile.name)
+            self.tempfile = None
+
         def handle_common_scroll_keybind(obj, size, key):
 
             lb = obj.listbox
@@ -433,29 +456,23 @@ class sncli:
 
                     # XXX bottom status message showing pager string
 
-                    note = list_get_note_json(self.listbox.focus_position)
-                    ext = ".mkd" if 'markdown' in note['systemtags'] else ".txt"
-                    f = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
-                    f.write(note['content'])
-                    f.flush()
-
                     saveb = self.contents['body'][0]
                     saveh = self.contents['header'][0]
                     #savef = self.contents['footer'][0]
 
+                    tempfile_create(list_get_note_json(self.listbox.focus_position))
                     try:
-                        os.system(pager + u' ' + f.name)
+                        os.system(pager + u' ' + tempfile_name())
                     except OSError, e:
                         # XXX bottom status message pager error
                         raise
 
+                    # XXX check if modified, if so update it
+                    tempfile_delete()
+
                     self.contents['body']   = ( saveb, None )
                     self.contents['header'] = ( saveh, None )
                     #self.contents['footer'] = ( savef, None )
-
-                    # XXX check if modified, if so update it
-
-                    os.unlink(f.name)
 
                 elif key == self.config.get_keybind('search'):
                     self.contents['footer'] = \
