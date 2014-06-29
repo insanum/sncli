@@ -244,6 +244,22 @@ class sncli:
         def pop_last_view():
             return self.last_view.pop()
 
+        def remove_status_message(loop, frame):
+            frame.contents['footer'] = ( None, None )
+
+        def cancel_status_message(frame):
+            if frame.alarm:
+                sncli_loop.remove_alarm(frame.alarm)
+            frame.contents['footer'] = ( None, None )
+
+        def set_status_message(frame, msg):
+            t = urwid.AttrMap(urwid.Text(msg, wrap='clip'),
+                              'status_message')
+            frame.contents['footer'] = ( t, None )
+            frame.alarm = sncli_loop.set_alarm_at(time.time() + 5,
+                                                  remove_status_message,
+                                                  frame);
+
         def tempfile_name():
             if self.tempfile:
                 return self.tempfile.name
@@ -373,6 +389,7 @@ class sncli:
         class NoteTitles(urwid.Frame):
             def __init__(self):
                 self.config = get_config()
+                self.alarm = None
                 self.status_bar = self.config.get_config('status_bar')
                 super(NoteTitles, self).__init__(body=None,
                                                  header=None,
@@ -393,6 +410,8 @@ class sncli:
                 self.contents['body']   = ( self.listbox, None );
                 self.contents['footer'] = ( None, None );
                 self.update_status()
+                if len(self.listbox.body.positions()) == 0:
+                    set_status_message(self, 'No notes found!')
 
             def update_status(self):
                 if self.status_bar != 'yes':
@@ -802,6 +821,9 @@ class sncli:
             ('status_bar',
                 self.config.get_color('status_bar_fg'),
                 self.config.get_color('status_bar_bg') ),
+            ('status_message',
+                self.config.get_color('status_message_fg'),
+                self.config.get_color('status_message_bg') ),
             ('search_bar',
                 self.config.get_color('search_bar_fg'),
                 self.config.get_color('search_bar_bg') ),
