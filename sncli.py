@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import os, sys, re, signal, time, datetime, logging
+import os, sys, re, signal, time, datetime, logging, subprocess
 import copy, json, urwid, datetime, tempfile
 import utils
 from config import Config
@@ -258,7 +258,7 @@ class sncli:
             frame.contents['footer'] = ( t, None )
             frame.alarm = sncli_loop.set_alarm_at(time.time() + 5,
                                                   remove_status_message,
-                                                  frame);
+                                                  frame)
 
         def tempfile_name():
             if self.tempfile:
@@ -407,8 +407,8 @@ class sncli:
                 filter_notes(search_string)
                 self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker(list_get_note_titles()))
                 self.listbox.keypress = self.note_title_listbox_keypress
-                self.contents['body']   = ( self.listbox, None );
-                self.contents['footer'] = ( None, None );
+                self.contents['body']   = ( self.listbox, None )
+                self.contents['footer'] = ( None, None )
                 self.update_status()
                 if len(self.listbox.body.positions()) == 0:
                     set_status_message(self, 'No notes found!')
@@ -470,10 +470,8 @@ class sncli:
                     if not pager and os.environ['PAGER']:
                         pager = os.environ['PAGER']
                     if not pager:
-                        # XXX bottom status message no external pager configured
+                        set_status_message(self, "No pager configured!")
                         return
-
-                    # XXX bottom status message showing pager string
 
                     saveb = self.contents['body'][0]
                     saveh = self.contents['header'][0]
@@ -481,10 +479,9 @@ class sncli:
 
                     tempfile_create(list_get_note_json(self.listbox.focus_position))
                     try:
-                        os.system(pager + u' ' + tempfile_name())
-                    except OSError, e:
-                        # XXX bottom status message pager error
-                        raise
+                        subprocess.check_call(pager + u' ' + tempfile_name(), shell=True)
+                    except Exception, e:
+                        set_status_message(self, "Pager error: " + str(e))
 
                     # XXX check if modified, if so update it
                     tempfile_delete()
