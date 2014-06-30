@@ -245,20 +245,42 @@ class sncli:
             return self.last_view.pop()
 
         def remove_status_message(loop, frame):
+            if not hasattr(frame, 'contents'):
+                return
             frame.contents['footer'] = ( None, None )
+            frame.status_msg_alarm = None
 
-        def cancel_status_message(frame):
-            if frame.alarm:
-                sncli_loop.remove_alarm(frame.alarm)
-            frame.contents['footer'] = ( None, None )
+        def cancel_status_message():
+            # XXX verify current loop widget is a urwid.Frame
+            # at the very least make sure the contents variable exists
+            if not hasattr(sncli_loop.widget, 'contents'):
+                return
+            if sncli_loop.widget.status_msg_alarm:
+                sncli_loop.remove_alarm(sncli_loop.widget.status_msg_alarm)
+            sncli_loop.widget.contents['footer'] = ( None, None )
+            sncli_loop.widget.status_msg_alarm = None
 
-        def set_status_message(frame, msg):
-            t = urwid.AttrMap(urwid.Text(msg, wrap='clip'),
+        def set_status_message(msg):
+            # XXX verify current loop widget is a urwid.Frame
+            # at the very least make sure the contents variable exists
+            if not hasattr(sncli_loop.widget, 'contents'):
+                return
+            # if there is already a message showing then conatenate them
+            existing_msg = ''
+            if sncli_loop.widget.status_msg_alarm and \
+               'footer' in sncli_loop.widget.contents.keys():
+                existing_msg = \
+                    sncli_loop.widget.contents['footer'][0].base_widget.text + u'\n'
+            # cancel any existing state message alarm
+            cancel_status_message();
+            t = urwid.AttrMap(urwid.Text(existing_msg + msg,
+                                         wrap='clip'),
                               'status_message')
-            frame.contents['footer'] = ( t, None )
-            frame.alarm = sncli_loop.set_alarm_at(time.time() + 5,
-                                                  remove_status_message,
-                                                  frame)
+            sncli_loop.widget.contents['footer'] = ( t, None )
+            sncli_loop.widget.status_msg_alarm = \
+                sncli_loop.set_alarm_at(time.time() + 5,
+                                        remove_status_message,
+                                        sncli_loop.widget)
 
         def tempfile_name():
             if self.tempfile:
@@ -389,7 +411,7 @@ class sncli:
         class NoteTitles(urwid.Frame):
             def __init__(self):
                 self.config = get_config()
-                self.alarm = None
+                self.status_msg_alarm = None
                 self.status_bar = self.config.get_config('status_bar')
                 super(NoteTitles, self).__init__(body=None,
                                                  header=None,
@@ -411,7 +433,7 @@ class sncli:
                 self.contents['footer'] = ( None, None )
                 self.update_status()
                 if len(self.listbox.body.positions()) == 0:
-                    set_status_message(self, 'No notes found!')
+                    set_status_message('No notes found!')
 
             def update_status(self):
                 if self.status_bar != 'yes':
@@ -449,6 +471,9 @@ class sncli:
                 if key == self.config.get_keybind('quit'):
                     raise urwid.ExitMainLoop()
 
+                elif key == 'o':
+                    set_status_message("foobar")
+
                 elif key == self.config.get_keybind('help'):
                     push_last_view(self)
                     sncli_loop.widget = Help()
@@ -470,25 +495,28 @@ class sncli:
                     if not pager and os.environ['PAGER']:
                         pager = os.environ['PAGER']
                     if not pager:
-                        set_status_message(self, "No pager configured!")
+                        set_status_message("No pager configured!")
                         return
 
-                    saveb = self.contents['body'][0]
-                    saveh = self.contents['header'][0]
-                    #savef = self.contents['footer'][0]
+                    saveb = self.contents['body'][0] \
+                                if 'body' in self.contents.keys() else None
+                    saveh = self.contents['header'][0] \
+                                if 'header' in self.contents.keys() else None
+                    savef = self.contents['footer'][0] \
+                                if 'footer' in self.contents.keys() else None
 
                     tempfile_create(list_get_note_json(self.listbox.focus_position))
                     try:
                         subprocess.check_call(pager + u' ' + tempfile_name(), shell=True)
                     except Exception, e:
-                        set_status_message(self, "Pager error: " + str(e))
+                        set_status_message("Pager error: " + str(e))
 
                     # XXX check if modified, if so update it
                     tempfile_delete()
 
                     self.contents['body']   = ( saveb, None )
                     self.contents['header'] = ( saveh, None )
-                    #self.contents['footer'] = ( savef, None )
+                    self.contents['footer'] = ( savef, None )
 
                 elif key == self.config.get_keybind('search'):
                     self.contents['footer'] = \
