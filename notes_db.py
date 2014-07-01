@@ -714,7 +714,10 @@ class NotesDB(utils.SubjectMixin):
                 systemtags.remove('pinned')
 
             n['modifydate'] = time.time()
-            self.notify_observers('change:note-status', utils.KeyValueObject(what='modifydate', key=key))
+            self.notify_observers('change:note-status',
+                utils.KeyValueObject(what='modifydate',
+                                     key=key,
+                                     msg='Note pinned.' if pinned else 'Note unpinned.'))
 
 
     def worker_save(self):

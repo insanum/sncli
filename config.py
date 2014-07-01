@@ -39,6 +39,8 @@ class Config:
             'kb_tabstop8'       : '8',
             'kb_search'         : '/',
             'kb_clear_search'   : 'a',
+            'kb_note_pin'       : 'p',
+            'kb_note_unpin'     : 'u',
 
             'clr_default_fg'            : 'default',
             'clr_default_bg'            : 'default',
@@ -126,7 +128,9 @@ class Config:
         'tabstop4'       : [ cp.get(cfg_sec, 'kb_tabstop4'),       'View with tabstop=4' ],
         'tabstop8'       : [ cp.get(cfg_sec, 'kb_tabstop8'),       'View with tabstop=8' ],
         'search'         : [ cp.get(cfg_sec, 'kb_search'),         'Search notes' ],
-        'clear_search'   : [ cp.get(cfg_sec, 'kb_clear_search'),   'Show all notes' ]
+        'clear_search'   : [ cp.get(cfg_sec, 'kb_clear_search'),   'Show all notes' ],
+        'note_pin'       : [ cp.get(cfg_sec, 'kb_note_pin'),       'Pin note' ],
+        'note_unpin'     : [ cp.get(cfg_sec, 'kb_note_unpin'),     'Unpin note' ]
         }
 
         self.colors = \

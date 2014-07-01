@@ -59,10 +59,7 @@ class sncli:
 
     def observer_notes_db_change_note_status(self, ndb, evt_type, evt):
         logging.debug(evt.msg)
-        # XXX set status text someplace visible
-        skey = self.get_selected_note_key()
-        if skey == evt.key:
-            print self.ndb.get_note_status(skey)
+        set_status_message(evt.msg)
 
     def observer_notes_db_sync_full(self, ndb, evt_type, evt):
         logging.debug(evt.msg)
@@ -109,10 +106,10 @@ class sncli:
             # get the note flags
             if note.has_key("systemtags"):
                 flags = ''
-                if ('pinned' in note['systemtags']):   flags = flags + u'*'
-                else:                                  flags = flags + u' '
-                if ('markdown' in note['systemtags']): flags = flags + u'm'
-                else:                                  flags = flags + u' '
+                if 'pinned' in note['systemtags']:   flags = flags + u'*'
+                else:                                flags = flags + u' '
+                if 'markdown' in note['systemtags']: flags = flags + u'm'
+                else:                                flags = flags + u' '
             else:
                 flags = '  '
 
@@ -243,6 +240,9 @@ class sncli:
 
         def pop_last_view():
             return self.last_view.pop()
+
+        def set_note_pinned(note_key, pinned):
+            self.ndb.set_note_pinned(note_key, pinned)
 
         def remove_status_message(loop, frame):
             if not hasattr(frame, 'contents'):
@@ -433,7 +433,7 @@ class sncli:
                 self.contents['footer'] = ( None, None )
                 self.update_status()
                 if len(self.listbox.body.positions()) == 0:
-                    set_status_message('No notes found!')
+                    set_status_message(u'No notes found!')
 
             def update_status(self):
                 if self.status_bar != 'yes':
@@ -471,12 +471,19 @@ class sncli:
                 if key == self.config.get_keybind('quit'):
                     raise urwid.ExitMainLoop()
 
-                elif key == 'o':
-                    set_status_message("foobar")
-
                 elif key == self.config.get_keybind('help'):
                     push_last_view(self)
                     sncli_loop.widget = Help()
+
+                elif key == self.config.get_keybind('note_pin'):
+                    set_note_pinned(
+                        list_get_note_json(
+                            self.listbox.focus_position)['key'], 1)
+
+                elif key == self.config.get_keybind('note_unpin'):
+                    set_note_pinned(
+                        list_get_note_json(
+                            self.listbox.focus_position)['key'], 0)
 
                 elif key == self.config.get_keybind('view_log'):
                     push_last_view(self)
@@ -495,7 +502,7 @@ class sncli:
                     if not pager and os.environ['PAGER']:
                         pager = os.environ['PAGER']
                     if not pager:
-                        set_status_message("No pager configured!")
+                        set_status_message(u'No pager configured!')
                         return
 
                     saveb = self.contents['body'][0] \
@@ -509,7 +516,7 @@ class sncli:
                     try:
                         subprocess.check_call(pager + u' ' + tempfile_name(), shell=True)
                     except Exception, e:
-                        set_status_message("Pager error: " + str(e))
+                        set_status_message(u'Pager error: ' + str(e))
 
                     # XXX check if modified, if so update it
                     tempfile_delete()
@@ -698,14 +705,18 @@ class sncli:
                 lines.extend(self.create_kb_help_lines(u"Keybinds Common", keys))
 
                 # NoteTitles keybinds
-                keys = [ 'search',
+                keys = [ 'note_pin',
+                         'note_unpin',
+                         'search',
                          'clear_search',
                          'view_note',
                          'view_note_ext' ]
                 lines.extend(self.create_kb_help_lines(u"Keybinds Note List", keys))
 
                 # NoteContent keybinds
-                keys = [ 'tabstop2',
+                keys = [ 'note_pin',
+                         'note_unpin',
+                         'tabstop2',
                          'tabstop4',
                          'tabstop8' ]
                 lines.extend(self.create_kb_help_lines(u"Keybinds Note Content", keys))
