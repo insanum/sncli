@@ -51,33 +51,44 @@ class sncli:
         self.ndb.add_observer('change:note-status', self.observer_notes_db_change_note_status)
         self.ndb.add_observer('progress:sync_full', self.observer_notes_db_sync_full)
 
-    def sync_full(self):
+    def sync_full_threaded(self):
         thread.start_new_thread(self.ndb.sync_full, ())
 
     def sync_full_initial(self, loop, arg):
-        self.sync_full()
+        self.sync_full_threaded()
 
     def sync_notes_cancel(self):
         self.sync_notes_lock.acquire()
+
         if self.sync_notes_alarm:
             self.sncli_loop.remove_alarm(self.sync_notes_alarm)
         self.sync_notes_alarm = None
+
         self.sync_notes_lock.release()
 
     def sync_notes_timeout(self, loop, arg):
+        self.sync_notes_lock.acquire()
+
+        self.sync_notes_alarm = None
         self.status_message_set('Starting sync...')
         self.ndb.sync_to_server_threaded()
         self.status_message_set('Sync complete.')
-        self.sync_notes_alarm = None
+
+        self.sync_notes_lock.release()
 
     def sync_notes_schedule(self):
         self.sync_notes_lock.acquire()
-        self.sync_notes_cancel()
+
+        if self.sync_notes_alarm:
+            self.sncli_loop.remove_alarm(self.sync_notes_alarm)
+        self.sync_notes_alarm = None
+
         self.ndb.save_threaded()
         self.sync_notes_alarm = \
             self.sncli_loop.set_alarm_at(time.time() + 4,
                                          self.sync_notes_timeout,
                                          None)
+
         self.sync_notes_lock.release()
 
     def observer_notes_db_change_note_status(self, ndb, evt_type, evt):
@@ -86,8 +97,7 @@ class sncli:
 
     def observer_notes_db_sync_full(self, ndb, evt_type, evt):
         logging.debug(evt.msg)
-        # XXX
-        #self.status_message_set(evt.msg)
+        self.status_message_set(evt.msg)
 
     def observer_notes_db_synced_note(self, ndb, evt_type, evt):
         logging.debug(evt.msg)
@@ -97,11 +107,11 @@ class sncli:
 
     def header_clear(self):
         self.master_frame.contents['header'] = ( None, None )
-        #self.sncli_loop.draw_screen()
+        self.sncli_loop.draw_screen()
 
     def header_set(self, w):
         self.master_frame.contents['header'] = ( w, None )
-        #self.sncli_loop.draw_screen()
+        self.sncli_loop.draw_screen()
 
     def header_get(self):
         return self.master_frame.contents['header'][0]
@@ -111,11 +121,11 @@ class sncli:
 
     def footer_clear(self):
         self.master_frame.contents['footer'] = ( None, None )
-        #self.sncli_loop.draw_screen()
+        self.sncli_loop.draw_screen()
 
     def footer_set(self, w):
         self.master_frame.contents['footer'] = ( w, None )
-        #self.sncli_loop.draw_screen()
+        self.sncli_loop.draw_screen()
 
     def footer_get(self):
         return self.master_frame.contents['footer'][0]
@@ -125,11 +135,12 @@ class sncli:
 
     def body_clear(self):
         self.master_frame.contents['body'] = ( None, None )
-        #self.sncli_loop.draw_screen()
+        self.sncli_loop.draw_screen()
 
     def body_set(self, w):
         self.master_frame.contents['body'] = ( w, None )
-        #self.sncli_loop.draw_screen()
+        self.update_status_bar()
+        self.sncli_loop.draw_screen()
 
     def body_get(self):
         return self.master_frame.contents['body'][0]
@@ -138,8 +149,12 @@ class sncli:
         self.master_frame.focus_position = 'body'
 
     def status_message_timeout(self, loop, arg):
-        self.footer_clear()
+        self.status_message_lock.acquire()
+
         self.status_message_alarm = None
+        self.footer_clear()
+
+        self.status_message_lock.release()
 
     def status_message_cancel(self):
         self.status_message_lock.acquire()
@@ -152,8 +167,6 @@ class sncli:
 
     def status_message_set(self, msg):
         self.status_message_lock.acquire()
-
-        # XXX check if sncli_loop has started, if not stuff msg in a local
 
         # if there is already a message showing then concatenate them
         existing_msg = ''
@@ -216,7 +229,6 @@ class sncli:
                                         'status_message' : self.status_message_set,
                                         'sync_func'      : self.sync_notes_schedule
                                        }))
-            self.update_status_bar()
         else:
             self.footer_clear()
             self.body_focus()
@@ -365,7 +377,7 @@ class sncli:
                 self.master_frame.keypress = self.footer_get().keypress
 
         elif key == 'S':
-            self.sync_full()
+            self.sync_full_threaded()
 
         elif key == self.config.get_keybind('clear_search'):
             self.body_set(
@@ -377,7 +389,6 @@ class sncli:
                                         'status_message' : self.status_message_set,
                                         'sync_func'      : self.sync_notes_schedule
                                        }))
-            self.update_status_bar()
 
         else:
             return lb.keypress(size, key)
@@ -396,7 +407,11 @@ class sncli:
                                     'status_message' : self.status_message_set,
                                     'sync_func'      : self.sync_notes_schedule
                                    }))
-        self.update_status_bar()
+
+        if self.do_sync:
+            # start full sync after initial view is up
+            #self.sync_full_threaded()
+            self.sncli_loop.set_alarm_in(1, self.sync_full_initial, None)
 
     def ba_bam_what(self):
 
@@ -473,12 +488,7 @@ class sncli:
                                          palette,
                                          handle_mouse=False)
 
-        #self.sncli_loop.set_alarm_in(0, self.init_view, None)
-        self.init_view(None, None)
-
-        if self.do_sync:
-            # start full sync in one second after initial view is up
-            self.sncli_loop.set_alarm_in(1, self.sync_full_initial, None)
+        self.sncli_loop.set_alarm_in(0, self.init_view, None)
 
         self.sncli_loop.run()
 
