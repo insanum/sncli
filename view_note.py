@@ -65,14 +65,19 @@ class ViewNote(urwid.ListBox):
             self.body[:] = \
                 urwid.SimpleFocusListWalker(
                     self.get_note_content_as_list(2))
+            return None
 
         elif key == self.config.get_keybind('tabstop4'):
             self.body[:] = \
                 urwid.SimpleFocusListWalker(
                     self.get_note_content_as_list(4))
+            return None
 
         elif key == self.config.get_keybind('tabstop8'):
             self.body[:] = \
                 urwid.SimpleFocusListWalker(
                     self.get_note_content_as_list(8))
+            return None
+
+        return key
 
