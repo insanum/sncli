@@ -47,11 +47,15 @@ class ViewNote(urwid.ListBox):
                                      mod_time,
                                      wrap='clip'),
                           'status_bar')
-        status_tags = \
-            ('pack', urwid.AttrMap(urwid.Text(u'[' + tags + u']'),
+        flags = ''
+        if self.note.has_key("systemtags"):
+            if 'pinned' in self.note['systemtags']:   flags = flags + u'*'
+            if 'markdown' in self.note['systemtags']: flags = flags + u'm'
+        status_tags_flags = \
+            ('pack', urwid.AttrMap(urwid.Text(u'[' + tags + u'] [' + flags + u']'),
                                    'status_bar'))
         pile_top = urwid.Columns([ status_title, status_index ])
-        pile_bottom = urwid.Columns([ status_date, status_tags ])
+        pile_bottom = urwid.Columns([ status_date, status_tags_flags ])
         return \
             urwid.AttrMap(urwid.Pile([ pile_top, pile_bottom ]),
                           'status_bar')
