@@ -1,8 +1,9 @@
 #!/usr/bin/env python2
 
-import os, sys, re, signal, time, datetime, logging, subprocess
+import os, sys, re, signal, time, datetime, logging
+import subprocess, thread, threading
 import copy, json, urwid, datetime, tempfile
-import view_titles, view_note, view_help, view_log, search_notes
+import view_titles, view_note, view_help, view_log, user_input
 import utils
 from config import Config
 from simplenote import Simplenote
@@ -12,6 +13,7 @@ from logging.handlers import RotatingFileHandler
 class sncli:
 
     def __init__(self, do_sync):
+        self.do_sync = do_sync
         self.config = Config()
 
         if not os.path.exists(self.config.get_config('db_path')):
@@ -39,61 +41,67 @@ class sncli:
 
         self.last_view = []
         self.status_bar = self.config.get_config('status_bar')
+
         self.status_message_alarm = None
+        self.status_message_lock = threading.Lock()
+        self.sync_notes_alarm = None
+        self.sync_notes_lock = threading.Lock()
 
         self.ndb.add_observer('synced:note', self.observer_notes_db_synced_note)
         self.ndb.add_observer('change:note-status', self.observer_notes_db_change_note_status)
         self.ndb.add_observer('progress:sync_full', self.observer_notes_db_sync_full)
 
-        if do_sync:
-            self.sync_full()
-
     def sync_full(self):
-        try:
-            sync_from_server_errors = self.ndb.sync_full()
-        except Exception, e:
-            print e
-            exit(1)
-        else:
-            if sync_from_server_errors > 0:
-                print('Error syncing %d notes from server. Please check sncli.log for details.' % (sync_from_server_errors))
+        thread.start_new_thread(self.ndb.sync_full, ())
+
+    def sync_full_initial(self, loop, arg):
+        self.sync_full()
+
+    def sync_notes_cancel(self):
+        self.sync_notes_lock.acquire()
+        if self.sync_notes_alarm:
+            self.sncli_loop.remove_alarm(self.sync_notes_alarm)
+        self.sync_notes_alarm = None
+        self.sync_notes_lock.release()
+
+    def sync_notes_timeout(self, loop, arg):
+        self.status_message_set('Starting sync...')
+        self.ndb.sync_to_server_threaded()
+        self.status_message_set('Sync complete.')
+        self.sync_notes_alarm = None
+
+    def sync_notes_schedule(self):
+        self.sync_notes_lock.acquire()
+        self.sync_notes_cancel()
+        self.ndb.save_threaded()
+        self.sync_notes_alarm = \
+            self.sncli_loop.set_alarm_at(time.time() + 4,
+                                         self.sync_notes_timeout,
+                                         None)
+        self.sync_notes_lock.release()
 
     def observer_notes_db_change_note_status(self, ndb, evt_type, evt):
         logging.debug(evt.msg)
-        print type(self)
-        print dir(self)
         self.status_message_set(evt.msg)
 
     def observer_notes_db_sync_full(self, ndb, evt_type, evt):
         logging.debug(evt.msg)
-        # XXX set status text someplace visible
-        print evt.msg 
+        # XXX
+        #self.status_message_set(evt.msg)
 
     def observer_notes_db_synced_note(self, ndb, evt_type, evt):
-        """This observer gets called only when a note returns from
-        a sync that's more recent than our most recent mod to that note.
-        """
-
-        selected_note_o = self.notes_list_model.list[self.selected_note_idx]
-        print "observer_notes_db_synced_note: " + evt.msg
-
-        # if the note synced back matches our currently selected note,
-        # we overwrite.
-
+        logging.debug(evt.msg)
+        self.status_message_set(evt.msg)
         # XXX
-        #if selected_note_o.key == evt.lkey:
-        #    if selected_note_o.note['content'] != evt.old_note['content']:
-        #        self.view.mute_note_data_changes()
-        #        # in this case, we want to keep the user's undo buffer so that they
-        #        # can undo synced back changes if they would want to.
-        #        self.view.set_note_data(selected_note_o.note, reset_undo=False)
-        #        self.view.unmute_note_data_changes()
+        # update view if note synced back is the visible one
 
     def header_clear(self):
         self.master_frame.contents['header'] = ( None, None )
+        #self.sncli_loop.draw_screen()
 
     def header_set(self, w):
         self.master_frame.contents['header'] = ( w, None )
+        #self.sncli_loop.draw_screen()
 
     def header_get(self):
         return self.master_frame.contents['header'][0]
@@ -103,9 +111,11 @@ class sncli:
 
     def footer_clear(self):
         self.master_frame.contents['footer'] = ( None, None )
+        #self.sncli_loop.draw_screen()
 
     def footer_set(self, w):
         self.master_frame.contents['footer'] = ( w, None )
+        #self.sncli_loop.draw_screen()
 
     def footer_get(self):
         return self.master_frame.contents['footer'][0]
@@ -115,9 +125,11 @@ class sncli:
 
     def body_clear(self):
         self.master_frame.contents['body'] = ( None, None )
+        #self.sncli_loop.draw_screen()
 
     def body_set(self, w):
         self.master_frame.contents['body'] = ( w, None )
+        #self.sncli_loop.draw_screen()
 
     def body_get(self):
         return self.master_frame.contents['body'][0]
@@ -130,27 +142,40 @@ class sncli:
         self.status_message_alarm = None
 
     def status_message_cancel(self):
+        self.status_message_lock.acquire()
+
         if self.status_message_alarm:
             self.sncli_loop.remove_alarm(self.status_message_alarm)
-        self.footer_clear()
         self.status_message_alarm = None
 
+        self.status_message_lock.release()
+
     def status_message_set(self, msg):
+        self.status_message_lock.acquire()
+
+        # XXX check if sncli_loop has started, if not stuff msg in a local
+
         # if there is already a message showing then concatenate them
         existing_msg = ''
         if self.status_message_alarm and \
            'footer' in self.master_frame.contents.keys():
             existing_msg = \
                 self.master_frame.contents['footer'][0].base_widget.text + u'\n'
+
         # cancel any existing state message alarm
-        self.status_message_cancel()
-        self.footer_set(urwid.AttrMap(urwid.Text(existing_msg + msg,
-                                                 wrap='clip'),
+        if self.status_message_alarm:
+            self.sncli_loop.remove_alarm(self.status_message_alarm)
+        self.status_message_alarm = None
+
+        self.footer_set(urwid.AttrMap(urwid.Text(existing_msg + msg),
                                       'status_message'))
+
         self.status_message_alarm = \
             self.sncli_loop.set_alarm_at(time.time() + 5,
                                          self.status_message_timeout,
                                          None)
+
+        self.status_message_lock.release()
 
     def update_status_bar(self):
         if self.status_bar != 'yes':
@@ -161,6 +186,7 @@ class sncli:
     def switch_frame_body(self, args):
         if args == None:
             if len(self.last_view) == 0:
+                self.ndb.sync_to_server_threaded(False)
                 self.sncli_loop.widget = None
                 raise urwid.ExitMainLoop()
             else:
@@ -176,19 +202,41 @@ class sncli:
         self.body_focus()
         self.master_frame.keypress = self.frame_keypress
 
-    def search_complete(self, search_string):
-        self.footer_clear()
-        self.body_focus()
-        self.master_frame.keypress = self.frame_keypress
-        self.body_set(
-            view_titles.ViewTitles(self.config,
-                                   {
-                                    'ndb'            : self.ndb,
-                                    'search_string'  : search_string,
-                                    'body_changer'   : self.switch_frame_body,
-                                    'status_message' : self.status_message_set
-                                   }))
-        self.update_status_bar()
+    def search_input(self, search_string):
+        if search_string:
+            self.footer_clear()
+            self.body_focus()
+            self.master_frame.keypress = self.frame_keypress
+            self.body_set(
+                view_titles.ViewTitles(self.config,
+                                       {
+                                        'ndb'            : self.ndb,
+                                        'search_string'  : search_string,
+                                        'body_changer'   : self.switch_frame_body,
+                                        'status_message' : self.status_message_set,
+                                        'sync_func'      : self.sync_notes_schedule
+                                       }))
+            self.update_status_bar()
+        else:
+            self.footer_clear()
+            self.body_focus()
+            self.master_frame.keypress = self.frame_keypress
+
+    def tags_input(self, tags):
+        if tags != None:
+            self.footer_clear()
+            self.body_focus()
+            self.master_frame.keypress = self.frame_keypress
+
+            lb = self.body_get()
+            self.ndb.set_note_tags(lb.all_notes[lb.focus_position].note['key'], tags)
+            lb.update_note_title(None, lb.focus_position)
+            self.update_status_bar()
+            self.sync_notes_schedule()
+        else:
+            self.footer_clear()
+            self.body_focus()
+            self.master_frame.keypress = self.frame_keypress
 
     def frame_keypress(self, size, key):
 
@@ -291,16 +339,33 @@ class sncli:
                 self.status_bar = self.config.get_config('status_bar')
 
         elif key == self.config.get_keybind('search'):
-
             # search when viewing the note list
             if self.body_get().__class__ == view_titles.ViewTitles:
                 self.status_message_cancel()
                 self.footer_set(urwid.AttrMap(
-                                    search_notes.SearchNotes(self.config,
-                                                             key, self),
+                                    user_input.UserInput(self.config,
+                                                         key, '',
+                                                         self.search_input),
                                               'search_bar'))
                 self.footer_focus()
                 self.master_frame.keypress = self.footer_get().keypress
+
+        elif key == 't':
+            # edit tags when viewing the note list
+            if self.body_get().__class__ == view_titles.ViewTitles:
+                self.status_message_cancel()
+                self.footer_set(
+                    urwid.AttrMap(
+                        user_input.UserInput(self.config,
+                                             'Tags: ',
+                                             '%s' % ','.join(lb.all_notes[lb.focus_position].note['tags']),
+                                             self.tags_input),
+                                  'search_bar'))
+                self.footer_focus()
+                self.master_frame.keypress = self.footer_get().keypress
+
+        elif key == 'S':
+            self.sync_full()
 
         elif key == self.config.get_keybind('clear_search'):
             self.body_set(
@@ -309,13 +374,28 @@ class sncli:
                                         'ndb'            : self.ndb,
                                         'search_string'  : None,
                                         'body_changer'   : self.switch_frame_body,
-                                        'status_message' : self.status_message_set
+                                        'status_message' : self.status_message_set,
+                                        'sync_func'      : self.sync_notes_schedule
                                        }))
             self.update_status_bar()
 
         else:
-            lb.keypress(size, key)
+            return lb.keypress(size, key)
 
+        self.update_status_bar()
+        return None
+
+    def init_view(self, loop, arg):
+        self.master_frame.keypress = self.frame_keypress
+        self.body_set(
+            view_titles.ViewTitles(self.config,
+                                   {
+                                    'ndb'            : self.ndb,
+                                    'search_string'  : None,
+                                    'body_changer'   : self.switch_frame_body,
+                                    'status_message' : self.status_message_set,
+                                    'sync_func'      : self.sync_notes_schedule
+                                   }))
         self.update_status_bar()
 
     def ba_bam_what(self):
@@ -384,24 +464,21 @@ class sncli:
                 self.config.get_color('help_descr_bg') )
           ]
 
-        self.master_frame = urwid.Frame(body=None,
+        self.master_frame = urwid.Frame(body=urwid.Filler(urwid.Text(u'')),
                                         header=None,
                                         footer=None,
                                         focus_part='body')
+
         self.sncli_loop = urwid.MainLoop(self.master_frame,
                                          palette,
                                          handle_mouse=False)
 
-        self.master_frame.keypress = self.frame_keypress
-        self.body_set(
-            view_titles.ViewTitles(self.config,
-                                   {
-                                    'ndb'            : self.ndb,
-                                    'search_string'  : None,
-                                    'body_changer'   : self.switch_frame_body,
-                                    'status_message' : self.status_message_set
-                                   }))
-        self.update_status_bar()
+        #self.sncli_loop.set_alarm_in(0, self.init_view, None)
+        self.init_view(None, None)
+
+        if self.do_sync:
+            # start full sync in one second after initial view is up
+            self.sncli_loop.set_alarm_in(1, self.sync_full_initial, None)
 
         self.sncli_loop.run()
 
