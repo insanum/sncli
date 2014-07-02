@@ -2,6 +2,7 @@
 
 import os, sys, re, signal, time, datetime, logging, subprocess
 import copy, json, urwid, datetime, tempfile
+import view_titles, view_note, view_help, view_log, search_notes
 import utils
 from config import Config
 from simplenote import Simplenote
@@ -26,6 +27,8 @@ class sncli:
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.DEBUG)
         self.logger.addHandler(self.loghandler)
+        self.config.logfile = self.logfile
+
         logging.debug('sncli logging initialized')
 
         try:
@@ -35,6 +38,8 @@ class sncli:
             exit(1)
 
         self.last_view = []
+        self.status_bar = self.config.get_config('status_bar')
+        self.status_message_alarm = None
 
         self.ndb.add_observer('synced:note', self.observer_notes_db_synced_note)
         self.ndb.add_observer('change:note-status', self.observer_notes_db_change_note_status)
@@ -42,10 +47,6 @@ class sncli:
 
         if do_sync:
             self.sync_full()
-
-        self.search_string = None
-        self.all_notes, match_regex, self.all_notes_cnt = \
-            self.ndb.filter_notes(self.search_string)
 
     def sync_full(self):
         try:
@@ -59,7 +60,9 @@ class sncli:
 
     def observer_notes_db_change_note_status(self, ndb, evt_type, evt):
         logging.debug(evt.msg)
-        set_status_message(evt.msg)
+        print type(self)
+        print dir(self)
+        self.status_message_set(evt.msg)
 
     def observer_notes_db_sync_full(self, ndb, evt_type, evt):
         logging.debug(evt.msg)
@@ -86,768 +89,236 @@ class sncli:
         #        self.view.set_note_data(selected_note_o.note, reset_undo=False)
         #        self.view.unmute_note_data_changes()
 
+    def header_clear(self):
+        self.master_frame.contents['header'] = ( None, None )
+
+    def header_set(self, w):
+        self.master_frame.contents['header'] = ( w, None )
+
+    def header_get(self):
+        return self.master_frame.contents['header'][0]
+
+    def header_focus(self):
+        self.master_frame.focus_position = 'header'
+
+    def footer_clear(self):
+        self.master_frame.contents['footer'] = ( None, None )
+
+    def footer_set(self, w):
+        self.master_frame.contents['footer'] = ( w, None )
+
+    def footer_get(self):
+        return self.master_frame.contents['footer'][0]
+
+    def footer_focus(self):
+        self.master_frame.focus_position = 'footer'
+
+    def body_clear(self):
+        self.master_frame.contents['body'] = ( None, None )
+
+    def body_set(self, w):
+        self.master_frame.contents['body'] = ( w, None )
+
+    def body_get(self):
+        return self.master_frame.contents['body'][0]
+
+    def body_focus(self):
+        self.master_frame.focus_position = 'body'
+
+    def status_message_timeout(self, loop, arg):
+        self.footer_clear()
+        self.status_message_alarm = None
+
+    def status_message_cancel(self):
+        if self.status_message_alarm:
+            self.sncli_loop.remove_alarm(self.status_message_alarm)
+        self.footer_clear()
+        self.status_message_alarm = None
+
+    def status_message_set(self, msg):
+        # if there is already a message showing then concatenate them
+        existing_msg = ''
+        if self.status_message_alarm and \
+           'footer' in self.master_frame.contents.keys():
+            existing_msg = \
+                self.master_frame.contents['footer'][0].base_widget.text + u'\n'
+        # cancel any existing state message alarm
+        self.status_message_cancel()
+        self.footer_set(urwid.AttrMap(urwid.Text(existing_msg + msg,
+                                                 wrap='clip'),
+                                      'status_message'))
+        self.status_message_alarm = \
+            self.sncli_loop.set_alarm_at(time.time() + 5,
+                                         self.status_message_timeout,
+                                         None)
+
+    def update_status_bar(self):
+        if self.status_bar != 'yes':
+            self.header_clear()
+        else:
+            self.header_set(self.body_get().get_status_bar())
+
+    def switch_frame_body(self, args):
+        if args == None:
+            if len(self.last_view) == 0:
+                self.sncli_loop.widget = None
+                raise urwid.ExitMainLoop()
+            else:
+                self.body_set(self.last_view.pop())
+            return
+
+        if self.body_get().__class__ != args['view']:
+            self.last_view.append(self.body_get())
+            self.body_set(args['view'](self.config, args))
+
+    def search_quit(self):
+        self.footer_clear()
+        self.body_focus()
+        self.master_frame.keypress = self.frame_keypress
+
+    def search_complete(self, search_string):
+        self.footer_clear()
+        self.body_focus()
+        self.master_frame.keypress = self.frame_keypress
+        self.body_set(
+            view_titles.ViewTitles(self.config,
+                                   {
+                                    'ndb'            : self.ndb,
+                                    'search_string'  : search_string,
+                                    'body_changer'   : self.switch_frame_body,
+                                    'status_message' : self.status_message_set
+                                   }))
+        self.update_status_bar()
+
+    def frame_keypress(self, size, key):
+
+        lb = self.body_get()
+
+        if key == self.config.get_keybind('quit'):
+            self.switch_frame_body(None)
+
+        elif key == self.config.get_keybind('help'):
+            self.switch_frame_body({ 'view' : view_help.ViewHelp })
+
+        elif key == self.config.get_keybind('view_log'):
+            self.switch_frame_body({ 'view' : view_log.ViewLog })
+
+        elif key == self.config.get_keybind('down'):
+            if len(lb.body.positions()) <= 0:
+                return
+            last = len(lb.body.positions())
+            if lb.focus_position == (last - 1):
+                return
+            lb.focus_position += 1
+            lb.render(size)
+
+        elif key == self.config.get_keybind('up'):
+            if len(lb.body.positions()) <= 0:
+                return
+            if lb.focus_position == 0:
+                return
+            lb.focus_position -= 1
+            lb.render(size)
+
+        elif key == self.config.get_keybind('page_down'):
+            if len(lb.body.positions()) <= 0:
+                return
+            last = len(lb.body.positions())
+            next_focus = lb.focus_position + size[1]
+            if next_focus >= last:
+                next_focus = last - 1
+            lb.change_focus(size, next_focus,
+                            offset_inset=0,
+                            coming_from='above')
+
+        elif key == self.config.get_keybind('page_up'):
+            if len(lb.body.positions()) <= 0:
+                return
+            if 'bottom' in lb.ends_visible(size):
+                last = len(lb.body.positions())
+                next_focus = last - size[1] - size[1]
+            else:
+                next_focus = lb.focus_position - size[1]
+            if next_focus < 0:
+                next_focus = 0
+            lb.change_focus(size, next_focus,
+                            offset_inset=0,
+                            coming_from='below')
+
+        elif key == self.config.get_keybind('half_page_down'):
+            if len(lb.body.positions()) <= 0:
+                return
+            last = len(lb.body.positions())
+            next_focus = lb.focus_position + (size[1] / 2)
+            if next_focus >= last:
+                next_focus = last - 1
+            lb.change_focus(size, next_focus,
+                            offset_inset=0,
+                            coming_from='above')
+
+        elif key == self.config.get_keybind('half_page_up'):
+            if len(lb.body.positions()) <= 0:
+                return
+            if 'bottom' in lb.ends_visible(size):
+                last = len(lb.body.positions())
+                next_focus = last - size[1] - (size[1] / 2)
+            else:
+                next_focus = lb.focus_position - (size[1] / 2)
+            if next_focus < 0:
+                next_focus = 0
+            lb.change_focus(size, next_focus,
+                            offset_inset=0,
+                            coming_from='below')
+
+        elif key == self.config.get_keybind('bottom'):
+            if len(lb.body.positions()) <= 0:
+                return
+            lb.change_focus(size, (len(lb.body.positions()) - 1),
+                            offset_inset=0,
+                            coming_from='above')
+
+        elif key == self.config.get_keybind('top'):
+            if len(lb.body.positions()) <= 0:
+                return
+            lb.change_focus(size, 0,
+                            offset_inset=0,
+                            coming_from='below')
+
+        elif key == self.config.get_keybind('status'):
+            if self.status_bar == 'yes':
+                self.status_bar = 'no'
+            else:
+                self.status_bar = self.config.get_config('status_bar')
+
+        elif key == self.config.get_keybind('search'):
+
+            # search when viewing the note list
+            if self.body_get().__class__ == view_titles.ViewTitles:
+                self.status_message_cancel()
+                self.footer_set(urwid.AttrMap(
+                                    search_notes.SearchNotes(self.config,
+                                                             key, self),
+                                              'search_bar'))
+                self.footer_focus()
+                self.master_frame.keypress = self.footer_get().keypress
+
+        elif key == self.config.get_keybind('clear_search'):
+            self.body_set(
+                view_titles.ViewTitles(self.config,
+                                       {
+                                        'ndb'            : self.ndb,
+                                        'search_string'  : None,
+                                        'body_changer'   : self.switch_frame_body,
+                                        'status_message' : self.status_message_set
+                                       }))
+            self.update_status_bar()
+
+        else:
+            lb.keypress(size, key)
+
+        self.update_status_bar()
+
     def ba_bam_what(self):
-
-        def format_title(note):
-            """
-            Various formatting tags are supporting for dynamically building
-            the title string. Each of these formatting tags supports a width
-            specifier (decimal) and a left justification (-) like that
-            supported by printf.
-
-            %F -- flags ('*' for pinned, 'm' for markdown)
-            %T -- tags
-            %D -- date
-            %N -- note title
-            """
-
-            title = utils.get_note_title(note)
-
-            # get the note flags
-            if note.has_key("systemtags"):
-                flags = ''
-                if 'pinned' in note['systemtags']:   flags = flags + u'*'
-                else:                                flags = flags + u' '
-                if 'markdown' in note['systemtags']: flags = flags + u'm'
-                else:                                flags = flags + u' '
-            else:
-                flags = '  '
-
-            # get the note tags
-            tags = '%s' % ','.join(note['tags'])
-
-            # format the note modification date
-            t = time.localtime(float(note['modifydate']))
-            mod_time = time.strftime(self.config.get_config('format_strftime'), t)
-
-            # get the age of the note
-            dt = datetime.datetime.fromtimestamp(time.mktime(t))
-            if dt > datetime.datetime.now() - datetime.timedelta(days=1):
-                note_age = 'd' # less than a day old
-            elif dt > datetime.datetime.now() - datetime.timedelta(weeks=1):
-                note_age = 'w' # less than a week old
-            elif dt > datetime.datetime.now() - datetime.timedelta(weeks=4):
-                note_age = 'm' # less than a month old
-            elif dt > datetime.datetime.now() - datetime.timedelta(weeks=52):
-                note_age = 'y' # less than a year old
-            else:
-                note_age = 'a' # ancient
-
-            def recursive_format(title_format):
-                if not title_format:
-                    return None
-                fmt = re.search("^(.*)%([-]*)([0-9]*)([FDTN])(.*)$", title_format)
-                if not fmt:
-                    m = ('pack', urwid.AttrMap(urwid.Text(title_format),
-                                               'default'))
-                    l_fmt = None
-                    r_fmt = None
-                else:
-                    l = fmt.group(1) if fmt.group(1) else None
-                    m = None
-                    r = fmt.group(5) if fmt.group(5) else None
-                    align = 'left' if fmt.group(2) == '-' else 'right'
-                    width = int(fmt.group(3)) if fmt.group(3) else 'pack'
-                    if fmt.group(4) == 'F':
-                        m = (width, urwid.AttrMap(urwid.Text(flags,
-                                                             align=align,
-                                                             wrap='clip'),
-                                                  'note_flags'))
-                    elif fmt.group(4) == 'D':
-                        m = (width, urwid.AttrMap(urwid.Text(mod_time,
-                                                             align=align,
-                                                             wrap='clip'),
-                                                  'note_date'))
-                    elif fmt.group(4) == 'T':
-                        m = (width, urwid.AttrMap(urwid.Text(tags,
-                                                             align=align,
-                                                             wrap='clip'),
-                                                  'note_tags'))
-                    elif fmt.group(4) == 'N':
-                        if   note_age == 'd': attr = 'note_title_day'
-                        elif note_age == 'w': attr = 'note_title_week'
-                        elif note_age == 'm': attr = 'note_title_month'
-                        elif note_age == 'y': attr = 'note_title_year'
-                        elif note_age == 'a': attr = 'note_title_ancient'
-                        if width != 'pack':
-                            m = (width, urwid.AttrMap(urwid.Text(title,
-                                                                 align=align,
-                                                                 wrap='clip'),
-                                                      attr))
-                        else:
-                            m = urwid.AttrMap(urwid.Text(title,
-                                                         align=align,
-                                                         wrap='clip'),
-                                              attr)
-                    l_fmt = recursive_format(l)
-                    r_fmt = recursive_format(r)
-                tmp = []
-                if l_fmt: tmp.extend(l_fmt)
-                tmp.append(m)
-                if r_fmt: tmp.extend(r_fmt)
-                return tmp
-
-            # convert the format string into the actual note title line
-            title_line = recursive_format(self.config.get_config('format_note_title'))
-            return urwid.Columns(title_line)
-
-        def list_get_note_titles():
-            lines = []
-            for n in self.all_notes:
-                lines.append(
-                    urwid.AttrMap(format_title(n.note),
-                                  'default',
-                                  { 'default'            : 'note_focus',
-                                    'note_title_day'     : 'note_focus',
-                                    'note_title_week'    : 'note_focus',
-                                    'note_title_month'   : 'note_focus',
-                                    'note_title_year'    : 'note_focus',
-                                    'note_title_ancient' : 'note_focus',
-                                    'note_date'          : 'note_focus',
-                                    'note_flags'         : 'note_focus',
-                                    'note_tags'          : 'note_focus' }))
-            return lines
-
-        def filter_notes(search_string=None):
-            if self.search_string != search_string:
-                self.search_string = search_string
-                self.all_notes, match_regex, self.all_notes_cnt = \
-                    self.ndb.filter_notes(self.search_string)
-
-        def get_search_string():
-            return self.search_string
-
-        def list_get_note_content(index, tabstop):
-            lines = []
-            for l in self.all_notes[index].note['content'].split('\n'):
-                lines.append(
-                    urwid.AttrMap(urwid.Text(l.replace('\t', ' ' * tabstop)),
-                                  'note_content',
-                                  'note_content_focus'))
-            return lines
-
-        def list_get_note_json(index):
-            return self.all_notes[index].note
-
-        def get_config():
-            return self.config
-
-        def get_logfile():
-            return self.logfile
-
-        def push_last_view(view):
-            self.last_view.append(view)
-
-        def pop_last_view():
-            return self.last_view.pop()
-
-        def set_note_pinned(note_key, pinned):
-            self.ndb.set_note_pinned(note_key, pinned)
-
-        def remove_status_message(loop, frame):
-            if not hasattr(frame, 'contents'):
-                return
-            frame.contents['footer'] = ( None, None )
-            frame.status_msg_alarm = None
-
-        def cancel_status_message():
-            # XXX verify current loop widget is a urwid.Frame
-            # at the very least make sure the contents variable exists
-            if not hasattr(sncli_loop.widget, 'contents'):
-                return
-            if sncli_loop.widget.status_msg_alarm:
-                sncli_loop.remove_alarm(sncli_loop.widget.status_msg_alarm)
-            sncli_loop.widget.contents['footer'] = ( None, None )
-            sncli_loop.widget.status_msg_alarm = None
-
-        def set_status_message(msg):
-            # XXX verify current loop widget is a urwid.Frame
-            # at the very least make sure the contents variable exists
-            if not hasattr(sncli_loop.widget, 'contents'):
-                return
-            # if there is already a message showing then conatenate them
-            existing_msg = ''
-            if sncli_loop.widget.status_msg_alarm and \
-               'footer' in sncli_loop.widget.contents.keys():
-                existing_msg = \
-                    sncli_loop.widget.contents['footer'][0].base_widget.text + u'\n'
-            # cancel any existing state message alarm
-            cancel_status_message();
-            t = urwid.AttrMap(urwid.Text(existing_msg + msg,
-                                         wrap='clip'),
-                              'status_message')
-            sncli_loop.widget.contents['footer'] = ( t, None )
-            sncli_loop.widget.status_msg_alarm = \
-                sncli_loop.set_alarm_at(time.time() + 5,
-                                        remove_status_message,
-                                        sncli_loop.widget)
-
-        def tempfile_name():
-            if self.tempfile:
-                return self.tempfile.name
-            return ''
-
-        def tempfile_create(note):
-            tempfile_delete()
-            ext = '.txt'
-            if note and 'markdown' in note['systemtags']:
-                ext = '.mkd'
-            self.tempfile = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
-            if note:
-                self.tempfile.write(note['content'])
-            self.tempfile.flush()
-            return self.tempfile
-
-        def tempfile_delete():
-            if self.tempfile:
-                os.unlink(self.tempfile.name)
-            self.tempfile = None
-
-        def handle_common_scroll_keybind(obj, size, key):
-
-            lb = obj.listbox
-
-            if key == self.config.get_keybind('down'):
-                if len(lb.body.positions()) <= 0:
-                    return
-                last = len(lb.body.positions())
-                if lb.focus_position == (last - 1):
-                    return
-                lb.focus_position += 1
-                lb.render(size)
-
-            elif key == self.config.get_keybind('up'):
-                if len(lb.body.positions()) <= 0:
-                    return
-                if lb.focus_position == 0:
-                    return
-                lb.focus_position -= 1
-                lb.render(size)
-
-            elif key == self.config.get_keybind('page_down'):
-                if len(lb.body.positions()) <= 0:
-                    return
-                last = len(lb.body.positions())
-                next_focus = lb.focus_position + size[1]
-                if next_focus >= last:
-                    next_focus = last - 1
-                lb.change_focus(size, next_focus,
-                                offset_inset=0,
-                                coming_from='above')
-
-            elif key == self.config.get_keybind('page_up'):
-                if len(lb.body.positions()) <= 0:
-                    return
-                if 'bottom' in lb.ends_visible(size):
-                    last = len(lb.body.positions())
-                    next_focus = last - size[1] - size[1]
-                else:
-                    next_focus = lb.focus_position - size[1]
-                if next_focus < 0:
-                    next_focus = 0
-                lb.change_focus(size, next_focus,
-                                offset_inset=0,
-                                coming_from='below')
-
-            elif key == self.config.get_keybind('half_page_down'):
-                if len(lb.body.positions()) <= 0:
-                    return
-                last = len(lb.body.positions())
-                next_focus = lb.focus_position + (size[1] / 2)
-                if next_focus >= last:
-                    next_focus = last - 1
-                lb.change_focus(size, next_focus,
-                                offset_inset=0,
-                                coming_from='above')
-
-            elif key == self.config.get_keybind('half_page_up'):
-                if len(lb.body.positions()) <= 0:
-                    return
-                if 'bottom' in lb.ends_visible(size):
-                    last = len(lb.body.positions())
-                    next_focus = last - size[1] - (size[1] / 2)
-                else:
-                    next_focus = lb.focus_position - (size[1] / 2)
-                if next_focus < 0:
-                    next_focus = 0
-                lb.change_focus(size, next_focus,
-                                offset_inset=0,
-                                coming_from='below')
-
-            elif key == self.config.get_keybind('bottom'):
-                if len(lb.body.positions()) <= 0:
-                    return
-                lb.change_focus(size, (len(lb.body.positions()) - 1),
-                                offset_inset=0,
-                                coming_from='above')
-
-            elif key == self.config.get_keybind('top'):
-                if len(lb.body.positions()) <= 0:
-                    return
-                lb.change_focus(size, 0,
-                                offset_inset=0,
-                                coming_from='below')
-
-            elif key == self.config.get_keybind('status'):
-                if obj.status_bar == 'yes':
-                    obj.status_bar = 'no'
-                else:
-                    obj.status_bar = obj.config.get_config('status_bar')
-
-        class SearchNotes(urwid.Edit):
-            def __init__(self, key, note_titles):
-                self.note_titles = note_titles
-                super(SearchNotes, self).__init__(key)
-
-            def keypress(self, size, key):
-                if key == 'esc':
-                    self.note_titles.remove_search_bar()
-                elif key == 'enter':
-                    self.note_titles.update_note_titles(self.get_edit_text())
-                else:
-                    return super(SearchNotes, self).keypress(size, key)
-                return None
-
-        class NoteTitles(urwid.Frame):
-            def __init__(self):
-                self.config = get_config()
-                self.status_msg_alarm = None
-                self.status_bar = self.config.get_config('status_bar')
-                super(NoteTitles, self).__init__(body=None,
-                                                 header=None,
-                                                 footer=None,
-                                                 focus_part='body')
-                self.update_note_titles(None)
-
-            def remove_status_bar(self):
-                self.contents['header'] = ( None, None )
-
-            def remove_search_bar(self):
-                self.contents['footer'] = ( None, None )
-
-            def update_note_titles(self, search_string):
-                filter_notes(search_string)
-                self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker(list_get_note_titles()))
-                self.listbox.keypress = self.note_title_listbox_keypress
-                self.contents['body']   = ( self.listbox, None )
-                self.contents['footer'] = ( None, None )
-                self.update_status()
-                if len(self.listbox.body.positions()) == 0:
-                    set_status_message(u'No notes found!')
-
-            def update_status(self):
-                if self.status_bar != 'yes':
-                    self.remove_status_bar()
-                    return
-
-                cur   = -1
-                total = 0
-                if len(self.listbox.body.positions()) > 0:
-                    cur   = self.listbox.focus_position
-                    total = len(self.listbox.body.positions())
-
-                hdr = u'Simplenote'
-                if get_search_string() != None:
-                    hdr += ' - Search: ' + get_search_string()
-
-                status_title = \
-                    urwid.AttrMap(urwid.Text(
-                                        hdr,
-                                        wrap='clip'),
-                                  'status_bar')
-                status_index = \
-                    ('pack', urwid.AttrMap(urwid.Text(
-                                                 u' ' +
-                                                 str(cur + 1) +
-                                                 u'/' +
-                                                 str(total)),
-                                           'status_bar'))
-                self.status = \
-                    urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
-                                  'status_bar')
-                self.contents['header'] = ( self.status, None )
-
-            def note_title_listbox_keypress(self, size, key):
-                if key == self.config.get_keybind('quit'):
-                    raise urwid.ExitMainLoop()
-
-                elif key == self.config.get_keybind('help'):
-                    push_last_view(self)
-                    sncli_loop.widget = Help()
-
-                elif key == self.config.get_keybind('note_pin'):
-                    set_note_pinned(
-                        list_get_note_json(
-                            self.listbox.focus_position)['key'], 1)
-
-                elif key == self.config.get_keybind('note_unpin'):
-                    set_note_pinned(
-                        list_get_note_json(
-                            self.listbox.focus_position)['key'], 0)
-
-                elif key == self.config.get_keybind('view_log'):
-                    push_last_view(self)
-                    sncli_loop.widget = ViewLog()
-
-                elif key == self.config.get_keybind('view_note'):
-                    if len(self.listbox.body.positions()) > 0:
-                        push_last_view(self)
-                        sncli_loop.widget = NoteContent(self.listbox.focus_position,
-                                                        int(get_config().get_config('tabstop')))
-
-                elif key == 'meta enter':
-                    pager = None
-                    if self.config.get_config('pager'):
-                        pager = self.config.get_config('pager')
-                    if not pager and os.environ['PAGER']:
-                        pager = os.environ['PAGER']
-                    if not pager:
-                        set_status_message(u'No pager configured!')
-                        return
-
-                    saveb = self.contents['body'][0] \
-                                if 'body' in self.contents.keys() else None
-                    saveh = self.contents['header'][0] \
-                                if 'header' in self.contents.keys() else None
-                    savef = self.contents['footer'][0] \
-                                if 'footer' in self.contents.keys() else None
-
-                    tempfile_create(list_get_note_json(self.listbox.focus_position))
-                    try:
-                        subprocess.check_call(pager + u' ' + tempfile_name(), shell=True)
-                    except Exception, e:
-                        set_status_message(u'Pager error: ' + str(e))
-
-                    # XXX check if modified, if so update it
-                    tempfile_delete()
-
-                    self.contents['body']   = ( saveb, None )
-                    self.contents['header'] = ( saveh, None )
-                    self.contents['footer'] = ( savef, None )
-
-                elif key == self.config.get_keybind('search'):
-                    self.contents['footer'] = \
-                        ( urwid.AttrMap(SearchNotes(key, self), 'search_bar'), None )
-                    self.focus_position = 'footer'
-
-                elif key == self.config.get_keybind('clear_search'):
-                    self.update_note_titles(None)
-
-                else:
-                    handle_common_scroll_keybind(self, size, key)
-                    self.update_status()
-
-        class NoteContent(urwid.Frame):
-            def __init__(self, nl_focus_index, tabstop):
-                self.config = get_config()
-                self.status_bar = self.config.get_config('status_bar')
-                self.nl_focus_index = nl_focus_index
-                self.note = list_get_note_json(self.nl_focus_index)
-                self.listbox = \
-                    urwid.ListBox(urwid.SimpleFocusListWalker(
-                            list_get_note_content(self.nl_focus_index, tabstop)))
-                self.listbox.keypress = self.note_content_listbox_keypress
-                super(NoteContent, self).__init__(body=self.listbox,
-                                                  header=None,
-                                                  footer=None,
-                                                  focus_part='body')
-                self.update_status()
-
-            def update_status(self):
-                if self.status_bar != 'yes':
-                    self.contents['header'] = ( None, None )
-                    return
-
-                cur   = -1
-                total = 0
-                if len(self.listbox.body.positions()) > 0:
-                    cur   = self.listbox.focus_position
-                    total = len(self.listbox.body.positions())
-
-                t = time.localtime(float(self.note['modifydate']))
-                mod_time = time.strftime('%a, %d %b %Y %H:%M:%S', t)
-                tags = '%s' % ','.join(self.note['tags'])
-                status_title = \
-                    urwid.AttrMap(urwid.Text(
-                                        u'Title: ' +
-                                        utils.get_note_title(self.note),
-                                        wrap='clip'),
-                                  'status_bar')
-                status_index = \
-                    ('pack', urwid.AttrMap(urwid.Text(
-                                                 u' ' +
-                                                 str(cur + 1) +
-                                                 u'/' +
-                                                 str(total)),
-                                           'status_bar'))
-                status_date = \
-                    urwid.AttrMap(urwid.Text(
-                                        u'Date: ' +
-                                        mod_time,
-                                        wrap='clip'),
-                                  'status_bar')
-                status_tags = \
-                    ('pack', urwid.AttrMap(urwid.Text(
-                                                 u'[' + tags + u']'),
-                                           'status_bar'))
-                pile_top = urwid.Columns([ status_title, status_index ])
-                pile_bottom = urwid.Columns([ status_date, status_tags ])
-                self.status = \
-                    urwid.AttrMap(urwid.Pile([ pile_top, pile_bottom ]),
-                                  'status_bar')
-                self.contents['header'] = ( self.status, None )
-
-            def note_content_listbox_keypress(self, size, key):
-                if key == self.config.get_keybind('quit'):
-                    sncli_loop.widget = pop_last_view()
-
-                elif key == self.config.get_keybind('help'):
-                    push_last_view(self)
-                    sncli_loop.widget = Help()
-
-                elif key == self.config.get_keybind('view_log'):
-                    push_last_view(self)
-                    sncli_loop.widget = ViewLog()
-
-                elif key == self.config.get_keybind('tabstop2'):
-                    sncli_loop.widget = NoteContent(self.nl_focus_index, 2)
-
-                elif key == self.config.get_keybind('tabstop4'):
-                    sncli_loop.widget = NoteContent(self.nl_focus_index, 4)
-
-                elif key == self.config.get_keybind('tabstop8'):
-                    sncli_loop.widget = NoteContent(self.nl_focus_index, 8)
-
-                else:
-                    handle_common_scroll_keybind(self, size, key)
-                    self.update_status()
-
-        class ViewLog(urwid.Frame):
-            def __init__(self):
-                self.config = get_config()
-                self.status_bar = self.config.get_config('status_bar')
-                f = open(get_logfile())
-                lines = []
-                for line in f:
-                    lines.append(
-                        urwid.AttrMap(urwid.Text(line.rstrip()),
-                                      'note_content',
-                                      'note_content_focus'))
-                f.close()
-                self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker(lines))
-                self.listbox.keypress = self.view_log_listbox_keypress
-                super(ViewLog, self).__init__(body=self.listbox,
-                                              header=None,
-                                              footer=None,
-                                              focus_part='body')
-                self.update_status()
-
-            def update_status(self):
-                if self.status_bar != 'yes':
-                    self.contents['header'] = ( None, None )
-                    return
-
-                cur   = -1
-                total = 0
-                if len(self.listbox.body.positions()) > 0:
-                    cur   = self.listbox.focus_position
-                    total = len(self.listbox.body.positions())
-
-                status_title = \
-                    urwid.AttrMap(urwid.Text(
-                                        u'Sync Log',
-                                        wrap='clip'),
-                                  'status_bar')
-                status_index = \
-                    ('pack', urwid.AttrMap(urwid.Text(
-                                                 u' ' +
-                                                 str(cur + 1) +
-                                                 u'/' +
-                                                 str(total)),
-                                           'status_bar'))
-                self.status = \
-                    urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
-                                  'status_bar')
-                self.contents['header'] = ( self.status, None )
-
-            def view_log_listbox_keypress(self, size, key):
-                if key == self.config.get_keybind('quit'):
-                    sncli_loop.widget = pop_last_view()
-
-                elif key == self.config.get_keybind('help'):
-                    push_last_view(self)
-                    sncli_loop.widget = Help()
-
-                else:
-                    handle_common_scroll_keybind(self, size, key)
-                    self.update_status()
-
-        class Help(urwid.Frame):
-            def __init__(self):
-                self.config = get_config()
-                self.status_bar = self.config.get_config('status_bar')
-
-                lines = []
-
-                # Common keybinds
-                keys = [ 'help',
-                         'quit',
-                         'down',
-                         'up',
-                         'page_down',
-                         'page_up',
-                         'half_page_down',
-                         'half_page_up',
-                         'bottom',
-                         'top',
-                         'status',
-                         'view_log' ]
-                lines.extend(self.create_kb_help_lines(u"Keybinds Common", keys))
-
-                # NoteTitles keybinds
-                keys = [ 'note_pin',
-                         'note_unpin',
-                         'search',
-                         'clear_search',
-                         'view_note',
-                         'view_note_ext' ]
-                lines.extend(self.create_kb_help_lines(u"Keybinds Note List", keys))
-
-                # NoteContent keybinds
-                keys = [ 'note_pin',
-                         'note_unpin',
-                         'tabstop2',
-                         'tabstop4',
-                         'tabstop8' ]
-                lines.extend(self.create_kb_help_lines(u"Keybinds Note Content", keys))
-
-                lines.extend(self.create_config_help_lines())
-                lines.extend(self.create_color_help_lines())
-
-                lines.append(urwid.Text(('help_header', u'')))
-
-                self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker(lines))
-                self.listbox.keypress = self.help_listbox_keypress
-                super(Help, self).__init__(body=self.listbox,
-                                           header=None,
-                                           footer=None,
-                                           focus_part='body')
-                self.update_status()
-
-            def update_status(self):
-                if self.status_bar != 'yes':
-                    self.contents['header'] = ( None, None )
-                    return
-
-                cur   = -1
-                total = 0
-                if len(self.listbox.body.positions()) > 0:
-                    cur   = self.listbox.focus_position
-                    total = len(self.listbox.body.positions())
-
-                status_title = \
-                    urwid.AttrMap(urwid.Text(
-                                        u'Help',
-                                        wrap='clip'),
-                                  'status_bar')
-                status_index = \
-                    ('pack', urwid.AttrMap(urwid.Text(
-                                                 u' ' +
-                                                 str(cur + 1) +
-                                                 u'/' +
-                                                 str(total)),
-                                           'status_bar'))
-                self.status = \
-                    urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
-                                  'status_bar')
-                self.contents['header'] = ( self.status, None )
-
-            def create_kb_help_lines(self, header, keys):
-                lines = [ urwid.AttrMap(urwid.Text(u''),
-                                        'help_header',
-                                        'help_focus') ]
-                lines.append(urwid.AttrMap(urwid.Text(u' ' + header),
-                                           'help_header',
-                                           'help_focus'))
-                for c in keys:
-                    lines.append(
-                        urwid.AttrMap(
-                          urwid.Text(
-                            [
-                              ('help_descr',  '{:>24}  '.format(self.config.get_keybind_descr(c))),
-                              ('help_config', '{:>25}  '.format(u'kb_' + c)),
-                              ('help_value',  u"'" + self.config.get_keybind(c) + u"'")
-                            ]
-                          ),
-                          attr_map = None,
-                          focus_map = {
-                                        'help_value'  : 'help_focus',
-                                        'help_config' : 'help_focus',
-                                        'help_descr'  : 'help_focus'
-                                      }
-                        ))
-                return lines
-
-            def create_config_help_lines(self):
-                lines = [ urwid.AttrMap(urwid.Text(u''),
-                                        'help_header',
-                                        'help_focus') ]
-                lines.append(urwid.AttrMap(urwid.Text(u' Configuration'),
-                                           'help_header',
-                                           'help_focus'))
-                for c in sorted(self.config.configs):
-                    if c in [ 'sn_username', 'sn_password' ]: continue
-                    lines.append(
-                        urwid.AttrMap(
-                          urwid.Text(
-                            [
-                              ('help_descr',  '{:>24}  '.format(self.config.get_config_descr(c))),
-                              ('help_config', '{:>25}  '.format(u'cfg_' + c)),
-                              ('help_value',  u"'" + self.config.get_config(c) + u"'")
-                            ]
-                          ),
-                          attr_map = None,
-                          focus_map = {
-                                        'help_value'  : 'help_focus',
-                                        'help_config' : 'help_focus',
-                                        'help_descr'  : 'help_focus'
-                                      }
-                        ))
-                return lines
-
-            def create_color_help_lines(self):
-                lines = [ urwid.AttrMap(urwid.Text(u''),
-                                        'help_header',
-                                        'help_focus') ]
-                lines.append(urwid.AttrMap(urwid.Text(u' Colors'),
-                                           'help_header',
-                                           'help_focus'))
-                fmap = {}
-                for c in sorted(self.config.colors):
-                    fmap[re.search("^(.*)(_fg|_bg)$", c).group(1)] = 'help_focus'
-                for c in sorted(self.config.colors):
-                    lines.append(
-                        urwid.AttrMap(
-                          urwid.Text(
-                            [
-                              ('help_descr',  '{:>24}  '.format(self.config.get_color_descr(c))),
-                              ('help_config', '{:>25}  '.format(u'clr_' + c)),
-                              (re.search("^(.*)(_fg|_bg)$", c).group(1),
-                                   u"'" + self.config.get_color(c) + u"'")
-                            ]
-                          ),
-                          attr_map = None,
-                          focus_map = fmap
-                        ))
-                return lines
-
-            def help_listbox_keypress(self, size, key):
-                if key == self.config.get_keybind('quit'):
-                    sncli_loop.widget = pop_last_view()
-
-                else:
-                    handle_common_scroll_keybind(self, size, key)
-                    self.update_status()
 
         palette = \
           [
@@ -913,11 +384,26 @@ class sncli:
                 self.config.get_color('help_descr_bg') )
           ]
 
-        sncli_loop = urwid.MainLoop(NoteTitles(),
-                                    palette,
-                                    handle_mouse=False)
-        sncli_loop.run()
+        self.master_frame = urwid.Frame(body=None,
+                                        header=None,
+                                        footer=None,
+                                        focus_part='body')
+        self.sncli_loop = urwid.MainLoop(self.master_frame,
+                                         palette,
+                                         handle_mouse=False)
 
+        self.master_frame.keypress = self.frame_keypress
+        self.body_set(
+            view_titles.ViewTitles(self.config,
+                                   {
+                                    'ndb'            : self.ndb,
+                                    'search_string'  : None,
+                                    'body_changer'   : self.switch_frame_body,
+                                    'status_message' : self.status_message_set
+                                   }))
+        self.update_status_bar()
+
+        self.sncli_loop.run()
 
 def SIGINT_handler(signum, frame):
     print('\nSignal caught, bye!')
