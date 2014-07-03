@@ -10,7 +10,6 @@ class ViewTitles(urwid.ListBox):
         self.search_string = args['search_string']
         self.body_changer = args['body_changer']
         self.status_message = args['status_message']
-        self.sync_func = args['sync_func']
         self.all_notes, match_regex, self.all_notes_cnt = \
             self.ndb.filter_notes(self.search_string)
         if len(self.all_notes) == 0:
@@ -180,7 +179,6 @@ class ViewTitles(urwid.ListBox):
                 self.ndb.set_note_pinned(
                     self.all_notes[self.focus_position].note['key'], 1)
                 self.update_note_title(None, self.focus_position)
-                self.sync_func()
             return None
 
         elif key == self.config.get_keybind('note_unpin'):
@@ -188,7 +186,6 @@ class ViewTitles(urwid.ListBox):
                 self.ndb.set_note_pinned(
                     self.all_notes[self.focus_position].note['key'], 0)
                 self.update_note_title(None, self.focus_position)
-                self.sync_func()
             return None
 
         elif key == self.config.get_keybind('view_note'):
