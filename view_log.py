@@ -13,6 +13,8 @@ class ViewLog(urwid.ListBox):
                                 'note_content',
                                 'note_content_focus'))
         f.close()
+        if self.config.get_config('log_reversed') == 'yes':
+            lines.reverse()
         super(ViewLog, self).__init__(urwid.SimpleFocusListWalker(lines))
 
     def get_status_bar(self):

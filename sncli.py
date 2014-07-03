@@ -173,7 +173,7 @@ class sncli:
     def switch_frame_body(self, args):
         if args == None:
             if len(self.last_view) == 0:
-                self.ndb.sync_to_server_threaded(False)
+                # XXX verify all notes saved...
                 self.sncli_loop.widget = None
                 raise urwid.ExitMainLoop()
             else:
@@ -190,10 +190,10 @@ class sncli:
         self.master_frame.keypress = self.frame_keypress
 
     def search_input(self, search_string):
+        self.footer_clear()
+        self.body_focus()
+        self.master_frame.keypress = self.frame_keypress
         if search_string:
-            self.footer_clear()
-            self.body_focus()
-            self.master_frame.keypress = self.frame_keypress
             self.body_set(
                 view_titles.ViewTitles(self.config,
                                        {
@@ -202,25 +202,15 @@ class sncli:
                                         'body_changer'   : self.switch_frame_body,
                                         'status_message' : self.status_message_set
                                        }))
-        else:
-            self.footer_clear()
-            self.body_focus()
-            self.master_frame.keypress = self.frame_keypress
 
     def tags_input(self, tags):
+        self.footer_clear()
+        self.body_focus()
+        self.master_frame.keypress = self.frame_keypress
         if tags != None:
-            self.footer_clear()
-            self.body_focus()
-            self.master_frame.keypress = self.frame_keypress
-
             lb = self.body_get()
             self.ndb.set_note_tags(lb.all_notes[lb.focus_position].note['key'], tags)
             lb.update_note_title(None, lb.focus_position)
-            self.update_status_bar()
-        else:
-            self.footer_clear()
-            self.body_focus()
-            self.master_frame.keypress = self.frame_keypress
 
     def frame_keypress(self, size, key):
 
@@ -334,7 +324,7 @@ class sncli:
                 self.footer_focus()
                 self.master_frame.keypress = self.footer_get().keypress
 
-        elif key == 't':
+        elif key == self.config.get_keybind('note_tags'):
             # edit tags when viewing the note list
             if self.body_get().__class__ == view_titles.ViewTitles:
                 self.status_message_cancel()
@@ -347,9 +337,6 @@ class sncli:
                                   'search_bar'))
                 self.footer_focus()
                 self.master_frame.keypress = self.footer_get().keypress
-
-        elif key == 'S':
-            self.sync_full_threaded()
 
         elif key == self.config.get_keybind('clear_search'):
             self.body_set(

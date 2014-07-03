@@ -76,13 +76,6 @@ class NotesDB(utils.SubjectMixin):
         # in progress. This variable is only used by the background thread.
         self.threaded_syncing_keys = {}
 
-        self.q_sync = Queue()
-        self.q_sync_res = Queue()
-
-        thread_sync = Thread(target=self.worker_sync)
-        thread_sync.setDaemon(True)
-        thread_sync.start()
-
     def create_note(self, title):
         # need to get a key unique to this database. not really important
         # what it is, as long as it's unique.
@@ -105,11 +98,6 @@ class NotesDB(utils.SubjectMixin):
         self.notes[new_key] = new_note
 
         return new_key
-
-    def delete_note(self, key):
-        n = self.notes[key]
-        n['deleted'] = 1
-        n['modifydate'] = time.time()
 
     def filter_notes(self, search_string=None):
         """Return list of notes filtered with search string.
@@ -315,6 +303,12 @@ class NotesDB(utils.SubjectMixin):
     def get_note(self, key):
         return self.notes[key]
 
+    def get_note_systemtags(self, key):
+        return self.notes[key].get('systemtags')
+
+    def get_note_tags(self, key):
+        return self.notes[key].get('tags')
+
     def get_note_content(self, key):
         return self.notes[key].get('content')
 
@@ -334,8 +328,83 @@ class NotesDB(utils.SubjectMixin):
 
         return o
 
-    def get_sync_queue_len(self):
-        return self.q_sync.qsize()
+    def flag_what_changed(self, note, what_changed):
+        if 'what_changed' not in note:
+            note['what_changed'] = []
+        if what_changed not in note['what_changed']:
+            note['what_changed'].append(what_changed)
+
+    def set_note_deleted(self, key):
+        n = self.notes[key]
+        if not n['deleted']:
+            n['deleted'] = 1
+            n['modifydate'] = time.time()
+            self.notify_observers('change:note-status',
+                                  utils.KeyValueObject(what='modifydate',
+                                                       key=key,
+                                                       msg='Note trashed.'))
+            self.flag_what_changed(n, 'deleted')
+
+    def set_note_content(self, key, content):
+        n = self.notes[key]
+        old_content = n.get('content')
+        if content != old_content:
+            n['content'] = content
+            n['modifydate'] = time.time()
+            self.notify_observers('change:note-status',
+                                  utils.KeyValueObject(what='modifydate',
+                                                       key=key,
+                                                       msg='Note content updated.'))
+            self.flag_what_changed(n, 'content')
+
+    def set_note_tags(self, key, tags):
+        n = self.notes[key]
+        old_tags = n.get('tags')
+        tags = utils.sanitise_tags(tags)
+        if tags != old_tags:
+            n['tags'] = tags
+            n['modifydate'] = time.time()
+            self.notify_observers('change:note-status',
+                                  utils.KeyValueObject(what='modifydate',
+                                                       key=key,
+                                                       msg='Note tags updated.'))
+            self.flag_what_changed(n, 'tags')
+
+    def set_note_pinned(self, key, pinned):
+        n = self.notes[key]
+        old_pinned = utils.note_pinned(n)
+        if pinned != old_pinned:
+            if 'systemtags' not in n:
+                n['systemtags'] = []
+            systemtags = n['systemtags']
+            if pinned:
+                systemtags.append('pinned')
+            else:
+                systemtags.remove('pinned')
+            n['modifydate'] = time.time()
+            self.notify_observers('change:note-status',
+                utils.KeyValueObject(what='modifydate',
+                                     key=key,
+                                     msg='Note pinned.' if pinned else 'Note unpinned.'))
+            self.flag_what_changed(n, 'systemtags')
+
+    def set_note_markdown(self, key, markdown):
+        n = self.notes[key]
+        old_markdown = utils.note_markdown(n)
+        if markdown != old_markdown:
+            if 'systemtags' not in n:
+                n['systemtags'] = []
+            systemtags = n['systemtags']
+            if markdown:
+                systemtags.append('markdown')
+            else:
+                systemtags.remove('markdown')
+            n['modifydate'] = time.time()
+            self.notify_observers('change:note-status',
+                utils.KeyValueObject(what='modifydate',
+                                     key=key,
+                                     msg='Note markdown flagged.' if pinned else 'Note markdown unflagged.'))
+            self.flag_what_changed(n, 'systemtags')
 
     def helper_key_to_fname(self, k):
             return os.path.join(self.config.get_config('db_path'), k) + '.json'
@@ -351,7 +420,7 @@ class NotesDB(utils.SubjectMixin):
         # record that we saved this to disc.
         note['savedate'] = time.time()
 
-    def sync_note_unthreaded(self, k):
+    def sync_note(self, k, check_for_new):
         """Sync a single note with the server.
 
         Update existing note in memory with the returned data.
@@ -360,175 +429,80 @@ class NotesDB(utils.SubjectMixin):
 
         note = self.notes[k]
 
-        if not note.get('key') or float(note.get('modifydate')) > float(note.get('syncdate')):
-            # if has no key, or it has been modified sync last sync,
-            # update to server
-            uret = self.simplenote.update_note(note)
+        # update if note has no key or it has been modified since last sync
+        if not note.get('key') or \
+           float(note.get('modifydate')) > float(note.get('syncdate')):
+            logging.debug('Sync worker: updating note %s', k)
 
-            if uret[1] == 0:
-                # success!
+            # only send required fields
+            cn = copy.deepcopy(note)
+            del note['what_changed']
+
+            del cn['minversion']
+            del cn['createdate']
+            del cn['syncdate']
+            del cn['savedate']
+
+            if 'deleted' not in cn['what_changed']:
+                del cn['deleted']
+            if 'systemtags' not in cn['what_changed']:
+                del cn['systemtags']
+            if 'tags' not in cn['what_changed']:
+                del cn['tags']
+            if 'content' not in cn['what_changed']:
+                del cn['content']
+            del cn['what_changed']
+
+            uret = self.simplenote.update_note(cn)
+            #uret = self.simplenote.update_note(note)
+
+            if uret[1] == 0: # success!
                 n = uret[0]
-
-                # if content was unchanged, there'll be no content sent back!
-                if n.get('content', None):
-                    new_content = True
-
-                else:
-                    new_content = False
-
-                now = time.time()
-                # 1. store when we've synced
-                n['syncdate'] = now
-
-                # update our existing note in-place!
+                # if content was unchanged there'll be no content sent back
+                new_content = True if n.get('content', None) else False
+                # store when we've synced
+                n['syncdate'] = time.time()
                 note.update(n)
-
-                # return the key
+                logging.debug('Sync worker: updated note %s', k)
                 return (k, new_content)
-
             else:
+                logging.debug('ERROR: Sync worker: update failed for note %s', k)
                 return None
 
-
         else:
-            # our note is synced up, but we check if server has something new for us
+            if not check_for_new:
+                return None
+
+            logging.debug('Sync worker: checking for server update of note %s', k)
+
+            # our note is synced so lets check if server has something newer
             gret = self.simplenote.get_note(note['key'])
 
-            if gret[1] == 0:
+            if gret[1] == 0: # success!
                 n = gret[0]
-
                 if int(n.get('syncnum')) > int(note.get('syncnum')):
+                    # store what we pulled down from the server
                     n['syncdate'] = time.time()
                     note.update(n)
+                    logging.debug('Sync worker: server had an update for note %s', k)
                     return (k, True)
-
                 else:
+                    logging.debug('Sync worker: server in sync with note %s', k)
                     return (k, False)
-
             else:
+                logging.debug('ERROR: Sync worker: get failed for note %s', k)
                 return None
 
-    # worker thread...
-    def save_worker(self):
-        logging.debug('Save worker: started')
+    # sync worker thread...
+    def sync_worker(self):
+        logging.debug('Sync worker: started')
         while True:
             time.sleep(5)
-            #logging.debug('Save worker: checking for work')
+            now = time.time()
             for k,n in self.notes.items():
-                savedate = float(n.get('savedate'))
-                if float(n.get('modifydate')) > savedate or \
-                   float(n.get('syncdate')) > savedate:
-                    try:
-                        # this will write the new savedate into the note
-                        self.helper_save_note(k, n)
-                        logging.debug('Saved note: %s', k)
-                    except WriteError, e:
-                        msg = 'ERROR: Failed to write file to the filesystem!'
-                        logging.error(msg)
-                        print msg
-                        os._exit(1)
-
-    def sync_to_server_threaded(self, wait_for_idle=True):
-        """Only sync notes that have been changed / created locally since previous sync.
-
-        This function is called by the housekeeping handler, so once every
-        few seconds.
-
-        @param wait_for_idle: Usually, last modification date has to be more
-        than a few seconds ago before a sync to server is attempted. If
-        wait_for_idle is set to False, no waiting is applied. Used by exit
-        cleanup in controller.
-
-        """
-
-        # this many seconds of idle time (i.e. modification this long ago)
-        # before we try to sync.
-        if wait_for_idle:
-            lastmod = 3
-        else:
-            lastmod = 0
-
-        now = time.time()
-        for k,n in self.notes.items():
-            # if note has been modified sinc the sync, we need to sync.
-            # only do so if note hasn't been touched for 3 seconds
-            # and if this note isn't still in the queue to be processed by the
-            # worker (this last one very important)
-            modifydate = float(n.get('modifydate', -1))
-            syncdate = float(n.get('syncdate', -1))
-            if modifydate > syncdate and \
-               now - modifydate > lastmod and \
-               k not in self.threaded_syncing_keys:
-                # record that we've requested a sync on this note,
-                # so that we don't keep on putting stuff on the queue.
-                self.threaded_syncing_keys[k] = True
-                cn = copy.deepcopy(n)
-                # we store the timestamp when this copy was made as the syncdate
-                cn['syncdate'] = time.time()
-                # put it on my queue as a sync
-                o = utils.KeyValueObject(key=k, note=cn)
-                self.q_sync.put(o)
-
-        # in this same call, we read out the result queue
-        nsynced = 0
-        nerrored = 0
-        while True:
-            try:
-                o = self.q_sync_res.get_nowait()
-            except Empty:
-                break
-
-            okey = o.key
-
-            if o.error:
-                nerrored += 1
-                del self.threaded_syncing_keys[okey]
-                continue
-
-            # o (.key, .note) is something that was synced
-
-            # we only apply the changes if the syncdate is newer than
-            # what we already have, since the main thread could be
-            # running a full sync whilst the worker thread is putting
-            # results in the queue.
-            if float(o.note['syncdate']) > float(self.notes[okey]['syncdate']):
-
-                if float(o.note['syncdate']) > float(self.notes[okey]['modifydate']):
-                    # note was synced AFTER the last modification to our local version
-                    # do an in-place update of the existing note
-                    # this could be with or without new content.
-                    old_note = copy.deepcopy(self.notes[okey])
-                    self.notes[okey].update(o.note)
-                    self.notify_observers('synced:note',
-                                          utils.KeyValueObject(lkey=okey,
-                                                               old_note=old_note,
-                                                               msg='Note synced.'))
-
-                else:
-                    # the user has changed stuff since the version that got synced
-                    # just record syncnum and version that we got from simplenote
-                    # if we don't do this, merging problems start happening.
-                    # VERY importantly: also store the key. It
-                    # could be that we've just created the
-                    # note, but that the user continued
-                    # typing. We need to store the new server
-                    # key, else we'll keep on sending new
-                    # notes.
-                    tkeys = ['syncnum', 'version', 'syncdate', 'key']
-                    for tk in tkeys:
-                        self.notes[okey][tk] = o.note[tk]
-
-                nsynced += 1
-                self.notify_observers('change:note-status',
-                                      utils.KeyValueObject(what='syncdate',
-                                                           key=okey,
-                                                           msg='Note synced.'))
-
-            # after having handled the note that just came back,
-            # we can take it from this blocker dict
-            del self.threaded_syncing_keys[okey]
-
-        return (nsynced, nerrored)
+                modifydate = float(n.get('modifydate', -1))
+                if (now - modifydate) > 3:
+                    self.sync_note(k, False)
 
     def sync_full(self):
         """Perform a full bi-directional sync with server.
@@ -655,83 +629,23 @@ class NotesDB(utils.SubjectMixin):
 
         return sync_from_server_errors
 
-    def set_note_content(self, key, content):
-        n = self.notes[key]
-        old_content = n.get('content')
-        if content != old_content:
-            n['content'] = content
-            n['modifydate'] = time.time()
-            self.notify_observers('change:note-status',
-                                  utils.KeyValueObject(what='modifydate',
-                                                       key=key,
-                                                       msg='Note content updated.'))
-
-    def set_note_tags(self, key, tags):
-        n = self.notes[key]
-        old_tags = n.get('tags')
-        tags = utils.sanitise_tags(tags)
-        if tags != old_tags:
-            n['tags'] = tags
-            n['modifydate'] = time.time()
-            self.notify_observers('change:note-status',
-                                  utils.KeyValueObject(what='modifydate',
-                                                       key=key,
-                                                       msg='Note tags updated.'))
-
-    def set_note_pinned(self, key, pinned):
-        n = self.notes[key]
-        old_pinned = utils.note_pinned(n)
-        if pinned != old_pinned:
-            if 'systemtags' not in n:
-                n['systemtags'] = []
-            systemtags = n['systemtags']
-            if pinned:
-                systemtags.append('pinned')
-            else:
-                systemtags.remove('pinned')
-            n['modifydate'] = time.time()
-            self.notify_observers('change:note-status',
-                utils.KeyValueObject(what='modifydate',
-                                     key=key,
-                                     msg='Note pinned.' if pinned else 'Note unpinned.'))
-
-    def worker_sync(self):
+    # save worker thread...
+    def save_worker(self):
+        logging.debug('Save worker: started')
         while True:
-            o = self.q_sync.get()
-
-            if 'key' in o.note:
-                logging.debug('Updating note %s (local key %s) to server.' % (o.note['key'], o.key))
-            else:
-                logging.debug('Sending new note (local key %s) to server.' % (o.key,))
-
-            uret = self.simplenote.update_note(o.note)
-
-            if uret[1] != 0:
-                logging.error(uret[0])
-                # put it on the result queue
-                o.error = 1
-                self.q_sync_res.put(o)
-                continue
-
-            # success!
-            n = uret[0]
-
-            if not n.get('content', None):
-                # if note has not been changed, we don't get content back
-                # delete our own copy too.
-                del o.note['content']
-
-            logging.debug('Server replies with updated note ' + n['key'])
-
-            # syncdate was set when the note was copied into our queue
-            # we rely on that to determine when a returned note should
-            # overwrite a note in the main list.
-
-            # store the actual note back into o
-            # in-place update of our existing note copy
-            o.note.update(n)
-
-            # put it on the result queue
-            o.error = 0
-            self.q_sync_res.put(o)
+            time.sleep(5)
+            #logging.debug('Save worker: checking for work')
+            for k,n in self.notes.items():
+                savedate = float(n.get('savedate'))
+                if float(n.get('modifydate')) > savedate or \
+                   float(n.get('syncdate')) > savedate:
+                    try:
+                        # this will write the new savedate into the note
+                        self.helper_save_note(k, n)
+                        logging.debug('Save worker: saved note %s', k)
+                    except WriteError, e:
+                        msg = 'ERROR: Failed to write file to the filesystem!'
+                        logging.error(msg)
+                        print msg
+                        os._exit(1)
 

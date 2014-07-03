@@ -19,6 +19,7 @@ class Config:
          'cfg_format_note_title' : '[%D] %F %-N %T',
          'cfg_status_bar'        : 'yes',
          'cfg_pager'             : 'less -c',
+         'cfg_log_reversed'      : 'yes',
 
          'kb_help'           : 'h',
          'kb_quit'           : 'q',
@@ -41,6 +42,7 @@ class Config:
          'kb_clear_search'   : 'a',
          'kb_note_pin'       : 'p',
          'kb_note_unpin'     : 'u',
+         'kb_note_tags'      : 't',
 
          'clr_default_fg'            : 'default',
          'clr_default_bg'            : 'default',
@@ -105,7 +107,8 @@ class Config:
          'format_strftime'   : [ cp.get(cfg_sec, 'cfg_format_strftime', raw=True),   'Date strftime format' ],
          'format_note_title' : [ cp.get(cfg_sec, 'cfg_format_note_title', raw=True), 'Note title format' ],
          'status_bar'        : [ cp.get(cfg_sec, 'cfg_status_bar'),                  'Status bar location' ],
-         'pager'             : [ cp.get(cfg_sec, 'cfg_pager'),                       'External pager' ]
+         'pager'             : [ cp.get(cfg_sec, 'cfg_pager'),                       'External pager' ],
+         'log_reversed'      : [ cp.get(cfg_sec, 'cfg_log_reversed'),                'Log file reversed' ]
         }
 
         self.keybinds = \
@@ -130,7 +133,8 @@ class Config:
          'search'         : [ cp.get(cfg_sec, 'kb_search'),         'Search notes' ],
          'clear_search'   : [ cp.get(cfg_sec, 'kb_clear_search'),   'Show all notes' ],
          'note_pin'       : [ cp.get(cfg_sec, 'kb_note_pin'),       'Pin note' ],
-         'note_unpin'     : [ cp.get(cfg_sec, 'kb_note_unpin'),     'Unpin note' ]
+         'note_unpin'     : [ cp.get(cfg_sec, 'kb_note_unpin'),     'Unpin note' ],
+         'note_tags'      : [ cp.get(cfg_sec, 'kb_note_tags'),      'Edit note tags' ]
         }
 
         self.colors = \

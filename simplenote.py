@@ -15,6 +15,7 @@ from urllib2 import HTTPError
 import base64
 import time
 import datetime
+import logging
 
 try:
     import json
@@ -32,7 +33,6 @@ NOTE_FETCH_LENGTH = 100
 
 class SimplenoteLoginFailed(Exception):
     pass
-
 
 class Simplenote(object):
     """ Class for interacting with the simplenote web service """
@@ -101,12 +101,15 @@ class Simplenote(object):
             params_version = '/' + str(version)
          
         params = '/%s%s?auth=%s&email=%s' % (str(noteid), params_version, self.get_token(), self.username)
+        logging.debug('REQUEST: ' + DATA_URL+params)
         request = Request(DATA_URL+params)
         try:
             response = urllib2.urlopen(request)
         except HTTPError, e:
+            logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
         except IOError, e:
+            logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
         note = json.loads(response.read())
         # use UTF-8 encoding
@@ -114,6 +117,7 @@ class Simplenote(object):
         # For early versions of notes, tags not always available
         if note.has_key("tags"):
             note["tags"] = [t.encode('utf-8') for t in note["tags"]]
+        logging.debug('RESPONSE OK: ' + str(note))
         return note, 0
 
     def update_note(self, note):
@@ -133,8 +137,9 @@ class Simplenote(object):
         # use UTF-8 encoding
         # cpbotha: in both cases check if it's not unicode already
         # otherwise you get "TypeError: decoding Unicode is not supported"
-        if isinstance(note["content"], str):
-            note["content"] = unicode(note["content"], 'utf-8')
+        if note.has_key("content"):
+            if isinstance(note["content"], str):
+                note["content"] = unicode(note["content"], 'utf-8')
 
         if note.has_key("tags"):
             # if a tag is a string, unicode it, otherwise pass it through
@@ -152,11 +157,13 @@ class Simplenote(object):
                                               self.get_token(), self.username)
         else:
             url = '%s?auth=%s&email=%s' % (DATA_URL, self.get_token(), self.username)
+        logging.debug('REQUEST: ' + url + ' - ' + str(note))
         request = Request(url, urllib.quote(json.dumps(note)))
         response = ""
         try:
             response = urllib2.urlopen(request)
         except IOError, e:
+            logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
         note = json.loads(response.read())
         if note.has_key("content"):
@@ -164,6 +171,7 @@ class Simplenote(object):
             note["content"] = note["content"].encode('utf-8')
         if note.has_key("tags"):
             note["tags"] = [t.encode('utf-8') for t in note["tags"]]
+        logging.debug('RESPONSE OK: ' + str(note))
         return note, 0
 
     def add_note(self, note):
