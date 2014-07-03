@@ -47,9 +47,15 @@ class sncli:
         self.sync_notes_alarm = None
         self.sync_notes_lock = threading.Lock()
 
+        self.thread_save = threading.Thread(target=self.ndb.save_worker)
+        self.thread_save.setDaemon(True)
+
         self.ndb.add_observer('synced:note', self.observer_notes_db_synced_note)
         self.ndb.add_observer('change:note-status', self.observer_notes_db_change_note_status)
         self.ndb.add_observer('progress:sync_full', self.observer_notes_db_sync_full)
+
+    def start_threads(self):
+        self.thread_save.start()
 
     def sync_full_threaded(self):
         thread.start_new_thread(self.ndb.sync_full, ())
@@ -83,7 +89,6 @@ class sncli:
             self.sncli_loop.remove_alarm(self.sync_notes_alarm)
         self.sync_notes_alarm = None
 
-        self.ndb.save_threaded()
         self.sync_notes_alarm = \
             self.sncli_loop.set_alarm_at(time.time() + 4,
                                          self.sync_notes_timeout,
@@ -407,6 +412,8 @@ class sncli:
                                     'status_message' : self.status_message_set,
                                     'sync_func'      : self.sync_notes_schedule
                                    }))
+
+        self.start_threads()
 
         if self.do_sync:
             # start full sync after initial view is up
