@@ -400,6 +400,20 @@ class sncli:
                     lb.note_list[lb.focus_position].note['key'], 0)
                 lb.update_note_title(None)
 
+        elif key == self.config.get_keybind('note_markdown'):
+            # markdown note when viewing the note list
+            if self.body_get().__class__ == view_titles.ViewTitles:
+                self.ndb.set_note_markdown(
+                    lb.note_list[lb.focus_position].note['key'], 1)
+                lb.update_note_title(None)
+
+        elif key == self.config.get_keybind('note_unmarkdown'):
+            # unmarkdown note when viewing the note list
+            if self.body_get().__class__ == view_titles.ViewTitles:
+                self.ndb.set_note_markdown(
+                    lb.note_list[lb.focus_position].note['key'], 0)
+                lb.update_note_title(None)
+
         elif key == self.config.get_keybind('note_tags'):
             # edit tags when viewing the note list
             if self.body_get().__class__ == view_titles.ViewTitles:

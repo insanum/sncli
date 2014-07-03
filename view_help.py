@@ -26,6 +26,8 @@ class ViewHelp(urwid.ListBox):
         # NoteTitles keybinds
         keys = [ 'note_pin',
                  'note_unpin',
+                 'note_markdown',
+                 'note_unmarkdown',
                  'note_tags',
                  'search',
                  'clear_search',

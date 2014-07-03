@@ -403,7 +403,7 @@ class NotesDB(utils.SubjectMixin):
             self.notify_observers('change:note-status',
                 utils.KeyValueObject(what='modifydate',
                                      key=key,
-                                     msg='Note markdown flagged.' if pinned else 'Note markdown unflagged.'))
+                                     msg='Note markdown flagged.' if markdown else 'Note markdown unflagged.'))
             self.flag_what_changed(n, 'systemtags')
 
     def helper_key_to_fname(self, k):
