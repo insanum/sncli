@@ -1,6 +1,6 @@
 
 import re, time, datetime, urwid, subprocess
-import utils, view_note, temp
+import utils, view_note
 
 class ViewTitles(urwid.ListBox):
 
@@ -8,14 +8,21 @@ class ViewTitles(urwid.ListBox):
         self.config = config
         self.ndb = args['ndb']
         self.search_string = args['search_string']
-        self.body_changer = args['body_changer']
         self.status_message = args['status_message']
-        self.all_notes, match_regex, self.all_notes_cnt = \
+        self.note_list, match_regex, self.all_notes_cnt = \
             self.ndb.filter_notes(self.search_string)
-        if len(self.all_notes) == 0:
+        if len(self.note_list) == 0:
             self.status_message(u'No notes found!')
         super(ViewTitles, self).__init__(
                   urwid.SimpleFocusListWalker(self.get_note_titles()))
+
+    def update_note_list(self, search_string):
+        self.search_string = search_string
+        self.note_list, match_regex, self.all_notes_cnt = \
+            self.ndb.filter_notes(self.search_string)
+        self.body[:] = \
+            urwid.SimpleFocusListWalker(self.get_note_titles())
+        self.focus_position = 0
 
     def format_title(self, note):
         """
@@ -136,7 +143,7 @@ class ViewTitles(urwid.ListBox):
 
     def get_note_titles(self):
         lines = []
-        for n in self.all_notes:
+        for n in self.note_list:
             lines.append(self.get_note_title(n.note))
         return lines
 
@@ -165,55 +172,15 @@ class ViewTitles(urwid.ListBox):
             urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
                           'status_bar')
 
-    def update_note_title(self, key, pos):
+    def update_note_title(self, key):
         if not key:
-            self.body[pos] = self.get_note_title(self.all_notes[pos].note)
+            self.body[self.focus_position] = \
+                self.get_note_title(self.note_list[self.focus_position].note)
         else:
-            for i in xrange(len(self.all_notes)):
-                if self.all_notes[i].note['key'] == key:
-                    self.body[i] = self.get_note_title(self.all_notes[i].note)
+            for i in xrange(len(self.note_list)):
+                if self.note_list[i].note['key'] == key:
+                    self.body[i] = self.get_note_title(self.note_list[i].note)
 
     def keypress(self, size, key):
-        if key == self.config.get_keybind('note_pin'):
-            if len(self.body.positions()) > 0:
-                self.ndb.set_note_pinned(
-                    self.all_notes[self.focus_position].note['key'], 1)
-                self.update_note_title(None, self.focus_position)
-            return None
-
-        elif key == self.config.get_keybind('note_unpin'):
-            if len(self.body.positions()) > 0:
-                self.ndb.set_note_pinned(
-                    self.all_notes[self.focus_position].note['key'], 0)
-                self.update_note_title(None, self.focus_position)
-            return None
-
-        elif key == self.config.get_keybind('view_note'):
-            if len(self.body.positions()) > 0:
-                self.body_changer({ 'view' : view_note.ViewNote,
-                                    'note' : self.all_notes[self.focus_position].note })
-            return None
-
-        elif key == self.config.get_keybind('view_note_ext'):
-            if len(self.body.positions()) > 0:
-                pager = None
-                if self.config.get_config('pager'):
-                    pager = self.config.get_config('pager')
-                if not pager and os.environ['PAGER']:
-                    pager = os.environ['PAGER']
-                if not pager:
-                    self.status_message(u'No pager configured!')
-                    return None
-
-                tf = temp.tempfile_create(self.all_notes[self.focus_position].note)
-                try:
-                    subprocess.check_call(pager + u' ' + temp.tempfile_name(tf), shell=True)
-                except Exception, e:
-                    self.status_message(u'Pager error: ' + str(e))
-
-                # XXX check if modified, if so update it
-                temp.tempfile_delete(tf)
-            return None
-
         return key
 

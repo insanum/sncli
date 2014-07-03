@@ -3,7 +3,7 @@ import urwid
 
 class ViewLog(urwid.ListBox):
 
-    def __init__(self, config, args):
+    def __init__(self, config):
         self.config = config
         f = open(self.config.logfile)
         lines = []
@@ -37,4 +37,7 @@ class ViewLog(urwid.ListBox):
         return \
             urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
                           'status_bar')
+
+    def keypress(self, size, key):
+        return key
 

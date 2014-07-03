@@ -6,22 +6,37 @@ class ViewNote(urwid.ListBox):
 
     def __init__(self, config, args):
         self.config = config
-        self.note = args['note']
+        self.ndb = args['ndb']
+        self.key = args['key']
+        self.note = self.ndb.get_note(self.key) if self.key else None
+        self.tabstop = int(self.config.get_config('tabstop'))
         super(ViewNote, self).__init__(
-                  urwid.SimpleFocusListWalker(
-                      self.get_note_content_as_list(
-                          int(self.config.get_config('tabstop')))))
+                  urwid.SimpleFocusListWalker(self.get_note_content_as_list()))
 
-    def get_note_content_as_list(self, tabstop):
+    def get_note_content_as_list(self):
         lines = []
+        if not self.key:
+            return lines
         for l in self.note['content'].split('\n'):
             lines.append(
-                urwid.AttrMap(urwid.Text(l.replace('\t', ' ' * tabstop)),
+                urwid.AttrMap(urwid.Text(l.replace('\t', ' ' * self.tabstop)),
                               'note_content',
                               'note_content_focus'))
         return lines
 
+    def update_note(self, key):
+        self.key = key
+        self.note = self.ndb.get_note(self.key) if self.key else None
+        self.body[:] = \
+            urwid.SimpleFocusListWalker(self.get_note_content_as_list())
+        self.focus_position = 0
+
     def get_status_bar(self):
+        if not self.key:
+            return \
+                urwid.AttrMap(urwid.Text(u'No note...'),
+                              'status_bar')
+
         cur   = -1
         total = 0
         if len(self.body.positions()) > 0:
@@ -62,22 +77,22 @@ class ViewNote(urwid.ListBox):
 
     def keypress(self, size, key):
         if key == self.config.get_keybind('tabstop2'):
+            self.tabstop = 2
             self.body[:] = \
-                urwid.SimpleFocusListWalker(
-                    self.get_note_content_as_list(2))
-            return None
+                urwid.SimpleFocusListWalker(self.get_note_content_as_list())
 
         elif key == self.config.get_keybind('tabstop4'):
+            self.tabstop = 4
             self.body[:] = \
-                urwid.SimpleFocusListWalker(
-                    self.get_note_content_as_list(4))
-            return None
+                urwid.SimpleFocusListWalker(self.get_note_content_as_list())
 
         elif key == self.config.get_keybind('tabstop8'):
+            self.tabstop = 8
             self.body[:] = \
-                urwid.SimpleFocusListWalker(
-                    self.get_note_content_as_list(8))
-            return None
+                urwid.SimpleFocusListWalker(self.get_note_content_as_list())
 
-        return key
+        else:
+            return key
+
+        return None
 
