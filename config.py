@@ -117,32 +117,32 @@ class Config:
 
         self.keybinds = \
         {
-         'help'            : [ cp.get(cfg_sec, 'kb_help'),            'Help' ],
-         'quit'            : [ cp.get(cfg_sec, 'kb_quit'),            'Quit' ],
-         'down'            : [ cp.get(cfg_sec, 'kb_down'),            'Scroll down one line' ],
-         'up'              : [ cp.get(cfg_sec, 'kb_up'),              'Scroll up one line' ],
-         'page_down'       : [ cp.get(cfg_sec, 'kb_page_down'),       'Page down' ],
-         'page_up'         : [ cp.get(cfg_sec, 'kb_page_up'),         'Page up' ],
-         'half_page_down'  : [ cp.get(cfg_sec, 'kb_half_page_down'),  'Half page down' ],
-         'half_page_up'    : [ cp.get(cfg_sec, 'kb_half_page_up'),    'Half page up' ],
-         'bottom'          : [ cp.get(cfg_sec, 'kb_bottom'),          'Goto bottom' ],
-         'top'             : [ cp.get(cfg_sec, 'kb_top'),             'Goto top' ],
-         'status'          : [ cp.get(cfg_sec, 'kb_status'),          'Toggle status bar' ],
-         'view_note'       : [ cp.get(cfg_sec, 'kb_view_note'),       'View note' ],
-         'view_note_ext'   : [ cp.get(cfg_sec, 'kb_view_note_ext'),   'View note with pager' ],
-         'view_next_note'  : [ cp.get(cfg_sec, 'kb_view_next_note'),  'View next note' ],
-         'view_prev_note'  : [ cp.get(cfg_sec, 'kb_view_prev_note'),  'View previous note' ],
-         'view_log'        : [ cp.get(cfg_sec, 'kb_view_log'),        'View log' ],
-         'tabstop2'        : [ cp.get(cfg_sec, 'kb_tabstop2'),        'View with tabstop=2' ],
-         'tabstop4'        : [ cp.get(cfg_sec, 'kb_tabstop4'),        'View with tabstop=4' ],
-         'tabstop8'        : [ cp.get(cfg_sec, 'kb_tabstop8'),        'View with tabstop=8' ],
-         'search'          : [ cp.get(cfg_sec, 'kb_search'),          'Search notes' ],
-         'clear_search'    : [ cp.get(cfg_sec, 'kb_clear_search'),    'Show all notes' ],
-         'note_pin'        : [ cp.get(cfg_sec, 'kb_note_pin'),        'Pin note' ],
-         'note_unpin'      : [ cp.get(cfg_sec, 'kb_note_unpin'),      'Unpin note' ],
-         'note_markdown'   : [ cp.get(cfg_sec, 'kb_note_markdown'),   'Flag note as markdown' ],
-         'note_unmarkdown' : [ cp.get(cfg_sec, 'kb_note_unmarkdown'), 'Unflag note as markdown' ],
-         'note_tags'       : [ cp.get(cfg_sec, 'kb_note_tags'),       'Edit note tags' ]
+         'help'            : [ cp.get(cfg_sec, 'kb_help'),            'common', 'Help' ],
+         'quit'            : [ cp.get(cfg_sec, 'kb_quit'),            'common', 'Quit' ],
+         'down'            : [ cp.get(cfg_sec, 'kb_down'),            'common', 'Scroll down one line' ],
+         'up'              : [ cp.get(cfg_sec, 'kb_up'),              'common', 'Scroll up one line' ],
+         'page_down'       : [ cp.get(cfg_sec, 'kb_page_down'),       'common', 'Page down' ],
+         'page_up'         : [ cp.get(cfg_sec, 'kb_page_up'),         'common', 'Page up' ],
+         'half_page_down'  : [ cp.get(cfg_sec, 'kb_half_page_down'),  'common', 'Half page down' ],
+         'half_page_up'    : [ cp.get(cfg_sec, 'kb_half_page_up'),    'common', 'Half page up' ],
+         'bottom'          : [ cp.get(cfg_sec, 'kb_bottom'),          'common', 'Goto bottom' ],
+         'top'             : [ cp.get(cfg_sec, 'kb_top'),             'common', 'Goto top' ],
+         'status'          : [ cp.get(cfg_sec, 'kb_status'),          'common', 'Toggle status bar' ],
+         'view_log'        : [ cp.get(cfg_sec, 'kb_view_log'),        'common', 'View log' ],
+         'view_note'       : [ cp.get(cfg_sec, 'kb_view_note'),       'titles', 'View note' ],
+         'view_note_ext'   : [ cp.get(cfg_sec, 'kb_view_note_ext'),   'titles', 'View note with pager' ],
+         'view_next_note'  : [ cp.get(cfg_sec, 'kb_view_next_note'),  'notes',  'View next note' ],
+         'view_prev_note'  : [ cp.get(cfg_sec, 'kb_view_prev_note'),  'notes',  'View previous note' ],
+         'tabstop2'        : [ cp.get(cfg_sec, 'kb_tabstop2'),        'notes',  'View with tabstop=2' ],
+         'tabstop4'        : [ cp.get(cfg_sec, 'kb_tabstop4'),        'notes',  'View with tabstop=4' ],
+         'tabstop8'        : [ cp.get(cfg_sec, 'kb_tabstop8'),        'notes',  'View with tabstop=8' ],
+         'search'          : [ cp.get(cfg_sec, 'kb_search'),          'titles', 'Search notes' ],
+         'clear_search'    : [ cp.get(cfg_sec, 'kb_clear_search'),    'titles', 'Show all notes' ],
+         'note_pin'        : [ cp.get(cfg_sec, 'kb_note_pin'),        'titles', 'Pin note' ],
+         'note_unpin'      : [ cp.get(cfg_sec, 'kb_note_unpin'),      'titles', 'Unpin note' ],
+         'note_markdown'   : [ cp.get(cfg_sec, 'kb_note_markdown'),   'titles', 'Flag note as markdown' ],
+         'note_unmarkdown' : [ cp.get(cfg_sec, 'kb_note_unmarkdown'), 'titles', 'Unflag note as markdown' ],
+         'note_tags'       : [ cp.get(cfg_sec, 'kb_note_tags'),       'titles', 'Edit note tags' ]
         }
 
         self.colors = \
@@ -198,8 +198,11 @@ class Config:
     def get_keybind(self, name):
         return self.keybinds[name][0]
 
-    def get_keybind_descr(self, name):
+    def get_keybind_use(self, name):
         return self.keybinds[name][1]
+
+    def get_keybind_descr(self, name):
+        return self.keybinds[name][2]
 
     def get_color(self, name):
         return self.colors[name][0]

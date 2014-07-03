@@ -7,45 +7,11 @@ class ViewHelp(urwid.ListBox):
         self.config = config
 
         lines = []
-
-        # Common keybinds
-        keys = [ 'help',
-                 'quit',
-                 'down',
-                 'up',
-                 'page_down',
-                 'page_up',
-                 'half_page_down',
-                 'half_page_up',
-                 'bottom',
-                 'top',
-                 'status',
-                 'view_log' ]
-        lines.extend(self.create_kb_help_lines(u"Keybinds Common", keys))
-
-        # NoteTitles keybinds
-        keys = [ 'note_pin',
-                 'note_unpin',
-                 'note_markdown',
-                 'note_unmarkdown',
-                 'note_tags',
-                 'search',
-                 'clear_search',
-                 'view_note',
-                 'view_note_ext' ]
-        lines.extend(self.create_kb_help_lines(u"Keybinds Note List", keys))
-
-        # NoteContent keybinds
-        keys = [ 'view_next_note',
-                 'view_prev_note',
-                 'tabstop2',
-                 'tabstop4',
-                 'tabstop8' ]
-        lines.extend(self.create_kb_help_lines(u"Keybinds Note Content", keys))
-
+        lines.extend(self.create_kb_help_lines(u'Keybinds Common', 'common'))
+        lines.extend(self.create_kb_help_lines(u'Keybinds Note List', 'titles'))
+        lines.extend(self.create_kb_help_lines(u'Keybinds Note Content', 'notes'))
         lines.extend(self.create_config_help_lines())
         lines.extend(self.create_color_help_lines())
-
         lines.append(urwid.Text(('help_header', u'')))
 
         super(ViewHelp, self).__init__(urwid.SimpleFocusListWalker(lines))
@@ -71,14 +37,16 @@ class ViewHelp(urwid.ListBox):
             urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
                           'status_bar')
 
-    def create_kb_help_lines(self, header, keys):
+    def create_kb_help_lines(self, header, use):
         lines = [ urwid.AttrMap(urwid.Text(u''),
                                 'help_header',
                                 'help_focus') ]
         lines.append(urwid.AttrMap(urwid.Text(u' ' + header),
                                    'help_header',
                                    'help_focus'))
-        for c in keys:
+        for c in self.config.keybinds.keys():
+            if self.config.get_keybind_use(c) != use:
+                continue
             lines.append(
                 urwid.AttrMap(
                     urwid.Text(
@@ -133,7 +101,7 @@ class ViewHelp(urwid.ListBox):
                                    'help_focus'))
         fmap = {}
         for c in sorted(self.config.colors):
-            fmap[re.search("^(.*)(_fg|_bg)$", c).group(1)] = 'help_focus'
+            fmap[re.search('^(.*)(_fg|_bg)$', c).group(1)] = 'help_focus'
         for c in sorted(self.config.colors):
             lines.append(
                 urwid.AttrMap(
@@ -141,7 +109,7 @@ class ViewHelp(urwid.ListBox):
                     [
                      ('help_descr',  '{:>24}  '.format(self.config.get_color_descr(c))),
                      ('help_config', '{:>25}  '.format(u'clr_' + c)),
-                     (re.search("^(.*)(_fg|_bg)$", c).group(1),
+                     (re.search('^(.*)(_fg|_bg)$', c).group(1),
                           u"'" + self.config.get_color(c) + u"'")
                     ]
                     ),
