@@ -236,24 +236,24 @@ class sncli:
 
         elif key == self.config.get_keybind('down'):
             if len(lb.body.positions()) <= 0:
-                return
+                return None
             last = len(lb.body.positions())
             if lb.focus_position == (last - 1):
-                return
+                return None
             lb.focus_position += 1
             lb.render(size)
 
         elif key == self.config.get_keybind('up'):
             if len(lb.body.positions()) <= 0:
-                return
+                return None
             if lb.focus_position == 0:
-                return
+                return None
             lb.focus_position -= 1
             lb.render(size)
 
         elif key == self.config.get_keybind('page_down'):
             if len(lb.body.positions()) <= 0:
-                return
+                return None
             last = len(lb.body.positions())
             next_focus = lb.focus_position + size[1]
             if next_focus >= last:
@@ -264,7 +264,7 @@ class sncli:
 
         elif key == self.config.get_keybind('page_up'):
             if len(lb.body.positions()) <= 0:
-                return
+                return None
             if 'bottom' in lb.ends_visible(size):
                 last = len(lb.body.positions())
                 next_focus = last - size[1] - size[1]
@@ -278,7 +278,7 @@ class sncli:
 
         elif key == self.config.get_keybind('half_page_down'):
             if len(lb.body.positions()) <= 0:
-                return
+                return None
             last = len(lb.body.positions())
             next_focus = lb.focus_position + (size[1] / 2)
             if next_focus >= last:
@@ -289,7 +289,7 @@ class sncli:
 
         elif key == self.config.get_keybind('half_page_up'):
             if len(lb.body.positions()) <= 0:
-                return
+                return None
             if 'bottom' in lb.ends_visible(size):
                 last = len(lb.body.positions())
                 next_focus = last - size[1] - (size[1] / 2)
@@ -303,14 +303,14 @@ class sncli:
 
         elif key == self.config.get_keybind('bottom'):
             if len(lb.body.positions()) <= 0:
-                return
+                return None
             lb.change_focus(size, (len(lb.body.positions()) - 1),
                             offset_inset=0,
                             coming_from='above')
 
         elif key == self.config.get_keybind('top'):
             if len(lb.body.positions()) <= 0:
-                return
+                return None
             lb.change_focus(size, 0,
                             offset_inset=0,
                             coming_from='below')
@@ -324,7 +324,8 @@ class sncli:
         elif key == self.config.get_keybind('view_note'):
             # only when viewing the note list
             if self.body_get().__class__ == view_titles.ViewTitles:
-                self.view_note.update_note(lb.note_list[lb.focus_position].note['key'])
+                self.view_note.update_note(
+                    lb.note_list[lb.focus_position].note['key'])
                 self.switch_frame_body(self.view_note)
 
         elif key == self.config.get_keybind('view_note_ext'):
@@ -347,6 +348,31 @@ class sncli:
 
                 # XXX check if modified, if so update it
                 temp.tempfile_delete(tf)
+
+        elif key == self.config.get_keybind('view_next_note'):
+            # only when viewing the note content
+            if self.body_get().__class__ == view_note.ViewNote:
+                if len(self.view_titles.body.positions()) <= 0:
+                    return None
+                last = len(self.view_titles.body.positions())
+                if self.view_titles.focus_position == (last - 1):
+                    return None
+                self.view_titles.focus_position += 1
+                lb.update_note(
+                    self.view_titles.note_list[self.view_titles.focus_position].note['key'])
+                self.switch_frame_body(self.view_note)
+
+        elif key == self.config.get_keybind('view_prev_note'):
+            # only when viewing the note content
+            if self.body_get().__class__ == view_note.ViewNote:
+                if len(self.view_titles.body.positions()) <= 0:
+                    return None
+                if self.view_titles.focus_position == 0:
+                    return None
+                self.view_titles.focus_position -= 1
+                lb.update_note(
+                    self.view_titles.note_list[self.view_titles.focus_position].note['key'])
+                self.switch_frame_body(self.view_note)
 
         elif key == self.config.get_keybind('search'):
             # search when viewing the note list

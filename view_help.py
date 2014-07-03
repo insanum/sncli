@@ -26,6 +26,7 @@ class ViewHelp(urwid.ListBox):
         # NoteTitles keybinds
         keys = [ 'note_pin',
                  'note_unpin',
+                 'note_tags',
                  'search',
                  'clear_search',
                  'view_note',
@@ -33,8 +34,8 @@ class ViewHelp(urwid.ListBox):
         lines.extend(self.create_kb_help_lines(u"Keybinds Note List", keys))
 
         # NoteContent keybinds
-        keys = [ 'note_pin',
-                 'note_unpin',
+        keys = [ 'view_next_note',
+                 'view_prev_note',
                  'tabstop2',
                  'tabstop4',
                  'tabstop8' ]
