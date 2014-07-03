@@ -44,11 +44,12 @@ class sncli:
 
         self.status_message_alarm = None
         self.status_message_lock = threading.Lock()
-        self.sync_notes_alarm = None
-        self.sync_notes_lock = threading.Lock()
 
         self.thread_save = threading.Thread(target=self.ndb.save_worker)
         self.thread_save.setDaemon(True)
+
+        self.thread_sync = threading.Thread(target=self.ndb.sync_worker)
+        self.thread_sync.setDaemon(True)
 
         self.ndb.add_observer('synced:note', self.observer_notes_db_synced_note)
         self.ndb.add_observer('change:note-status', self.observer_notes_db_change_note_status)
@@ -56,45 +57,13 @@ class sncli:
 
     def start_threads(self):
         self.thread_save.start()
+        self.thread_sync.start()
 
     def sync_full_threaded(self):
         thread.start_new_thread(self.ndb.sync_full, ())
 
     def sync_full_initial(self, loop, arg):
         self.sync_full_threaded()
-
-    def sync_notes_cancel(self):
-        self.sync_notes_lock.acquire()
-
-        if self.sync_notes_alarm:
-            self.sncli_loop.remove_alarm(self.sync_notes_alarm)
-        self.sync_notes_alarm = None
-
-        self.sync_notes_lock.release()
-
-    def sync_notes_timeout(self, loop, arg):
-        self.sync_notes_lock.acquire()
-
-        self.sync_notes_alarm = None
-        self.status_message_set('Starting sync...')
-        self.ndb.sync_to_server_threaded()
-        self.status_message_set('Sync complete.')
-
-        self.sync_notes_lock.release()
-
-    def sync_notes_schedule(self):
-        self.sync_notes_lock.acquire()
-
-        if self.sync_notes_alarm:
-            self.sncli_loop.remove_alarm(self.sync_notes_alarm)
-        self.sync_notes_alarm = None
-
-        self.sync_notes_alarm = \
-            self.sncli_loop.set_alarm_at(time.time() + 4,
-                                         self.sync_notes_timeout,
-                                         None)
-
-        self.sync_notes_lock.release()
 
     def observer_notes_db_change_note_status(self, ndb, evt_type, evt):
         logging.debug(evt.msg)
@@ -231,8 +200,7 @@ class sncli:
                                         'ndb'            : self.ndb,
                                         'search_string'  : search_string,
                                         'body_changer'   : self.switch_frame_body,
-                                        'status_message' : self.status_message_set,
-                                        'sync_func'      : self.sync_notes_schedule
+                                        'status_message' : self.status_message_set
                                        }))
         else:
             self.footer_clear()
@@ -249,7 +217,6 @@ class sncli:
             self.ndb.set_note_tags(lb.all_notes[lb.focus_position].note['key'], tags)
             lb.update_note_title(None, lb.focus_position)
             self.update_status_bar()
-            self.sync_notes_schedule()
         else:
             self.footer_clear()
             self.body_focus()
@@ -391,8 +358,7 @@ class sncli:
                                         'ndb'            : self.ndb,
                                         'search_string'  : None,
                                         'body_changer'   : self.switch_frame_body,
-                                        'status_message' : self.status_message_set,
-                                        'sync_func'      : self.sync_notes_schedule
+                                        'status_message' : self.status_message_set
                                        }))
 
         else:
@@ -409,8 +375,7 @@ class sncli:
                                     'ndb'            : self.ndb,
                                     'search_string'  : None,
                                     'body_changer'   : self.switch_frame_body,
-                                    'status_message' : self.status_message_set,
-                                    'sync_func'      : self.sync_notes_schedule
+                                    'status_message' : self.status_message_set
                                    }))
 
         self.start_threads()
