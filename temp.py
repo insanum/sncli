@@ -20,3 +20,9 @@ def tempfile_name(tf):
         return tf.name
     return ''
 
+def tempfile_content(tf):
+    lines = []
+    for line in tf:
+        lines.append(line)
+    return lines
+

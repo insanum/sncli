@@ -321,6 +321,27 @@ class sncli:
             else:
                 self.status_bar = self.config.get_config('status_bar')
 
+        elif key == self.config.get_keybind('create_note'):
+            if self.body_get().__class__ == view_titles.ViewTitles:
+                editor = self.config.get_config('editor')
+                if not editor and os.environ['EDITOR']:
+                    editor = os.environ['EDITOR']
+                if not editor:
+                    self.status_message_set(u'No editor configured!')
+                    return None
+
+                tf = temp.tempfile_create(None)
+                try:
+                    subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
+                except Exception, e:
+                    self.status_message_set(u'Editor error: ' + str(e))
+
+                content = ''.join(temp.tempfile_content(tf))
+                if content:
+                    self.status_message_set(u'New note created')
+                    self.ndb.create_note(content)
+                temp.tempfile_delete(tf)
+
         elif key == self.config.get_keybind('view_note'):
             # only when viewing the note list
             if self.body_get().__class__ == view_titles.ViewTitles:
@@ -331,13 +352,11 @@ class sncli:
         elif key == self.config.get_keybind('view_note_ext'):
             # only when viewing the note list
             if self.body_get().__class__ == view_titles.ViewTitles:
-                pager = None
-                if self.config.get_config('pager'):
-                    pager = self.config.get_config('pager')
+                pager = self.config.get_config('pager')
                 if not pager and os.environ['PAGER']:
                     pager = os.environ['PAGER']
                 if not pager:
-                    self.status_message(u'No pager configured!')
+                    self.status_message_set(u'No pager configured!')
                     return None
 
                 tf = temp.tempfile_create(lb.note_list[lb.focus_position].note)

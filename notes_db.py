@@ -436,22 +436,24 @@ class NotesDB(utils.SubjectMixin):
 
             # only send required fields
             cn = copy.deepcopy(note)
-            del note['what_changed']
+            if 'what_changed' in note:
+                del note['what_changed']
 
             del cn['minversion']
             del cn['createdate']
             del cn['syncdate']
             del cn['savedate']
 
-            if 'deleted' not in cn['what_changed']:
-                del cn['deleted']
-            if 'systemtags' not in cn['what_changed']:
-                del cn['systemtags']
-            if 'tags' not in cn['what_changed']:
-                del cn['tags']
-            if 'content' not in cn['what_changed']:
-                del cn['content']
-            del cn['what_changed']
+            if 'what_changed' in cn:
+                if 'deleted' not in cn['what_changed']:
+                    del cn['deleted']
+                if 'systemtags' not in cn['what_changed']:
+                    del cn['systemtags']
+                if 'tags' not in cn['what_changed']:
+                    del cn['tags']
+                if 'content' not in cn['what_changed']:
+                    del cn['content']
+                del cn['what_changed']
 
             uret = self.simplenote.update_note(cn)
             #uret = self.simplenote.update_note(note)
