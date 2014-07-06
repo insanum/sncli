@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import os, sys, re, signal, time, datetime, logging
+import os, sys, re, signal, time, datetime, md5, logging
 import subprocess, thread, threading
 import copy, json, urwid, datetime
 import view_titles, view_note, view_help, view_log, user_input
@@ -94,6 +94,24 @@ class sncli:
         self.status_message_set(evt.msg)
         # XXX
         # update view if note synced back is the visible one
+
+    def get_editor(self):
+        editor = self.config.get_config('editor')
+        if not editor and os.environ['EDITOR']:
+            editor = os.environ['EDITOR']
+        if not editor:
+            self.status_message_set(u'No editor configured!')
+            return None
+        return editor
+
+    def get_pager(self):
+        pager = self.config.get_config('pager')
+        if not pager and os.environ['PAGER']:
+            pager = os.environ['PAGER']
+        if not pager:
+            self.status_message_set(u'No pager configured!')
+            return None
+        return pager
 
     def header_clear(self):
         self.master_frame.contents['header'] = ( None, None )
@@ -323,12 +341,8 @@ class sncli:
 
         elif key == self.config.get_keybind('create_note'):
             if self.body_get().__class__ == view_titles.ViewTitles:
-                editor = self.config.get_config('editor')
-                if not editor and os.environ['EDITOR']:
-                    editor = os.environ['EDITOR']
-                if not editor:
-                    self.status_message_set(u'No editor configured!')
-                    return None
+                editor = self.get_editor()
+                if not editor: return None
 
                 tf = temp.tempfile_create(None)
                 try:
@@ -342,6 +356,26 @@ class sncli:
                     self.ndb.create_note(content)
                 temp.tempfile_delete(tf)
 
+        elif key == self.config.get_keybind('edit_note'):
+            if self.body_get().__class__ == view_titles.ViewTitles:
+                editor = self.get_editor()
+                if not editor: return None
+
+                note = lb.note_list[lb.focus_position].note
+                md5_old = md5.new(note['content']).digest()
+                tf = temp.tempfile_create(note)
+                try:
+                    subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
+                except Exception, e:
+                    self.status_message_set(u'Editor error: ' + str(e))
+
+                new_content = ''.join(temp.tempfile_content(tf))
+                md5_new = md5.new(new_content).digest()
+                if md5_old != md5_new:
+                    self.status_message_set(u'Note updated')
+                    self.ndb.set_note_content(note['key'], new_content)
+                temp.tempfile_delete(tf)
+
         elif key == self.config.get_keybind('view_note'):
             # only when viewing the note list
             if self.body_get().__class__ == view_titles.ViewTitles:
@@ -352,20 +386,22 @@ class sncli:
         elif key == self.config.get_keybind('view_note_ext'):
             # only when viewing the note list
             if self.body_get().__class__ == view_titles.ViewTitles:
-                pager = self.config.get_config('pager')
-                if not pager and os.environ['PAGER']:
-                    pager = os.environ['PAGER']
-                if not pager:
-                    self.status_message_set(u'No pager configured!')
-                    return None
+                pager = self.get_pager()
+                if not pager: return None
 
-                tf = temp.tempfile_create(lb.note_list[lb.focus_position].note)
+                note = lb.note_list[lb.focus_position].note
+                md5_old = md5.new(note['content']).digest()
+                tf = temp.tempfile_create(note)
                 try:
                     subprocess.check_call(pager + u' ' + temp.tempfile_name(tf), shell=True)
                 except Exception, e:
                     self.status_message_set(u'Pager error: ' + str(e))
 
-                # XXX check if modified, if so update it
+                new_content = ''.join(temp.tempfile_content(tf))
+                md5_new = md5.new(new_content).digest()
+                if md5_old != md5_new:
+                    self.status_message_set(u'Note updated')
+                    self.ndb.set_note_content(note['key'], new_content)
                 temp.tempfile_delete(tf)
 
         elif key == self.config.get_keybind('view_next_note'):

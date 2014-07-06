@@ -21,6 +21,7 @@ def tempfile_name(tf):
     return ''
 
 def tempfile_content(tf):
+    tf.seek(0)
     lines = []
     for line in tf:
         lines.append(line)
