@@ -339,6 +339,11 @@ class sncli:
             else:
                 self.status_bar = self.config.get_config('status_bar')
 
+        elif key == self.config.get_keybind('delete_note'):
+            if self.body_get().__class__ == view_titles.ViewTitles:
+                note = lb.note_list[lb.focus_position].note
+                self.ndb.set_note_deleted(note['key'])
+
         elif key == self.config.get_keybind('create_note'):
             if self.body_get().__class__ == view_titles.ViewTitles:
                 editor = self.get_editor()
@@ -374,13 +379,14 @@ class sncli:
                 if md5_old != md5_new:
                     self.status_message_set(u'Note updated')
                     self.ndb.set_note_content(note['key'], new_content)
+                    lb.update_note_title(None)
                 temp.tempfile_delete(tf)
 
         elif key == self.config.get_keybind('view_note'):
             # only when viewing the note list
             if self.body_get().__class__ == view_titles.ViewTitles:
-                self.view_note.update_note(
-                    lb.note_list[lb.focus_position].note['key'])
+                note = lb.note_list[lb.focus_position].note
+                self.view_note.update_note(note['key'])
                 self.switch_frame_body(self.view_note)
 
         elif key == self.config.get_keybind('view_note_ext'):
@@ -402,6 +408,7 @@ class sncli:
                 if md5_old != md5_new:
                     self.status_message_set(u'Note updated')
                     self.ndb.set_note_content(note['key'], new_content)
+                    lb.update_note_title(None)
                 temp.tempfile_delete(tf)
 
         elif key == self.config.get_keybind('view_next_note'):
@@ -444,40 +451,41 @@ class sncli:
         elif key == self.config.get_keybind('note_pin'):
             # pin note when viewing the note list
             if self.body_get().__class__ == view_titles.ViewTitles:
-                self.ndb.set_note_pinned(
-                    lb.note_list[lb.focus_position].note['key'], 1)
+                note = lb.note_list[lb.focus_position].note
+                self.ndb.set_note_pinned(note['key'], 1)
                 lb.update_note_title(None)
 
         elif key == self.config.get_keybind('note_unpin'):
             # unpin note when viewing the note list
             if self.body_get().__class__ == view_titles.ViewTitles:
-                self.ndb.set_note_pinned(
-                    lb.note_list[lb.focus_position].note['key'], 0)
+                note = lb.note_list[lb.focus_position].note
+                self.ndb.set_note_pinned(note['key'], 0)
                 lb.update_note_title(None)
 
         elif key == self.config.get_keybind('note_markdown'):
             # markdown note when viewing the note list
             if self.body_get().__class__ == view_titles.ViewTitles:
-                self.ndb.set_note_markdown(
-                    lb.note_list[lb.focus_position].note['key'], 1)
+                note = lb.note_list[lb.focus_position].note
+                self.ndb.set_note_markdown(note['key'], 1)
                 lb.update_note_title(None)
 
         elif key == self.config.get_keybind('note_unmarkdown'):
             # unmarkdown note when viewing the note list
             if self.body_get().__class__ == view_titles.ViewTitles:
-                self.ndb.set_note_markdown(
-                    lb.note_list[lb.focus_position].note['key'], 0)
+                note = lb.note_list[lb.focus_position].note
+                self.ndb.set_note_markdown(note['key'], 0)
                 lb.update_note_title(None)
 
         elif key == self.config.get_keybind('note_tags'):
             # edit tags when viewing the note list
             if self.body_get().__class__ == view_titles.ViewTitles:
+                note = lb.note_list[lb.focus_position].note
                 self.status_message_cancel()
                 self.footer_set(
                     urwid.AttrMap(
                         user_input.UserInput(self.config,
                                              'Tags: ',
-                                             '%s' % ','.join(lb.note_list[lb.focus_position].note['tags']),
+                                             '%s' % ','.join(note['tags']),
                                              self.tags_input),
                                   'search_bar'))
                 self.footer_focus()
