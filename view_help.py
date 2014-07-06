@@ -45,7 +45,7 @@ class ViewHelp(urwid.ListBox):
                                    'help_header',
                                    'help_focus'))
         for c in self.config.keybinds.keys():
-            if self.config.get_keybind_use(c) != use:
+            if use not in self.config.get_keybind_use(c):
                 continue
             lines.append(
                 urwid.AttrMap(
