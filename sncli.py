@@ -249,6 +249,9 @@ class sncli:
         elif key == self.config.get_keybind('help'):
             self.switch_frame_body(self.view_help)
 
+        elif key == self.config.get_keybind('sync'):
+            self.sync_full_threaded()
+
         elif key == self.config.get_keybind('view_log'):
             self.switch_frame_body(self.view_log)
 
@@ -339,7 +342,7 @@ class sncli:
             else:
                 self.status_bar = self.config.get_config('status_bar')
 
-        elif key == self.config.get_keybind('delete_note'):
+        elif key == self.config.get_keybind('trash_note'):
             if self.body_get().__class__ == view_titles.ViewTitles:
                 note = lb.note_list[lb.focus_position].note
                 self.ndb.set_note_deleted(note['key'])
@@ -508,7 +511,6 @@ class sncli:
 
         if self.do_sync:
             # start full sync after initial view is up
-            #self.sync_full_threaded()
             self.sncli_loop.set_alarm_in(1, self.sync_full_initial, None)
 
     def ba_bam_what(self):

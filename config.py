@@ -24,6 +24,7 @@ class Config:
 
          'kb_help'            : 'h',
          'kb_quit'            : 'q',
+         'kb_sync'            : 'S',
          'kb_down'            : 'j',
          'kb_up'              : 'k',
          'kb_page_down'       : ' ',
@@ -33,7 +34,7 @@ class Config:
          'kb_bottom'          : 'G',
          'kb_top'             : 'g',
          'kb_status'          : 's',
-         'kb_delete_note'     : 'D',
+         'kb_trash_note'      : 'T',
          'kb_create_note'     : 'C',
          'kb_edit_note'       : 'e',
          'kb_view_note'       : 'enter',
@@ -124,6 +125,7 @@ class Config:
         {
          'help'            : [ cp.get(cfg_sec, 'kb_help'),            [ 'common' ], 'Help' ],
          'quit'            : [ cp.get(cfg_sec, 'kb_quit'),            [ 'common' ], 'Quit' ],
+         'sync'            : [ cp.get(cfg_sec, 'kb_sync'),            [ 'common' ], 'Full sync' ],
          'down'            : [ cp.get(cfg_sec, 'kb_down'),            [ 'common' ], 'Scroll down one line' ],
          'up'              : [ cp.get(cfg_sec, 'kb_up'),              [ 'common' ], 'Scroll up one line' ],
          'page_down'       : [ cp.get(cfg_sec, 'kb_page_down'),       [ 'common' ], 'Page down' ],
@@ -134,7 +136,7 @@ class Config:
          'top'             : [ cp.get(cfg_sec, 'kb_top'),             [ 'common' ], 'Goto top' ],
          'status'          : [ cp.get(cfg_sec, 'kb_status'),          [ 'common' ], 'Toggle status bar' ],
          'view_log'        : [ cp.get(cfg_sec, 'kb_view_log'),        [ 'common' ], 'View log' ],
-         'delete_note'     : [ cp.get(cfg_sec, 'kb_delete_note'),     [ 'titles' ], 'Delete a note' ],
+         'trash_note'      : [ cp.get(cfg_sec, 'kb_trash_note'),      [ 'titles' ], 'Trash a note' ],
          'create_note'     : [ cp.get(cfg_sec, 'kb_create_note'),     [ 'titles' ], 'Create a new note' ],
          'edit_note'       : [ cp.get(cfg_sec, 'kb_edit_note'),       [ 'titles' ], 'Edit note' ],
          'view_note'       : [ cp.get(cfg_sec, 'kb_view_note'),       [ 'titles' ], 'View note' ],
