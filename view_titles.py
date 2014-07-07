@@ -20,9 +20,10 @@ class ViewTitles(urwid.ListBox):
             self.ndb.filter_notes(self.search_string)
         self.body[:] = \
             urwid.SimpleFocusListWalker(self.get_note_titles())
-        self.focus_position = 0
         if len(self.note_list) == 0:
             self.status_message(u'No notes found!')
+        else:
+            self.focus_position = 0
 
     def format_title(self, note):
         """
