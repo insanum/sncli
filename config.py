@@ -137,12 +137,12 @@ class Config:
          'top'             : [ cp.get(cfg_sec, 'kb_top'),             [ 'common' ], 'Goto top' ],
          'status'          : [ cp.get(cfg_sec, 'kb_status'),          [ 'common' ], 'Toggle status bar' ],
          'view_log'        : [ cp.get(cfg_sec, 'kb_view_log'),        [ 'common' ], 'View log' ],
-         'trash_note'      : [ cp.get(cfg_sec, 'kb_trash_note'),      [ 'titles' ], 'Trash a note' ],
+         'trash_note'      : [ cp.get(cfg_sec, 'kb_trash_note'),      [ 'titles', 'notes' ], 'Trash a note' ],
          'create_note'     : [ cp.get(cfg_sec, 'kb_create_note'),     [ 'titles' ], 'Create a new note' ],
-         'edit_note'       : [ cp.get(cfg_sec, 'kb_edit_note'),       [ 'titles' ], 'Edit note' ],
+         'edit_note'       : [ cp.get(cfg_sec, 'kb_edit_note'),       [ 'titles', 'notes' ], 'Edit note' ],
          'view_note'       : [ cp.get(cfg_sec, 'kb_view_note'),       [ 'titles' ], 'View note' ],
-         'view_note_ext'   : [ cp.get(cfg_sec, 'kb_view_note_ext'),   [ 'titles' ], 'View note with pager' ],
-         'pipe_note'       : [ cp.get(cfg_sec, 'kb_pipe_note'),       [ 'titles' ], 'Pipe note contents' ],
+         'view_note_ext'   : [ cp.get(cfg_sec, 'kb_view_note_ext'),   [ 'titles', 'notes' ], 'View note with pager' ],
+         'pipe_note'       : [ cp.get(cfg_sec, 'kb_pipe_note'),       [ 'titles', 'notes' ], 'Pipe note contents' ],
          'view_next_note'  : [ cp.get(cfg_sec, 'kb_view_next_note'),  [ 'notes'  ], 'View next note' ],
          'view_prev_note'  : [ cp.get(cfg_sec, 'kb_view_prev_note'),  [ 'notes'  ], 'View previous note' ],
          'tabstop2'        : [ cp.get(cfg_sec, 'kb_tabstop2'),        [ 'notes'  ], 'View with tabstop=2' ],
@@ -150,11 +150,11 @@ class Config:
          'tabstop8'        : [ cp.get(cfg_sec, 'kb_tabstop8'),        [ 'notes'  ], 'View with tabstop=8' ],
          'search'          : [ cp.get(cfg_sec, 'kb_search'),          [ 'titles' ], 'Search notes' ],
          'clear_search'    : [ cp.get(cfg_sec, 'kb_clear_search'),    [ 'titles' ], 'Show all notes' ],
-         'note_pin'        : [ cp.get(cfg_sec, 'kb_note_pin'),        [ 'titles' ], 'Pin note' ],
-         'note_unpin'      : [ cp.get(cfg_sec, 'kb_note_unpin'),      [ 'titles' ], 'Unpin note' ],
-         'note_markdown'   : [ cp.get(cfg_sec, 'kb_note_markdown'),   [ 'titles' ], 'Flag note as markdown' ],
-         'note_unmarkdown' : [ cp.get(cfg_sec, 'kb_note_unmarkdown'), [ 'titles' ], 'Unflag note as markdown' ],
-         'note_tags'       : [ cp.get(cfg_sec, 'kb_note_tags'),       [ 'titles' ], 'Edit note tags' ]
+         'note_pin'        : [ cp.get(cfg_sec, 'kb_note_pin'),        [ 'titles', 'notes' ], 'Pin note' ],
+         'note_unpin'      : [ cp.get(cfg_sec, 'kb_note_unpin'),      [ 'titles', 'notes' ], 'Unpin note' ],
+         'note_markdown'   : [ cp.get(cfg_sec, 'kb_note_markdown'),   [ 'titles', 'notes' ], 'Flag note as markdown' ],
+         'note_unmarkdown' : [ cp.get(cfg_sec, 'kb_note_unmarkdown'), [ 'titles', 'notes' ], 'Unflag note as markdown' ],
+         'note_tags'       : [ cp.get(cfg_sec, 'kb_note_tags'),       [ 'titles', 'notes' ], 'Edit note tags' ]
         }
 
         self.colors = \

@@ -203,9 +203,19 @@ class sncli:
         self.gui_body_focus()
         self.master_frame.keypress = self.gui_frame_keypress
         if tags != None:
-            self.ndb.set_note_tags(
-                self.view_titles.note_list[self.view_titles.focus_position].note['key'], tags)
-            self.view_titles.update_note_title(None)
+            if self.gui_body_get().__class__ != view_titles.ViewTitles:
+                note = self.view_titles.note_list[self.view_titles.focus_position].note
+            else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                note = self.view_note.note
+
+            self.ndb.set_note_tags(note['key'], tags)
+
+            if self.gui_body_get().__class__ != view_titles.ViewTitles:
+                self.view_titles.update_note_title(None)
+            else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                self.view_note.update_note(note['key'])
+
+            self.gui_update_status_bar()
 
     def gui_pipe_input(self, cmd):
         self.gui_footer_clear()
@@ -326,198 +336,269 @@ class sncli:
                 self.status_bar = self.config.get_config('status_bar')
 
         elif key == self.config.get_keybind('trash_note'):
+            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
+               self.gui_body_get().__class__ != view_note.ViewNotes:
+                return key
+
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 if len(lb.body.positions()) <= 0:
                     return None
                 note = lb.note_list[lb.focus_position].note
-                self.ndb.set_note_deleted(note['key'])
+            else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                note = lb.note
+
+            self.ndb.set_note_deleted(note['key'])
 
         elif key == self.config.get_keybind('create_note'):
-            if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                editor = self.get_editor()
-                if not editor: return None
+            if self.gui_body_get().__class__ != view_titles.ViewTitles:
+                return key
 
-                tf = temp.tempfile_create(None)
-                try:
-                    subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
-                except Exception, e:
-                    self.gui_status_message_set(u'Editor error: ' + str(e))
-                    return None
+            editor = self.get_editor()
+            if not editor: return None
 
-                content = ''.join(temp.tempfile_content(tf))
-                if content:
-                    self.gui_status_message_set(u'New note created')
-                    self.ndb.create_note(content)
+            tf = temp.tempfile_create(None)
+            try:
+                subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
+            except Exception, e:
+                self.gui_status_message_set(u'Editor error: ' + str(e))
+                return None
 
-                temp.tempfile_delete(tf)
+            content = ''.join(temp.tempfile_content(tf))
+            if content:
+                self.gui_status_message_set(u'New note created')
+                self.ndb.create_note(content)
+
+            temp.tempfile_delete(tf)
 
         elif key == self.config.get_keybind('edit_note'):
+            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
+               self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 if len(lb.body.positions()) <= 0:
                     return None
-
-                editor = self.get_editor()
-                if not editor: return None
-
                 note = lb.note_list[lb.focus_position].note
-                md5_old = md5.new(note['content']).digest()
-                tf = temp.tempfile_create(note)
-                try:
-                    subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
-                except Exception, e:
-                    self.gui_status_message_set(u'Editor error: ' + str(e))
-                    return None
+            else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                note = lb.note
 
+            editor = self.get_editor()
+            if not editor: return None
+
+            md5_old = md5.new(note['content']).digest()
+            tf = temp.tempfile_create(note)
+            try:
+                subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
+            except Exception, e:
+                self.gui_status_message_set(u'Editor error: ' + str(e))
+                temp.tempfile_delete(tf)
+            else:
                 new_content = ''.join(temp.tempfile_content(tf))
                 md5_new = md5.new(new_content).digest()
                 if md5_old != md5_new:
                     self.gui_status_message_set(u'Note updated')
                     self.ndb.set_note_content(note['key'], new_content)
-                    lb.update_note_title(None)
+                    if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                        lb.update_note_title(None)
+                    else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                        lb.update_note(note['key'])
                 temp.tempfile_delete(tf)
 
         elif key == self.config.get_keybind('view_note'):
-            # only when viewing the note list
-            if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                if len(lb.body.positions()) <= 0:
-                    return None
-                note = lb.note_list[lb.focus_position].note
-                self.view_note.update_note(note['key'])
-                self.gui_switch_frame_body(self.view_note)
+            if self.gui_body_get().__class__ != view_titles.ViewTitles:
+                return key
+
+            if len(lb.body.positions()) <= 0:
+                return None
+            note = lb.note_list[lb.focus_position].note
+            self.view_note.update_note(note['key'])
+            self.gui_switch_frame_body(self.view_note)
 
         elif key == self.config.get_keybind('view_note_ext'):
-            # only when viewing the note list
+            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
+               self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 if len(lb.body.positions()) <= 0:
                     return None
-
-                pager = self.get_pager()
-                if not pager: return None
-
                 note = lb.note_list[lb.focus_position].note
-                md5_old = md5.new(note['content']).digest()
-                tf = temp.tempfile_create(note)
-                try:
-                    subprocess.check_call(pager + u' ' + temp.tempfile_name(tf), shell=True)
-                except Exception, e:
-                    self.gui_status_message_set(u'Pager error: ' + str(e))
-                    return None
+            else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                note = lb.note
 
-                new_content = ''.join(temp.tempfile_content(tf))
-                md5_new = md5.new(new_content).digest()
-                if md5_old != md5_new:
-                    self.gui_status_message_set(u'Note updated')
-                    self.ndb.set_note_content(note['key'], new_content)
-                    lb.update_note_title(None)
-                temp.tempfile_delete(tf)
+            pager = self.get_pager()
+            if not pager: return None
+
+            md5_old = md5.new(note['content']).digest()
+            tf = temp.tempfile_create(note)
+            try:
+                subprocess.check_call(pager + u' ' + temp.tempfile_name(tf), shell=True)
+            except Exception, e:
+                self.gui_status_message_set(u'Pager error: ' + str(e))
+                return None
+
+            new_content = ''.join(temp.tempfile_content(tf))
+            md5_new = md5.new(new_content).digest()
+            if md5_old != md5_new:
+                self.gui_status_message_set(u'Note updated')
+                self.ndb.set_note_content(note['key'], new_content)
+                lb.update_note_title(None)
+            temp.tempfile_delete(tf)
 
         elif key == self.config.get_keybind('pipe_note'):
-            # only when viewing the note list
+            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
+               self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 if len(lb.body.positions()) <= 0:
                     return None
                 note = lb.note_list[lb.focus_position].note
-                self.gui_status_message_cancel()
-                self.gui_footer_set(
-                    urwid.AttrMap(
-                        user_input.UserInput(self.config,
-                                             key, '',
-                                             self.gui_pipe_input),
-                                  'search_bar'))
-                self.gui_footer_focus()
-                self.master_frame.keypress = self.gui_footer_get().keypress
+            else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                note = lb.note
+
+            self.gui_status_message_cancel()
+            self.gui_footer_set(
+                urwid.AttrMap(
+                    user_input.UserInput(self.config,
+                                         key, '',
+                                         self.gui_pipe_input),
+                              'search_bar'))
+            self.gui_footer_focus()
+            self.master_frame.keypress = self.gui_footer_get().keypress
 
         elif key == self.config.get_keybind('view_next_note'):
-            # only when viewing the note content
-            if self.gui_body_get().__class__ == view_note.ViewNote:
-                if len(self.view_titles.body.positions()) <= 0:
-                    return None
-                last = len(self.view_titles.body.positions())
-                if self.view_titles.focus_position == (last - 1):
-                    return None
-                self.view_titles.focus_position += 1
-                lb.update_note(
-                    self.view_titles.note_list[self.view_titles.focus_position].note['key'])
-                self.gui_switch_frame_body(self.view_note)
+            if self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
+            if len(self.view_titles.body.positions()) <= 0:
+                return None
+            last = len(self.view_titles.body.positions())
+            if self.view_titles.focus_position == (last - 1):
+                return None
+            self.view_titles.focus_position += 1
+            lb.update_note(
+                self.view_titles.note_list[self.view_titles.focus_position].note['key'])
+            self.gui_switch_frame_body(self.view_note)
 
         elif key == self.config.get_keybind('view_prev_note'):
-            # only when viewing the note content
-            if self.gui_body_get().__class__ == view_note.ViewNote:
-                if len(self.view_titles.body.positions()) <= 0:
-                    return None
-                if self.view_titles.focus_position == 0:
-                    return None
-                self.view_titles.focus_position -= 1
-                lb.update_note(
-                    self.view_titles.note_list[self.view_titles.focus_position].note['key'])
-                self.gui_switch_frame_body(self.view_note)
+            if self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
+            if len(self.view_titles.body.positions()) <= 0:
+                return None
+            if self.view_titles.focus_position == 0:
+                return None
+            self.view_titles.focus_position -= 1
+            lb.update_note(
+                self.view_titles.note_list[self.view_titles.focus_position].note['key'])
+            self.gui_switch_frame_body(self.view_note)
 
         elif key == self.config.get_keybind('search'):
-            # search when viewing the note list
-            if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                self.gui_status_message_cancel()
-                self.gui_footer_set(urwid.AttrMap(
-                                    user_input.UserInput(self.config,
-                                                         key, '',
-                                                         self.gui_search_input),
-                                              'search_bar'))
-                self.gui_footer_focus()
-                self.master_frame.keypress = self.gui_footer_get().keypress
+            if self.gui_body_get().__class__ != view_titles.ViewTitles:
+                return key
+
+            self.gui_status_message_cancel()
+            self.gui_footer_set(urwid.AttrMap(
+                                user_input.UserInput(self.config,
+                                                     key, '',
+                                                     self.gui_search_input),
+                                          'search_bar'))
+            self.gui_footer_focus()
+            self.master_frame.keypress = self.gui_footer_get().keypress
 
         elif key == self.config.get_keybind('note_pin'):
-            # pin note when viewing the note list
+            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
+               self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 if len(lb.body.positions()) <= 0:
                     return None
                 note = lb.note_list[lb.focus_position].note
-                self.ndb.set_note_pinned(note['key'], 1)
+            else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                note = lb.note
+
+            self.ndb.set_note_pinned(note['key'], 1)
+
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 lb.update_note_title(None)
 
         elif key == self.config.get_keybind('note_unpin'):
-            # unpin note when viewing the note list
+            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
+               self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 if len(lb.body.positions()) <= 0:
                     return None
                 note = lb.note_list[lb.focus_position].note
-                self.ndb.set_note_pinned(note['key'], 0)
+            else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                note = lb.note
+
+            self.ndb.set_note_pinned(note['key'], 0)
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 lb.update_note_title(None)
 
         elif key == self.config.get_keybind('note_markdown'):
-            # markdown note when viewing the note list
+            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
+               self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 if len(lb.body.positions()) <= 0:
                     return None
                 note = lb.note_list[lb.focus_position].note
-                self.ndb.set_note_markdown(note['key'], 1)
+            else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                note = lb.note
+
+            self.ndb.set_note_markdown(note['key'], 1)
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 lb.update_note_title(None)
 
         elif key == self.config.get_keybind('note_unmarkdown'):
-            # unmarkdown note when viewing the note list
+            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
+               self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 if len(lb.body.positions()) <= 0:
                     return None
                 note = lb.note_list[lb.focus_position].note
-                self.ndb.set_note_markdown(note['key'], 0)
+            else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                note = lb.note
+
+            self.ndb.set_note_markdown(note['key'], 0)
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 lb.update_note_title(None)
 
         elif key == self.config.get_keybind('note_tags'):
-            # edit tags when viewing the note list
+            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
+               self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 if len(lb.body.positions()) <= 0:
                     return None
                 note = lb.note_list[lb.focus_position].note
-                self.gui_status_message_cancel()
-                self.gui_footer_set(
-                    urwid.AttrMap(
-                        user_input.UserInput(self.config,
-                                             'Tags: ',
-                                             '%s' % ','.join(note['tags']),
-                                             self.gui_tags_input),
-                                  'search_bar'))
-                self.gui_footer_focus()
-                self.master_frame.keypress = self.gui_footer_get().keypress
+            else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                note = lb.note
+
+            self.gui_status_message_cancel()
+            self.gui_footer_set(
+                urwid.AttrMap(
+                    user_input.UserInput(self.config,
+                                         'Tags: ',
+                                         '%s' % ','.join(note['tags']),
+                                         self.gui_tags_input),
+                              'search_bar'))
+            self.gui_footer_focus()
+            self.master_frame.keypress = self.gui_footer_get().keypress
 
         elif key == self.config.get_keybind('clear_search'):
+            if self.gui_body_get().__class__ != view_titles.ViewTitles:
+                return key
+
             self.view_titles.update_note_list(None)
             self.gui_body_set(self.view_titles)
 
