@@ -181,7 +181,7 @@ class sncli:
         if new_view == None:
             if len(self.last_view) == 0:
                 # XXX verify all notes saved...
-                raise urwid.ExitMainLoop()
+                self.gui_stop()
             else:
                 self.gui_body_set(self.last_view.pop())
         else:
@@ -225,12 +225,15 @@ class sncli:
             note = self.view_titles.note_list[self.view_titles.focus_position].note
             args = shlex.split(cmd)
             try:
+                self.gui_clear()
                 pipe = subprocess.Popen(cmd, stdin=subprocess.PIPE, shell=True)
                 pipe.communicate(note['content'])
                 pipe.stdin.close()
                 pipe.wait()
             except OSError, e:
                 self.gui_status_message_set(u'Pipe error: ' + str(e))
+            finally:
+                self.gui_reset()
 
     def gui_frame_keypress(self, size, key):
 
@@ -357,11 +360,16 @@ class sncli:
             if not editor: return None
 
             tf = temp.tempfile_create(None)
+
             try:
+                self.gui_clear()
                 subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
             except Exception, e:
                 self.gui_status_message_set(u'Editor error: ' + str(e))
+                temp.tempfile_delete(tf)
                 return None
+            finally:
+                self.gui_reset()
 
             content = ''.join(temp.tempfile_content(tf))
             if content:
@@ -387,22 +395,28 @@ class sncli:
 
             md5_old = md5.new(note['content']).digest()
             tf = temp.tempfile_create(note)
+
             try:
+                self.gui_clear()
                 subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
             except Exception, e:
                 self.gui_status_message_set(u'Editor error: ' + str(e))
                 temp.tempfile_delete(tf)
-            else:
-                new_content = ''.join(temp.tempfile_content(tf))
-                md5_new = md5.new(new_content).digest()
-                if md5_old != md5_new:
-                    self.gui_status_message_set(u'Note updated')
-                    self.ndb.set_note_content(note['key'], new_content)
-                    if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                        lb.update_note_title(None)
-                    else: # self.gui_body_get().__class__ == view_note.ViewNote:
-                        lb.update_note(note['key'])
-                temp.tempfile_delete(tf)
+                return None
+            finally:
+                self.gui_reset()
+
+            new_content = ''.join(temp.tempfile_content(tf))
+            md5_new = md5.new(new_content).digest()
+            if md5_old != md5_new:
+                self.gui_status_message_set(u'Note updated')
+                self.ndb.set_note_content(note['key'], new_content)
+                if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                    lb.update_note_title(None)
+                else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                    lb.update_note(note['key'])
+
+            temp.tempfile_delete(tf)
 
         elif key == self.config.get_keybind('view_note'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
@@ -431,11 +445,16 @@ class sncli:
 
             md5_old = md5.new(note['content']).digest()
             tf = temp.tempfile_create(note)
+
             try:
+                self.gui_clear()
                 subprocess.check_call(pager + u' ' + temp.tempfile_name(tf), shell=True)
             except Exception, e:
                 self.gui_status_message_set(u'Pager error: ' + str(e))
+                temp.tempfile_delete(tf)
                 return None
+            finally:
+                self.gui_reset()
 
             new_content = ''.join(temp.tempfile_content(tf))
             md5_new = md5.new(new_content).digest()
@@ -443,6 +462,7 @@ class sncli:
                 self.gui_status_message_set(u'Note updated')
                 self.ndb.set_note_content(note['key'], new_content)
                 lb.update_note_title(None)
+
             temp.tempfile_delete(tf)
 
         elif key == self.config.get_keybind('pipe_note'):
@@ -619,6 +639,19 @@ class sncli:
             # start full sync after initial view is up
             self.sncli_loop.set_alarm_in(1, self.gui_sync_full_initial, None)
 
+    def gui_clear(self):
+        self.sncli_loop.widget = urwid.Filler(urwid.Text(u''))
+        self.sncli_loop.draw_screen()
+
+    def gui_reset(self):
+        self.sncli_loop.widget = self.master_frame
+        self.sncli_loop.draw_screen()
+
+    def gui_stop(self):
+        # clear the screen and exit the urwid run loop
+        self.gui_clear()
+        raise urwid.ExitMainLoop()
+
     def gui(self, do_sync):
 
         self.do_gui  = True
@@ -770,23 +803,24 @@ class sncli:
 
             content = ''.join(sys.stdin)
             save_new_note(content)
+            return
 
-        else:
+        editor = self.get_editor()
+        if not editor: return
 
-            editor = self.get_editor()
-            if not editor: return
+        tf = temp.tempfile_create(None)
 
-            tf = temp.tempfile_create(None)
-            try:
-                subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
-            except Exception, e:
-                self.gui_status_message_set(u'Editor error: ' + str(e))
-                return
-
-            content = ''.join(temp.tempfile_content(tf))
-            save_new_note(content)
-
+        try:
+            subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
+        except Exception, e:
+            print u'Editor error: ' + str(e)
             temp.tempfile_delete(tf)
+            return
+
+        content = ''.join(temp.tempfile_content(tf))
+        save_new_note(content)
+
+        temp.tempfile_delete(tf)
 
 
 def SIGINT_handler(signum, frame):
