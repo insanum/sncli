@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import os, sys, re, signal, time, datetime, md5, logging
+import os, sys, re, signal, time, datetime, shlex, md5, logging
 import subprocess, thread, threading
 import copy, json, urwid, datetime
 import view_titles, view_note, view_help, view_log, user_input
@@ -239,6 +239,21 @@ class sncli:
                 self.view_titles.note_list[self.view_titles.focus_position].note['key'], tags)
             self.view_titles.update_note_title(None)
 
+    def pipe_input(self, cmd):
+        self.footer_clear()
+        self.body_focus()
+        self.master_frame.keypress = self.frame_keypress
+        if cmd != None:
+            note = self.view_titles.note_list[self.view_titles.focus_position].note
+            args = shlex.split(cmd)
+            try:
+                pipe = subprocess.Popen(cmd, stdin=subprocess.PIPE, shell=True)
+                pipe.communicate(note['content'])
+                pipe.stdin.close()
+                pipe.wait()
+            except OSError, e:
+                self.status_message_set(u'Pipe error: ' + str(e))
+
     def frame_keypress(self, size, key):
 
         lb = self.body_get()
@@ -413,6 +428,20 @@ class sncli:
                     self.ndb.set_note_content(note['key'], new_content)
                     lb.update_note_title(None)
                 temp.tempfile_delete(tf)
+
+        elif key == self.config.get_keybind('pipe_note'):
+            # only when viewing the note list
+            if self.body_get().__class__ == view_titles.ViewTitles:
+                note = lb.note_list[lb.focus_position].note
+                self.status_message_cancel()
+                self.footer_set(
+                    urwid.AttrMap(
+                        user_input.UserInput(self.config,
+                                             key, '',
+                                             self.pipe_input),
+                                  'search_bar'))
+                self.footer_focus()
+                self.master_frame.keypress = self.footer_get().keypress
 
         elif key == self.config.get_keybind('view_next_note'):
             # only when viewing the note content
