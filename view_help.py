@@ -48,7 +48,7 @@ class ViewHelp(urwid.ListBox):
             if use not in self.config.get_keybind_use(c):
                 continue
             lines.append(
-                urwid.AttrMap(
+                urwid.AttrMap(urwid.AttrMap(
                     urwid.Text(
                     [
                      ('help_descr',  '{:>24}  '.format(self.config.get_keybind_descr(c))),
@@ -62,7 +62,7 @@ class ViewHelp(urwid.ListBox):
                                  'help_config' : 'help_focus',
                                  'help_descr'  : 'help_focus'
                                 }
-                ))
+                ), 'default', 'help_focus'))
         return lines
 
     def create_config_help_lines(self):
@@ -75,7 +75,7 @@ class ViewHelp(urwid.ListBox):
         for c in sorted(self.config.configs):
             if c in [ 'sn_username', 'sn_password' ]: continue
             lines.append(
-                urwid.AttrMap(
+                urwid.AttrMap(urwid.AttrMap(
                     urwid.Text(
                     [
                      ('help_descr',  '{:>24}  '.format(self.config.get_config_descr(c))),
@@ -89,7 +89,7 @@ class ViewHelp(urwid.ListBox):
                                  'help_config' : 'help_focus',
                                  'help_descr'  : 'help_focus'
                                 }
-                ))
+                ), 'default', 'help_focus'))
         return lines
 
     def create_color_help_lines(self):
@@ -104,7 +104,7 @@ class ViewHelp(urwid.ListBox):
             fmap[re.search('^(.*)(_fg|_bg)$', c).group(1)] = 'help_focus'
         for c in sorted(self.config.colors):
             lines.append(
-                urwid.AttrMap(
+                urwid.AttrMap(urwid.AttrMap(
                     urwid.Text(
                     [
                      ('help_descr',  '{:>24}  '.format(self.config.get_color_descr(c))),
@@ -115,7 +115,7 @@ class ViewHelp(urwid.ListBox):
                     ),
                     attr_map = None,
                     focus_map = fmap
-                ))
+                ), 'default', 'help_focus'))
         return lines
 
     def keypress(self, size, key):

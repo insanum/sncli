@@ -85,7 +85,7 @@ class Config:
          'clr_note_content_focus_fg' : 'white',
          'clr_note_content_focus_bg' : 'light red',
          'clr_help_focus_fg'         : 'white',
-         'clr_help_focus_bg'         : 'dark gray',
+         'clr_help_focus_bg'         : 'light red',
          'clr_help_header_fg'        : 'dark blue',
          'clr_help_header_bg'        : 'default',
          'clr_help_config_fg'        : 'dark green',
