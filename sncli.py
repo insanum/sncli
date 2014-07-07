@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
-import os, sys, re, signal, time, datetime, shlex, md5, logging
-import subprocess, thread, threading
+import os, sys, getopt, re, signal, time, datetime, shlex, md5
+import subprocess, thread, threading, logging
 import copy, json, urwid, datetime
 import view_titles, view_note, view_help, view_log, user_input
 import utils, temp
@@ -12,9 +12,9 @@ from logging.handlers import RotatingFileHandler
 
 class sncli:
 
-    def __init__(self, do_sync):
-        self.do_sync = do_sync
-        self.config = Config()
+    def __init__(self):
+        self.config  = Config()
+        self.do_gui = False
 
         if not os.path.exists(self.config.get_config('db_path')):
             os.mkdir(self.config.get_config('db_path'))
@@ -35,63 +35,28 @@ class sncli:
             self.ndb = NotesDB(self.config)
         except Exception, e:
             print e
-            exit(1)
+            sys.exit(1)
 
-        self.last_view = []
-        self.status_bar = self.config.get_config('status_bar')
+    def sync_full(self):
+        self.ndb.sync_full()
 
-        self.status_message_alarm = None
-        self.status_message_lock = threading.Lock()
-
-        self.thread_save = threading.Thread(target=self.ndb.save_worker)
-        self.thread_save.setDaemon(True)
-
-        self.thread_sync = threading.Thread(target=self.ndb.sync_worker)
-        self.thread_sync.setDaemon(True)
-
-        self.ndb.add_observer('synced:note', self.observer_notes_db_synced_note)
-        self.ndb.add_observer('change:note-status', self.observer_notes_db_change_note_status)
-        self.ndb.add_observer('progress:sync_full', self.observer_notes_db_sync_full)
-
-        self.view_titles = \
-            view_titles.ViewTitles(self.config,
-                                   {
-                                    'ndb'            : self.ndb,
-                                    'search_string'  : None,
-                                    'status_message' : self.status_message_set
-                                   })
-        self.view_note = \
-            view_note.ViewNote(self.config,
-                               {
-                                'ndb'            : self.ndb,
-                                'key'            : None,
-                                'status_message' : self.status_message_set
-                               })
-
-        self.view_log  = view_log.ViewLog(self.config)
-        self.view_help = view_help.ViewHelp(self.config)
-
-    def start_threads(self):
-        self.thread_save.start()
-        self.thread_sync.start()
-
-    def sync_full_threaded(self):
+    def gui_sync_full_threaded(self):
         thread.start_new_thread(self.ndb.sync_full, ())
 
-    def sync_full_initial(self, loop, arg):
-        self.sync_full_threaded()
+    def gui_sync_full_initial(self, loop, arg):
+        self.gui_sync_full_threaded()
 
-    def observer_notes_db_change_note_status(self, ndb, evt_type, evt):
+    def gui_observer_notes_db_change_note_status(self, ndb, evt_type, evt):
         logging.debug(evt.msg)
-        self.status_message_set(evt.msg)
+        self.gui_status_message_set(evt.msg)
 
-    def observer_notes_db_sync_full(self, ndb, evt_type, evt):
+    def gui_observer_notes_db_sync_full(self, ndb, evt_type, evt):
         logging.debug(evt.msg)
-        self.status_message_set(evt.msg)
+        self.gui_status_message_set(evt.msg)
 
-    def observer_notes_db_synced_note(self, ndb, evt_type, evt):
+    def gui_observer_notes_db_synced_note(self, ndb, evt_type, evt):
         logging.debug(evt.msg)
-        self.status_message_set(evt.msg)
+        self.gui_status_message_set(evt.msg)
         # XXX
         # update view if note synced back is the visible one
 
@@ -100,7 +65,11 @@ class sncli:
         if not editor and os.environ['EDITOR']:
             editor = os.environ['EDITOR']
         if not editor:
-            self.status_message_set(u'No editor configured!')
+            msg = u'No editor configured!'
+            if self.gui:
+                self.gui_status_message_set(msg)
+            else:
+                print msg
             return None
         return editor
 
@@ -109,62 +78,66 @@ class sncli:
         if not pager and os.environ['PAGER']:
             pager = os.environ['PAGER']
         if not pager:
-            self.status_message_set(u'No pager configured!')
+            msg = u'No pager configured!'
+            if self.gui:
+                self.gui_status_message_set(msg)
+            else:
+                print msg
             return None
         return pager
 
-    def header_clear(self):
+    def gui_header_clear(self):
         self.master_frame.contents['header'] = ( None, None )
         self.sncli_loop.draw_screen()
 
-    def header_set(self, w):
+    def gui_header_set(self, w):
         self.master_frame.contents['header'] = ( w, None )
         self.sncli_loop.draw_screen()
 
-    def header_get(self):
+    def gui_header_get(self):
         return self.master_frame.contents['header'][0]
 
-    def header_focus(self):
+    def gui_header_focus(self):
         self.master_frame.focus_position = 'header'
 
-    def footer_clear(self):
+    def gui_footer_clear(self):
         self.master_frame.contents['footer'] = ( None, None )
         self.sncli_loop.draw_screen()
 
-    def footer_set(self, w):
+    def gui_footer_set(self, w):
         self.master_frame.contents['footer'] = ( w, None )
         self.sncli_loop.draw_screen()
 
-    def footer_get(self):
+    def gui_footer_get(self):
         return self.master_frame.contents['footer'][0]
 
-    def footer_focus(self):
+    def gui_footer_focus(self):
         self.master_frame.focus_position = 'footer'
 
-    def body_clear(self):
+    def gui_body_clear(self):
         self.master_frame.contents['body'] = ( None, None )
         self.sncli_loop.draw_screen()
 
-    def body_set(self, w):
+    def gui_body_set(self, w):
         self.master_frame.contents['body'] = ( w, None )
-        self.update_status_bar()
+        self.gui_update_status_bar()
         self.sncli_loop.draw_screen()
 
-    def body_get(self):
+    def gui_body_get(self):
         return self.master_frame.contents['body'][0]
 
-    def body_focus(self):
+    def gui_body_focus(self):
         self.master_frame.focus_position = 'body'
 
-    def status_message_timeout(self, loop, arg):
+    def gui_status_message_timeout(self, loop, arg):
         self.status_message_lock.acquire()
 
         self.status_message_alarm = None
-        self.footer_clear()
+        self.gui_footer_clear()
 
         self.status_message_lock.release()
 
-    def status_message_cancel(self):
+    def gui_status_message_cancel(self):
         self.status_message_lock.acquire()
 
         if self.status_message_alarm:
@@ -173,7 +146,7 @@ class sncli:
 
         self.status_message_lock.release()
 
-    def status_message_set(self, msg):
+    def gui_status_message_set(self, msg):
         self.status_message_lock.acquire()
 
         # if there is already a message showing then concatenate them
@@ -188,61 +161,56 @@ class sncli:
             self.sncli_loop.remove_alarm(self.status_message_alarm)
         self.status_message_alarm = None
 
-        self.footer_set(urwid.AttrMap(urwid.Text(existing_msg + msg),
-                                      'status_message'))
+        self.gui_footer_set(urwid.AttrMap(urwid.Text(existing_msg + msg),
+                                          'status_message'))
 
         self.status_message_alarm = \
             self.sncli_loop.set_alarm_at(time.time() + 5,
-                                         self.status_message_timeout,
+                                         self.gui_status_message_timeout,
                                          None)
 
         self.status_message_lock.release()
 
-    def update_status_bar(self):
+    def gui_update_status_bar(self):
         if self.status_bar != 'yes':
-            self.header_clear()
+            self.gui_header_clear()
         else:
-            self.header_set(self.body_get().get_status_bar())
+            self.gui_header_set(self.gui_body_get().get_status_bar())
 
-    def switch_frame_body(self, new_view, save_current_view=True):
+    def gui_switch_frame_body(self, new_view, save_current_view=True):
         if new_view == None:
             if len(self.last_view) == 0:
                 # XXX verify all notes saved...
                 raise urwid.ExitMainLoop()
             else:
-                self.body_set(self.last_view.pop())
+                self.gui_body_set(self.last_view.pop())
         else:
-            if self.body_get().__class__ != new_view.__class__:
+            if self.gui_body_get().__class__ != new_view.__class__:
                 if save_current_view:
-                    self.last_view.append(self.body_get())
-                self.body_set(new_view)
+                    self.last_view.append(self.gui_body_get())
+                self.gui_body_set(new_view)
 
-    def search_quit(self):
-        self.footer_clear()
-        self.body_focus()
-        self.master_frame.keypress = self.frame_keypress
-
-    def search_input(self, search_string):
-        self.footer_clear()
-        self.body_focus()
-        self.master_frame.keypress = self.frame_keypress
+    def gui_search_input(self, search_string):
+        self.gui_footer_clear()
+        self.gui_body_focus()
+        self.master_frame.keypress = self.gui_frame_keypress
         if search_string:
             self.view_titles.update_note_list(search_string)
-            self.body_set(self.view_titles)
+            self.gui_body_set(self.view_titles)
 
-    def tags_input(self, tags):
-        self.footer_clear()
-        self.body_focus()
-        self.master_frame.keypress = self.frame_keypress
+    def gui_tags_input(self, tags):
+        self.gui_footer_clear()
+        self.gui_body_focus()
+        self.master_frame.keypress = self.gui_frame_keypress
         if tags != None:
             self.ndb.set_note_tags(
                 self.view_titles.note_list[self.view_titles.focus_position].note['key'], tags)
             self.view_titles.update_note_title(None)
 
-    def pipe_input(self, cmd):
-        self.footer_clear()
-        self.body_focus()
-        self.master_frame.keypress = self.frame_keypress
+    def gui_pipe_input(self, cmd):
+        self.gui_footer_clear()
+        self.gui_body_focus()
+        self.master_frame.keypress = self.gui_frame_keypress
         if cmd != None:
             note = self.view_titles.note_list[self.view_titles.focus_position].note
             args = shlex.split(cmd)
@@ -252,23 +220,23 @@ class sncli:
                 pipe.stdin.close()
                 pipe.wait()
             except OSError, e:
-                self.status_message_set(u'Pipe error: ' + str(e))
+                self.gui_status_message_set(u'Pipe error: ' + str(e))
 
-    def frame_keypress(self, size, key):
+    def gui_frame_keypress(self, size, key):
 
-        lb = self.body_get()
+        lb = self.gui_body_get()
 
         if key == self.config.get_keybind('quit'):
-            self.switch_frame_body(None)
+            self.gui_switch_frame_body(None)
 
         elif key == self.config.get_keybind('help'):
-            self.switch_frame_body(self.view_help)
+            self.gui_switch_frame_body(self.view_help)
 
         elif key == self.config.get_keybind('sync'):
-            self.sync_full_threaded()
+            self.gui_sync_full_threaded()
 
         elif key == self.config.get_keybind('view_log'):
-            self.switch_frame_body(self.view_log)
+            self.gui_switch_frame_body(self.view_log)
 
         elif key == self.config.get_keybind('down'):
             if len(lb.body.positions()) <= 0:
@@ -358,12 +326,14 @@ class sncli:
                 self.status_bar = self.config.get_config('status_bar')
 
         elif key == self.config.get_keybind('trash_note'):
-            if self.body_get().__class__ == view_titles.ViewTitles:
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                if len(lb.body.positions()) <= 0:
+                    return None
                 note = lb.note_list[lb.focus_position].note
                 self.ndb.set_note_deleted(note['key'])
 
         elif key == self.config.get_keybind('create_note'):
-            if self.body_get().__class__ == view_titles.ViewTitles:
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 editor = self.get_editor()
                 if not editor: return None
 
@@ -371,16 +341,21 @@ class sncli:
                 try:
                     subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
                 except Exception, e:
-                    self.status_message_set(u'Editor error: ' + str(e))
+                    self.gui_status_message_set(u'Editor error: ' + str(e))
+                    return None
 
                 content = ''.join(temp.tempfile_content(tf))
                 if content:
-                    self.status_message_set(u'New note created')
+                    self.gui_status_message_set(u'New note created')
                     self.ndb.create_note(content)
+
                 temp.tempfile_delete(tf)
 
         elif key == self.config.get_keybind('edit_note'):
-            if self.body_get().__class__ == view_titles.ViewTitles:
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                if len(lb.body.positions()) <= 0:
+                    return None
+
                 editor = self.get_editor()
                 if not editor: return None
 
@@ -390,26 +365,32 @@ class sncli:
                 try:
                     subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
                 except Exception, e:
-                    self.status_message_set(u'Editor error: ' + str(e))
+                    self.gui_status_message_set(u'Editor error: ' + str(e))
+                    return None
 
                 new_content = ''.join(temp.tempfile_content(tf))
                 md5_new = md5.new(new_content).digest()
                 if md5_old != md5_new:
-                    self.status_message_set(u'Note updated')
+                    self.gui_status_message_set(u'Note updated')
                     self.ndb.set_note_content(note['key'], new_content)
                     lb.update_note_title(None)
                 temp.tempfile_delete(tf)
 
         elif key == self.config.get_keybind('view_note'):
             # only when viewing the note list
-            if self.body_get().__class__ == view_titles.ViewTitles:
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                if len(lb.body.positions()) <= 0:
+                    return None
                 note = lb.note_list[lb.focus_position].note
                 self.view_note.update_note(note['key'])
-                self.switch_frame_body(self.view_note)
+                self.gui_switch_frame_body(self.view_note)
 
         elif key == self.config.get_keybind('view_note_ext'):
             # only when viewing the note list
-            if self.body_get().__class__ == view_titles.ViewTitles:
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                if len(lb.body.positions()) <= 0:
+                    return None
+
                 pager = self.get_pager()
                 if not pager: return None
 
@@ -419,33 +400,36 @@ class sncli:
                 try:
                     subprocess.check_call(pager + u' ' + temp.tempfile_name(tf), shell=True)
                 except Exception, e:
-                    self.status_message_set(u'Pager error: ' + str(e))
+                    self.gui_status_message_set(u'Pager error: ' + str(e))
+                    return None
 
                 new_content = ''.join(temp.tempfile_content(tf))
                 md5_new = md5.new(new_content).digest()
                 if md5_old != md5_new:
-                    self.status_message_set(u'Note updated')
+                    self.gui_status_message_set(u'Note updated')
                     self.ndb.set_note_content(note['key'], new_content)
                     lb.update_note_title(None)
                 temp.tempfile_delete(tf)
 
         elif key == self.config.get_keybind('pipe_note'):
             # only when viewing the note list
-            if self.body_get().__class__ == view_titles.ViewTitles:
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                if len(lb.body.positions()) <= 0:
+                    return None
                 note = lb.note_list[lb.focus_position].note
-                self.status_message_cancel()
-                self.footer_set(
+                self.gui_status_message_cancel()
+                self.gui_footer_set(
                     urwid.AttrMap(
                         user_input.UserInput(self.config,
                                              key, '',
-                                             self.pipe_input),
+                                             self.gui_pipe_input),
                                   'search_bar'))
-                self.footer_focus()
-                self.master_frame.keypress = self.footer_get().keypress
+                self.gui_footer_focus()
+                self.master_frame.keypress = self.gui_footer_get().keypress
 
         elif key == self.config.get_keybind('view_next_note'):
             # only when viewing the note content
-            if self.body_get().__class__ == view_note.ViewNote:
+            if self.gui_body_get().__class__ == view_note.ViewNote:
                 if len(self.view_titles.body.positions()) <= 0:
                     return None
                 last = len(self.view_titles.body.positions())
@@ -454,11 +438,11 @@ class sncli:
                 self.view_titles.focus_position += 1
                 lb.update_note(
                     self.view_titles.note_list[self.view_titles.focus_position].note['key'])
-                self.switch_frame_body(self.view_note)
+                self.gui_switch_frame_body(self.view_note)
 
         elif key == self.config.get_keybind('view_prev_note'):
             # only when viewing the note content
-            if self.body_get().__class__ == view_note.ViewNote:
+            if self.gui_body_get().__class__ == view_note.ViewNote:
                 if len(self.view_titles.body.positions()) <= 0:
                     return None
                 if self.view_titles.focus_position == 0:
@@ -466,83 +450,132 @@ class sncli:
                 self.view_titles.focus_position -= 1
                 lb.update_note(
                     self.view_titles.note_list[self.view_titles.focus_position].note['key'])
-                self.switch_frame_body(self.view_note)
+                self.gui_switch_frame_body(self.view_note)
 
         elif key == self.config.get_keybind('search'):
             # search when viewing the note list
-            if self.body_get().__class__ == view_titles.ViewTitles:
-                self.status_message_cancel()
-                self.footer_set(urwid.AttrMap(
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                self.gui_status_message_cancel()
+                self.gui_footer_set(urwid.AttrMap(
                                     user_input.UserInput(self.config,
                                                          key, '',
-                                                         self.search_input),
+                                                         self.gui_search_input),
                                               'search_bar'))
-                self.footer_focus()
-                self.master_frame.keypress = self.footer_get().keypress
+                self.gui_footer_focus()
+                self.master_frame.keypress = self.gui_footer_get().keypress
 
         elif key == self.config.get_keybind('note_pin'):
             # pin note when viewing the note list
-            if self.body_get().__class__ == view_titles.ViewTitles:
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                if len(lb.body.positions()) <= 0:
+                    return None
                 note = lb.note_list[lb.focus_position].note
                 self.ndb.set_note_pinned(note['key'], 1)
                 lb.update_note_title(None)
 
         elif key == self.config.get_keybind('note_unpin'):
             # unpin note when viewing the note list
-            if self.body_get().__class__ == view_titles.ViewTitles:
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                if len(lb.body.positions()) <= 0:
+                    return None
                 note = lb.note_list[lb.focus_position].note
                 self.ndb.set_note_pinned(note['key'], 0)
                 lb.update_note_title(None)
 
         elif key == self.config.get_keybind('note_markdown'):
             # markdown note when viewing the note list
-            if self.body_get().__class__ == view_titles.ViewTitles:
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                if len(lb.body.positions()) <= 0:
+                    return None
                 note = lb.note_list[lb.focus_position].note
                 self.ndb.set_note_markdown(note['key'], 1)
                 lb.update_note_title(None)
 
         elif key == self.config.get_keybind('note_unmarkdown'):
             # unmarkdown note when viewing the note list
-            if self.body_get().__class__ == view_titles.ViewTitles:
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                if len(lb.body.positions()) <= 0:
+                    return None
                 note = lb.note_list[lb.focus_position].note
                 self.ndb.set_note_markdown(note['key'], 0)
                 lb.update_note_title(None)
 
         elif key == self.config.get_keybind('note_tags'):
             # edit tags when viewing the note list
-            if self.body_get().__class__ == view_titles.ViewTitles:
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                if len(lb.body.positions()) <= 0:
+                    return None
                 note = lb.note_list[lb.focus_position].note
-                self.status_message_cancel()
-                self.footer_set(
+                self.gui_status_message_cancel()
+                self.gui_footer_set(
                     urwid.AttrMap(
                         user_input.UserInput(self.config,
                                              'Tags: ',
                                              '%s' % ','.join(note['tags']),
-                                             self.tags_input),
+                                             self.gui_tags_input),
                                   'search_bar'))
-                self.footer_focus()
-                self.master_frame.keypress = self.footer_get().keypress
+                self.gui_footer_focus()
+                self.master_frame.keypress = self.gui_footer_get().keypress
 
         elif key == self.config.get_keybind('clear_search'):
             self.view_titles.update_note_list(None)
-            self.body_set(self.view_titles)
+            self.gui_body_set(self.view_titles)
 
         else:
             return lb.keypress(size, key)
 
-        self.update_status_bar()
+        self.gui_update_status_bar()
         return None
 
-    def init_view(self, loop, arg):
-        self.master_frame.keypress = self.frame_keypress
-        self.body_set(self.view_titles)
-        self.start_threads()
+    def gui_init_view(self, loop, arg):
+        self.master_frame.keypress = self.gui_frame_keypress
+        self.gui_body_set(self.view_titles)
+
+        self.thread_save.start()
+        self.thread_sync.start()
 
         if self.do_sync:
             # start full sync after initial view is up
-            self.sncli_loop.set_alarm_in(1, self.sync_full_initial, None)
+            self.sncli_loop.set_alarm_in(1, self.gui_sync_full_initial, None)
 
-    def ba_bam_what(self):
+    def gui(self, do_sync):
+
+        self.do_gui  = True
+        self.do_sync = do_sync
+
+        self.last_view = []
+        self.status_bar = self.config.get_config('status_bar')
+
+        self.status_message_alarm = None
+        self.status_message_lock = threading.Lock()
+
+        self.thread_save = threading.Thread(target=self.ndb.save_worker)
+        self.thread_save.setDaemon(True)
+
+        self.thread_sync = threading.Thread(target=self.ndb.sync_worker)
+        self.thread_sync.setDaemon(True)
+
+        self.ndb.add_observer('synced:note', self.gui_observer_notes_db_synced_note)
+        self.ndb.add_observer('change:note-status', self.gui_observer_notes_db_change_note_status)
+        self.ndb.add_observer('progress:sync_full', self.gui_observer_notes_db_sync_full)
+
+        self.view_titles = \
+            view_titles.ViewTitles(self.config,
+                                   {
+                                    'ndb'            : self.ndb,
+                                    'search_string'  : None,
+                                    'status_message' : self.gui_status_message_set
+                                   })
+        self.view_note = \
+            view_note.ViewNote(self.config,
+                               {
+                                'ndb'            : self.ndb,
+                                'key'            : None,
+                                'status_message' : self.gui_status_message_set
+                               })
+
+        self.view_log  = view_log.ViewLog(self.config)
+        self.view_help = view_help.ViewHelp(self.config)
 
         palette = \
           [
@@ -617,9 +650,63 @@ class sncli:
                                          palette,
                                          handle_mouse=False)
 
-        self.sncli_loop.set_alarm_in(0, self.init_view, None)
+        self.sncli_loop.set_alarm_in(0, self.gui_init_view, None)
 
         self.sncli_loop.run()
+
+    def cli_list_notes(self, search_string):
+        note_list, match_regex, all_notes_cnt = \
+            self.ndb.filter_notes(search_string)
+        for n in note_list:
+            print n.key + u' - ' + utils.get_note_title(n.note)
+
+    def cli_dump_notes(self, search_string, key=None):
+
+        sep = u'+' + u'-'*39 + u'+'
+        def dump_note(note):
+            print sep
+            print u'| Key: ' + note['key'] + u' |'
+            print sep
+            print note['content']
+
+        if not key:
+            note_list, match_regex, all_notes_cnt = \
+                self.ndb.filter_notes(search_string)
+            for n in note_list:
+                dump_note(n.note)
+        else:
+            dump_note(self.ndb.get_note(key))
+
+    def cli_create_note(self, from_stdin):
+
+        def save_new_note(content):
+            if content and content != u'\n':
+                print u'New note created'
+                self.ndb.create_note(content)
+                self.ndb.sync_full()
+
+        if from_stdin:
+
+            content = ''.join(sys.stdin)
+            save_new_note(content)
+
+        else:
+
+            editor = self.get_editor()
+            if not editor: return
+
+            tf = temp.tempfile_create(None)
+            try:
+                subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
+            except Exception, e:
+                self.gui_status_message_set(u'Editor error: ' + str(e))
+                return
+
+            content = ''.join(temp.tempfile_content(tf))
+            save_new_note(content)
+
+            temp.tempfile_delete(tf)
+
 
 def SIGINT_handler(signum, frame):
     print('\nSignal caught, bye!')
@@ -627,9 +714,74 @@ def SIGINT_handler(signum, frame):
 
 signal.signal(signal.SIGINT, SIGINT_handler)
 
-def main():
-    sncli(True if len(sys.argv) > 1 else False).ba_bam_what()
+def usage():
+    print 'Usage: sncli ...'
+    sys.exit(0)
+
+def main(argv):
+    sync = True
+    gui  = True
+    key  = ''
+
+    try:
+        opts, args = getopt.getopt(argv, 'h',
+            [ 'help', 'nosync', 'nogui', 'key=' ])
+    except:
+        usage()
+
+    for opt, arg in opts:
+        if opt in [ '-h', '--help']:
+            usage()
+        elif opt == '--nosync':
+            sync = False
+        elif opt == '--nogui':
+            gui = False
+        elif opt == '--key':
+            key = arg
+        else:
+            print "ERROR: Unhandled option"
+            usage()
+
+    if gui and args: usage() # not quite right...
+
+    if gui:
+        sncli().gui(sync)
+        return
+
+    if not args: usage()
+
+    def sncli_start(sync):
+        sn = sncli()
+        if sync: sn.sync_full()
+        return sn
+
+    if args[0] == 'list':
+
+        sn = sncli_start(sync)
+        sn.cli_list_notes(' '.join(args[1:]))
+
+    elif args[0] == 'dump':
+
+        sn = sncli_start(sync)
+        if not key:
+            sn.cli_dump_notes(' '.join(args[1:]))
+        else:
+            sn.cli_dump_notes(None, key=key)
+
+    elif args[0] == 'create':
+
+        if len(args) == 1:
+            sn = sncli_start(sync)
+            sn.cli_create_note(False)
+        elif len(args) == 2 and args[1] == '-':
+            sn = sncli_start(sync)
+            sn.cli_create_note(True)
+        else:
+            usage()
+
+    else:
+        usage()
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
 
