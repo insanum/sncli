@@ -7,7 +7,6 @@ import copy
 import glob
 import os
 import json
-import logging
 from Queue import Queue, Empty
 import re
 import simplenote
@@ -30,10 +29,11 @@ class WriteError(RuntimeError):
 class NotesDB(utils.SubjectMixin):
     """NotesDB will take care of the local notes database and syncing with SN.
     """
-    def __init__(self, config):
+    def __init__(self, config, log):
         utils.SubjectMixin.__init__(self)
 
         self.config = config
+        self.log    = log
 
         # create db dir if it does not exist
         if not os.path.exists(self.config.get_config('db_path')):
@@ -50,12 +50,10 @@ class NotesDB(utils.SubjectMixin):
                 n = json.load(open(fn, 'rb'))
 
             except IOError, e:
-                logging.error('NotesDB_init: Error opening %s: %s' % (fn, str(e)))
-                raise ReadError ('Error opening note file')
+                raise ReadError ('Error opening {0}: {1}'.format(fn, str(e)))
 
             except ValueError, e:
-                logging.error('NotesDB_init: Error reading %s: %s' % (fn, str(e)))
-                raise ReadError ('Error reading note file')
+                raise ReadError ('Error reading {0}: {1}'.format(fn, str(e)))
 
             else:
                 # we always have a localkey, also when we don't have a note['key'] yet (no sync)
@@ -432,7 +430,7 @@ class NotesDB(utils.SubjectMixin):
         # update if note has no key or it has been modified since last sync
         if not note.get('key') or \
            float(note.get('modifydate')) > float(note.get('syncdate')):
-            logging.debug('Sync worker: updating note %s', k)
+            self.log('Sync worker: updating note {0}'.format(k))
 
             # only send required fields
             cn = copy.deepcopy(note)
@@ -465,17 +463,17 @@ class NotesDB(utils.SubjectMixin):
                 # store when we've synced
                 n['syncdate'] = time.time()
                 note.update(n)
-                logging.debug('Sync worker: updated note %s', k)
+                self.log('Sync worker: updated note {0}'.format(k))
                 return (k, new_content)
             else:
-                logging.debug('ERROR: Sync worker: update failed for note %s', k)
+                self.log('ERROR: Sync worker: update failed for note {0}'.format(k))
                 return None
 
         else:
             if not check_for_new:
                 return None
 
-            logging.debug('Sync worker: checking for server update of note %s', k)
+            self.log('Sync worker: checking for server update of note {0}'.format(k))
 
             # our note is synced so lets check if server has something newer
             gret = self.simplenote.get_note(note['key'])
@@ -486,18 +484,18 @@ class NotesDB(utils.SubjectMixin):
                     # store what we pulled down from the server
                     n['syncdate'] = time.time()
                     note.update(n)
-                    logging.debug('Sync worker: server had an update for note %s', k)
+                    self.log('Sync worker: server had an update for note {0}'.format(k))
                     return (k, True)
                 else:
-                    logging.debug('Sync worker: server in sync with note %s', k)
+                    self.log('Sync worker: server in sync with note {0}'.format(k))
                     return (k, False)
             else:
-                logging.debug('ERROR: Sync worker: get failed for note %s', k)
+                self.log('ERROR: Sync worker: get failed for note {0}'.format(k))
                 return None
 
     # sync worker thread...
     def sync_worker(self):
-        logging.debug('Sync worker: started')
+        self.log('Sync worker: started')
         while True:
             time.sleep(5)
             now = time.time()
@@ -620,7 +618,7 @@ class NotesDB(utils.SubjectMixin):
             try:
                 self.helper_save_note(uk, self.notes[uk])
             except WriteError, e:
-                raise WriteError(e)
+                raise WriteError (str(e))
 
         for dk in local_deletes.keys():
             fn = self.helper_key_to_fname(dk)
@@ -633,10 +631,10 @@ class NotesDB(utils.SubjectMixin):
 
     # save worker thread...
     def save_worker(self):
-        logging.debug('Save worker: started')
+        self.log('Save worker: started')
         while True:
             time.sleep(5)
-            #logging.debug('Save worker: checking for work')
+            #self.log('Save worker: checking for work')
             for k,n in self.notes.items():
                 savedate = float(n.get('savedate'))
                 if float(n.get('modifydate')) > savedate or \
@@ -644,10 +642,8 @@ class NotesDB(utils.SubjectMixin):
                     try:
                         # this will write the new savedate into the note
                         self.helper_save_note(k, n)
-                        logging.debug('Save worker: saved note %s', k)
+                        self.log('Save worker: saved note {0}'.format(k))
                     except WriteError, e:
-                        msg = 'ERROR: Failed to write file to the filesystem!'
-                        logging.error(msg)
-                        print msg
+                        self.log('ERROR: Failed to write file to the filesystem!')
                         os._exit(1)
 

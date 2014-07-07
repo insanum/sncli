@@ -32,9 +32,9 @@ class sncli:
         logging.debug('sncli logging initialized')
 
         try:
-            self.ndb = NotesDB(self.config)
+            self.ndb = NotesDB(self.config, self.log)
         except Exception, e:
-            print e
+            self.log(str(e))
             sys.exit(1)
 
     def sync_full(self):
@@ -47,29 +47,21 @@ class sncli:
         self.gui_sync_full_threaded()
 
     def gui_observer_notes_db_change_note_status(self, ndb, evt_type, evt):
-        logging.debug(evt.msg)
-        self.gui_status_message_set(evt.msg)
+        self.log(evt.msg)
 
     def gui_observer_notes_db_sync_full(self, ndb, evt_type, evt):
-        logging.debug(evt.msg)
-        self.gui_status_message_set(evt.msg)
+        self.log(evt.msg)
 
     def gui_observer_notes_db_synced_note(self, ndb, evt_type, evt):
-        logging.debug(evt.msg)
-        self.gui_status_message_set(evt.msg)
-        # XXX
-        # update view if note synced back is the visible one
+        self.log(evt.msg)
+        # XXX update view if note synced back is the visible one
 
     def get_editor(self):
         editor = self.config.get_config('editor')
         if not editor and os.environ['EDITOR']:
             editor = os.environ['EDITOR']
         if not editor:
-            msg = u'No editor configured!'
-            if self.gui:
-                self.gui_status_message_set(msg)
-            else:
-                print msg
+            self.log(u'No editor configured!')
             return None
         return editor
 
@@ -78,11 +70,7 @@ class sncli:
         if not pager and os.environ['PAGER']:
             pager = os.environ['PAGER']
         if not pager:
-            msg = u'No pager configured!'
-            if self.gui:
-                self.gui_status_message_set(msg)
-            else:
-                print msg
+            self.log(u'No pager configured!')
             return None
         return pager
 
@@ -129,47 +117,53 @@ class sncli:
     def gui_body_focus(self):
         self.master_frame.focus_position = 'body'
 
-    def gui_status_message_timeout(self, loop, arg):
-        self.status_message_lock.acquire()
+    def log_timeout(self, loop, arg):
+        self.log_lock.acquire()
 
-        self.status_message_alarm = None
+        self.log_alarm = None
         self.gui_footer_clear()
 
-        self.status_message_lock.release()
+        self.log_lock.release()
 
-    def gui_status_message_cancel(self):
-        self.status_message_lock.acquire()
+    def log_cancel(self):
+        self.log_lock.acquire()
 
-        if self.status_message_alarm:
-            self.sncli_loop.remove_alarm(self.status_message_alarm)
-        self.status_message_alarm = None
+        if self.log_alarm:
+            self.sncli_loop.remove_alarm(self.log_alarm)
+        self.log_alarm = None
 
-        self.status_message_lock.release()
+        self.log_lock.release()
 
-    def gui_status_message_set(self, msg):
-        self.status_message_lock.acquire()
+    def log(self, msg):
+        logging.debug(msg)
+
+        if not self.do_gui:
+            print msg
+            return
+
+        self.log_lock.acquire()
 
         # if there is already a message showing then concatenate them
         existing_msg = ''
-        if self.status_message_alarm and \
+        if self.log_alarm and \
            'footer' in self.master_frame.contents.keys():
             existing_msg = \
                 self.master_frame.contents['footer'][0].base_widget.text + u'\n'
 
         # cancel any existing state message alarm
-        if self.status_message_alarm:
-            self.sncli_loop.remove_alarm(self.status_message_alarm)
-        self.status_message_alarm = None
+        if self.log_alarm:
+            self.sncli_loop.remove_alarm(self.log_alarm)
+        self.log_alarm = None
 
         self.gui_footer_set(urwid.AttrMap(urwid.Text(existing_msg + msg),
-                                          'status_message'))
+                                          'log'))
 
-        self.status_message_alarm = \
+        self.log_alarm = \
             self.sncli_loop.set_alarm_at(time.time() + 5,
-                                         self.gui_status_message_timeout,
+                                         self.log_timeout,
                                          None)
 
-        self.status_message_lock.release()
+        self.log_lock.release()
 
     def gui_update_status_bar(self):
         if self.status_bar != 'yes':
@@ -231,7 +225,7 @@ class sncli:
                 pipe.stdin.close()
                 pipe.wait()
             except OSError, e:
-                self.gui_status_message_set(u'Pipe error: ' + str(e))
+                self.log(u'Pipe error: ' + str(e))
             finally:
                 self.gui_reset()
 
@@ -365,7 +359,7 @@ class sncli:
                 self.gui_clear()
                 subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
             except Exception, e:
-                self.gui_status_message_set(u'Editor error: ' + str(e))
+                self.log(u'Editor error: ' + str(e))
                 temp.tempfile_delete(tf)
                 return None
             finally:
@@ -373,7 +367,7 @@ class sncli:
 
             content = ''.join(temp.tempfile_content(tf))
             if content:
-                self.gui_status_message_set(u'New note created')
+                self.log(u'New note created')
                 self.ndb.create_note(content)
 
             temp.tempfile_delete(tf)
@@ -400,7 +394,7 @@ class sncli:
                 self.gui_clear()
                 subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
             except Exception, e:
-                self.gui_status_message_set(u'Editor error: ' + str(e))
+                self.log(u'Editor error: ' + str(e))
                 temp.tempfile_delete(tf)
                 return None
             finally:
@@ -409,7 +403,7 @@ class sncli:
             new_content = ''.join(temp.tempfile_content(tf))
             md5_new = md5.new(new_content).digest()
             if md5_old != md5_new:
-                self.gui_status_message_set(u'Note updated')
+                self.log(u'Note updated')
                 self.ndb.set_note_content(note['key'], new_content)
                 if self.gui_body_get().__class__ == view_titles.ViewTitles:
                     lb.update_note_title(None)
@@ -450,7 +444,7 @@ class sncli:
                 self.gui_clear()
                 subprocess.check_call(pager + u' ' + temp.tempfile_name(tf), shell=True)
             except Exception, e:
-                self.gui_status_message_set(u'Pager error: ' + str(e))
+                self.log(u'Pager error: ' + str(e))
                 temp.tempfile_delete(tf)
                 return None
             finally:
@@ -459,7 +453,7 @@ class sncli:
             new_content = ''.join(temp.tempfile_content(tf))
             md5_new = md5.new(new_content).digest()
             if md5_old != md5_new:
-                self.gui_status_message_set(u'Note updated')
+                self.log(u'Note updated')
                 self.ndb.set_note_content(note['key'], new_content)
                 lb.update_note_title(None)
 
@@ -477,7 +471,7 @@ class sncli:
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 note = lb.note
 
-            self.gui_status_message_cancel()
+            self.log_cancel()
             self.gui_footer_set(
                 urwid.AttrMap(
                     user_input.UserInput(self.config,
@@ -518,7 +512,7 @@ class sncli:
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
                 return key
 
-            self.gui_status_message_cancel()
+            self.log_cancel()
             self.gui_footer_set(urwid.AttrMap(
                                 user_input.UserInput(self.config,
                                                      key, '',
@@ -604,7 +598,7 @@ class sncli:
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 note = lb.note
 
-            self.gui_status_message_cancel()
+            self.log_cancel()
             self.gui_footer_set(
                 urwid.AttrMap(
                     user_input.UserInput(self.config,
@@ -660,8 +654,8 @@ class sncli:
         self.last_view = []
         self.status_bar = self.config.get_config('status_bar')
 
-        self.status_message_alarm = None
-        self.status_message_lock = threading.Lock()
+        self.log_alarm = None
+        self.log_lock = threading.Lock()
 
         self.thread_save = threading.Thread(target=self.ndb.save_worker)
         self.thread_save.setDaemon(True)
@@ -676,16 +670,16 @@ class sncli:
         self.view_titles = \
             view_titles.ViewTitles(self.config,
                                    {
-                                    'ndb'            : self.ndb,
-                                    'search_string'  : None,
-                                    'status_message' : self.gui_status_message_set
+                                    'ndb'           : self.ndb,
+                                    'search_string' : None,
+                                    'log'           : self.log
                                    })
         self.view_note = \
             view_note.ViewNote(self.config,
                                {
-                                'ndb'            : self.ndb,
-                                'key'            : None,
-                                'status_message' : self.gui_status_message_set
+                                'ndb' : self.ndb,
+                                'key' : None,
+                                'log' : self.log
                                })
 
         self.view_log  = view_log.ViewLog(self.config)
@@ -699,9 +693,9 @@ class sncli:
             ('status_bar',
                 self.config.get_color('status_bar_fg'),
                 self.config.get_color('status_bar_bg') ),
-            ('status_message',
-                self.config.get_color('status_message_fg'),
-                self.config.get_color('status_message_bg') ),
+            ('log',
+                self.config.get_color('log_fg'),
+                self.config.get_color('log_bg') ),
             ('search_bar',
                 self.config.get_color('search_bar_fg'),
                 self.config.get_color('search_bar_bg') ),
@@ -795,7 +789,7 @@ class sncli:
 
         def save_new_note(content):
             if content and content != u'\n':
-                print u'New note created'
+                self.log(u'New note created')
                 self.ndb.create_note(content)
                 self.ndb.sync_full()
 
@@ -813,7 +807,7 @@ class sncli:
         try:
             subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
         except Exception, e:
-            print u'Editor error: ' + str(e)
+            self.log(u'Editor error: ' + str(e))
             temp.tempfile_delete(tf)
             return
 
@@ -824,13 +818,13 @@ class sncli:
 
 
 def SIGINT_handler(signum, frame):
-    print('\nSignal caught, bye!')
+    print u'\nSignal caught, bye!'
     sys.exit(1)
 
 signal.signal(signal.SIGINT, SIGINT_handler)
 
 def usage():
-    print 'Usage: sncli ...'
+    print u'Usage: sncli ...'
     sys.exit(0)
 
 def main(argv):
@@ -854,7 +848,7 @@ def main(argv):
         elif opt == '--key':
             key = arg
         else:
-            print "ERROR: Unhandled option"
+            print u'ERROR: Unhandled option'
             usage()
 
     if gui and args: usage() # not quite right...

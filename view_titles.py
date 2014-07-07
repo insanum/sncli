@@ -8,7 +8,7 @@ class ViewTitles(urwid.ListBox):
         self.config = config
         self.ndb = args['ndb']
         self.search_string = args['search_string']
-        self.status_message = args['status_message']
+        self.log = args['log']
         self.note_list, match_regex, self.all_notes_cnt = \
             self.ndb.filter_notes(self.search_string)
         super(ViewTitles, self).__init__(
@@ -21,7 +21,7 @@ class ViewTitles(urwid.ListBox):
         self.body[:] = \
             urwid.SimpleFocusListWalker(self.get_note_titles())
         if len(self.note_list) == 0:
-            self.status_message(u'No notes found!')
+            self.log(u'No notes found!')
         else:
             self.focus_position = 0
 
