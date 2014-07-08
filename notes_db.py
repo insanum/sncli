@@ -2,7 +2,6 @@
 # copyright 2012 by Charl P. Botha <cpbotha@vxlabs.com>
 # new BSD license
 
-import codecs
 import copy
 import glob
 import os
@@ -26,12 +25,10 @@ class ReadError(RuntimeError):
 class WriteError(RuntimeError):
     pass
 
-class NotesDB(utils.SubjectMixin):
+class NotesDB():
     """NotesDB will take care of the local notes database and syncing with SN.
     """
     def __init__(self, config, log):
-        utils.SubjectMixin.__init__(self)
-
         self.config = config
         self.log    = log
 
@@ -334,11 +331,8 @@ class NotesDB(utils.SubjectMixin):
         if not n['deleted']:
             n['deleted'] = 1
             n['modifydate'] = time.time()
-            self.notify_observers('change:note-status',
-                                  utils.KeyValueObject(what='modifydate',
-                                                       key=key,
-                                                       msg='Note trashed.'))
             self.flag_what_changed(n, 'deleted')
+            self.log('Note trashed')
 
     def set_note_content(self, key, content):
         n = self.notes[key]
@@ -346,11 +340,8 @@ class NotesDB(utils.SubjectMixin):
         if content != old_content:
             n['content'] = content
             n['modifydate'] = time.time()
-            self.notify_observers('change:note-status',
-                                  utils.KeyValueObject(what='modifydate',
-                                                       key=key,
-                                                       msg='Note content updated.'))
             self.flag_what_changed(n, 'content')
+            self.log('Note content updated')
 
     def set_note_tags(self, key, tags):
         n = self.notes[key]
@@ -359,11 +350,8 @@ class NotesDB(utils.SubjectMixin):
         if tags != old_tags:
             n['tags'] = tags
             n['modifydate'] = time.time()
-            self.notify_observers('change:note-status',
-                                  utils.KeyValueObject(what='modifydate',
-                                                       key=key,
-                                                       msg='Note tags updated.'))
             self.flag_what_changed(n, 'tags')
+            self.log('Note tags updated')
 
     def set_note_pinned(self, key, pinned):
         n = self.notes[key]
@@ -377,11 +365,8 @@ class NotesDB(utils.SubjectMixin):
             else:
                 systemtags.remove('pinned')
             n['modifydate'] = time.time()
-            self.notify_observers('change:note-status',
-                utils.KeyValueObject(what='modifydate',
-                                     key=key,
-                                     msg='Note pinned.' if pinned else 'Note unpinned.'))
             self.flag_what_changed(n, 'systemtags')
+            self.log('Note pinned' if pinned else 'Note unpinned')
 
     def set_note_markdown(self, key, markdown):
         n = self.notes[key]
@@ -395,11 +380,8 @@ class NotesDB(utils.SubjectMixin):
             else:
                 systemtags.remove('markdown')
             n['modifydate'] = time.time()
-            self.notify_observers('change:note-status',
-                utils.KeyValueObject(what='modifydate',
-                                     key=key,
-                                     msg='Note markdown flagged.' if markdown else 'Note markdown unflagged.'))
             self.flag_what_changed(n, 'systemtags')
+            self.log('Note markdown flagged' if markdown else 'Note markdown unflagged')
 
     def helper_key_to_fname(self, k):
         return os.path.join(self.config.get_config('db_path'), k) + '.json'
@@ -527,8 +509,7 @@ class NotesDB(utils.SubjectMixin):
 
             3. for each remote note
                    if remote syncnum > local syncnum ||
-                       retrieve note, update note with response
-                   if new note, key is not in local store
+                      a new note and key is not in local store
                        retrieve note, update note with response
 
             4. for each local note not in the index
@@ -537,119 +518,108 @@ class NotesDB(utils.SubjectMixin):
 
         local_updates = {}
         local_deletes = {}
+        server_keys = {}
         now = time.time()
 
-        self.notify_observers('progress:sync_full', utils.KeyValueObject(msg='Starting full sync.'))
+        self.log('Starting full sync')
 
-        # 1. go through local notes, if anything changed or new, update to server
-        for ni,lk in enumerate(self.notes.keys()):
-            n = self.notes[lk]
-            if not n.get('key') or float(n.get('modifydate')) > float(n.get('syncdate')):
+        # 1. for any note changed locally, including new notes:
+        #        save note to server, update note with response
+        for note_index, local_key in enumerate(self.notes.keys()):
+            n = self.notes[local_key]
+            if not n.get('key') or \
+               float(n.get('modifydate')) > float(n.get('syncdate')):
                 uret = self.simplenote.update_note(n)
-                if uret[1] == 0:
-                    # replace n with uret[0]
-                    # if this was a new note, our local key is not valid anymore
-                    del self.notes[lk]
-                    # in either case (new or existing note), save note at assigned key
+                if uret[1] == 0: # success
+                    # if this is a new note our local key is not valid anymore
+                    # merge the note we got back (content could be empty)
+                    # record syncdate and save the note at the assigned key
+                    del self.notes[local_key]
                     k = uret[0].get('key')
-                    # we merge the note we got back (content could be empty!)
                     n.update(uret[0])
-                    # and put it at the new key slot
+                    n['syncdate'] = now
                     self.notes[k] = n
-
-                    # record that we just synced
-                    uret[0]['syncdate'] = now
 
                     # whatever the case may be, k is now updated
                     local_updates[k] = True
-                    if lk != k:
-                        # if lk was a different (purely local) key, should be deleted
-                        local_deletes[lk] = True
 
-                    self.notify_observers('progress:sync_full',
-                            utils.KeyValueObject(msg='Synced modified note %d to server. (key=%s)' % (ni,lk)))
+                    if local_key != k:
+                        # if local_key was a different key it should be deleted
+                        local_deletes[local_key] = True
 
+                    self.log('Synced note to server (key={0})'.format(local_key))
                 else:
-                    self.notify_observers('progress:sync_full',
-                            utils.KeyValueObject(msg='ERROR: Failed to sync modified note %d to server. (key=%s)' % (ni,lk)))
-                    self.notify_observers('progress:sync_full',
-                            utils.KeyValueObject(msg="SyncError: " + str(uret[0])))
+                    self.log('ERROR: Failed to sync note to server (key={0})'.format(local_key))
 
         # 2. get the note index
-        self.notify_observers('progress:sync_full',
-                utils.KeyValueObject(msg='Retrieving note list from server.'))
+        self.log('Retrieving note list from server')
         nl = self.simplenote.get_note_list()
         if nl[1] == 0: # success
-            self.notify_observers('progress:sync_full',
-                    utils.KeyValueObject(msg='Retrieved full note list from server.'))
+            self.log('Retrieved full note list from server')
         else:
-            self.notify_observers('progress:sync_full',
-                    utils.KeyValueObject(msg='ERROR: Could not get note list from server.'))
+            self.log('ERROR: Could not get note list from server')
             return 1
         nl = nl[0]
 
-        # 3. if remote syncnum > local syncnum, update our note; if key is new, add note to local.
-        # this gets the FULL note list, even if multiple gets are required
-        server_keys = {}
-        lennl = len(nl)
+        # 3. for each remote note
+        #        if remote syncnum > local syncnum ||
+        #           a new note and key is not in local store
+        #            retrieve note, update note with response
+        len_nl = len(nl)
         sync_from_server_errors = 0
-        for ni,n in enumerate(nl):
+        for note_index, n in enumerate(nl):
             k = n.get('key')
             server_keys[k] = True
-            # this works, only because in phase 1 we rewrite local keys to
-            # server keys when we get an updated not back from the server
+            # this works because in the prior step we rewrite local keys to
+            # server keys when we get an updated note back from the server
             if k in self.notes:
-                # we already have this
-                # check if server n has a newer syncnum than mine
+                # we already have this note
+                # if the server note has a newer syncnum we need to get it
                 if int(n.get('syncnum')) > int(self.notes[k].get('syncnum', -1)):
-                    # and the server is newer
-                    ret = self.simplenote.get_note(k)
-                    if ret[1] == 0:
-                        self.notes[k].update(ret[0])
+                    gret = self.simplenote.get_note(k)
+                    if gret[1] == 0:
+                        self.notes[k].update(gret[0])
                         local_updates[k] = True
-                        # in both cases, new or newer note, syncdate is now.
                         self.notes[k]['syncdate'] = now
-                        self.notify_observers('progress:sync_full',
-                                utils.KeyValueObject(msg='Synced newer note %d (%d) from server.' % (ni,lennl)))
+
+                        self.log('Synced newer note from server (key={0})'.format(k))
                     else:
-                        self.notify_observers('progress:sync_full',
-                                utils.KeyValueObject(msg='ERROR: Failed to sync newer note %s from server: %s' % (k,ret[0])))
-                        sync_from_server_errors+=1
-
+                        self.log('ERROR: Failed to sync newer note from server (key={0})'.format(k))
+                        sync_from_server_errors += 1
             else:
-                # new note
-                ret = self.simplenote.get_note(k)
-                if ret[1] == 0:
-                    self.notes[k] = ret[0]
+                # this is a new note
+                gret = self.simplenote.get_note(k)
+                if gret[1] == 0:
+                    self.notes[k] = gret[0]
                     local_updates[k] = True
-                    # in both cases, new or newer note, syncdate is now.
                     self.notes[k]['syncdate'] = now
-                    self.notify_observers('progress:sync_full',
-                            utils.KeyValueObject(msg='Synced new note %d (%d) from server.' % (ni,lennl)))
-                else:
-                    self.notify_observers('progress:sync_full',
-                            utils.KeyValueObject(msg='ERROR: Failed syncing new note %s from server: %s' % (k,ret[0])))
-                    sync_from_server_errors+=1
 
-        # 4. for each local note not in server index, remove.
-        for lk in self.notes.keys():
-            if lk not in server_keys:
-                del self.notes[lk]
-                local_deletes[lk] = True
+                    self.log('Synced new note from server (key={0})'.format(k))
+                else:
+                    self.log('ERROR: Failed syncing new note from server (key={0})'.format(k))
+                    sync_from_server_errors += 1
+
+        # 4. for each local note not in the index
+        #        PERMANENT DELETE, remove note from local store
+        for local_key in self.notes.keys():
+            if local_key not in server_keys:
+                del self.notes[local_key]
+                local_deletes[local_key] = True
 
         # sync done, now write changes to db_path
-        for uk in local_updates.keys():
+
+        for k in local_updates.keys():
             try:
-                self.helper_save_note(uk, self.notes[uk])
+                self.helper_save_note(k, self.notes[k])
             except WriteError, e:
                 raise WriteError (str(e))
 
-        for dk in local_deletes.keys():
-            fn = self.helper_key_to_fname(dk)
+        for k in local_deletes.keys():
+            fn = self.helper_key_to_fname(k)
             if os.path.exists(fn):
                 os.unlink(fn)
 
-        self.notify_observers('progress:sync_full', utils.KeyValueObject(msg='Full sync complete.'))
+        self.log('Full sync complete')
 
         return sync_from_server_errors
 

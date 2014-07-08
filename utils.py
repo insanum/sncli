@@ -2,11 +2,7 @@
 # copyright 2012 by Charl P. Botha <cpbotha@vxlabs.com>
 # new BSD license
 
-import datetime
-import random
-import re
-import string
-import urllib2
+import datetime, random, re
 
 # first line with non-whitespace should be the title
 note_title_re = re.compile('\s*(.*)\n?')
@@ -146,34 +142,3 @@ class KeyValueObject:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
-class SubjectMixin:
-    """Maintain a list of callables for each event type.
-    
-    We follow the convention action:object, e.g. change:entry.
-    """
-
-    def __init__(self):
-        self.observers = {}
-        self.mutes = {}
-
-    def add_observer(self, evt_type, o):
-        if evt_type not in self.observers:
-            self.observers[evt_type] = [o]
-        
-        elif o not in self.observers[evt_type]:
-            self.observers[evt_type].append(o)
-        
-    def notify_observers(self, evt_type, evt):
-        if evt_type in self.mutes or evt_type not in self.observers:
-            return
-        
-        for o in self.observers[evt_type]:
-            # invoke observers with ourselves as first param
-            o(self, evt_type, evt)
-            
-    def mute(self, evt_type):
-        self.mutes[evt_type] = True
-        
-    def unmute(self, evt_type):
-        if evt_type in self.mutes:
-            del self.mutes[evt_type]

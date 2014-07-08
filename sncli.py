@@ -46,16 +46,6 @@ class sncli:
     def gui_sync_full_initial(self, loop, arg):
         self.gui_sync_full_threaded()
 
-    def gui_observer_notes_db_change_note_status(self, ndb, evt_type, evt):
-        self.log(evt.msg)
-
-    def gui_observer_notes_db_sync_full(self, ndb, evt_type, evt):
-        self.log(evt.msg)
-
-    def gui_observer_notes_db_synced_note(self, ndb, evt_type, evt):
-        self.log(evt.msg)
-        # XXX update view if note synced back is the visible one
-
     def get_editor(self):
         editor = self.config.get_config('editor')
         if not editor and os.environ['EDITOR']:
@@ -647,10 +637,6 @@ class sncli:
 
         self.thread_sync = threading.Thread(target=self.ndb.sync_worker)
         self.thread_sync.setDaemon(True)
-
-        self.ndb.add_observer('synced:note', self.gui_observer_notes_db_synced_note)
-        self.ndb.add_observer('change:note-status', self.gui_observer_notes_db_change_note_status)
-        self.ndb.add_observer('progress:sync_full', self.gui_observer_notes_db_sync_full)
 
         self.view_titles = \
             view_titles.ViewTitles(self.config,
