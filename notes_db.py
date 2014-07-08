@@ -48,13 +48,10 @@ class NotesDB(utils.SubjectMixin):
         for fn in fnlist:
             try:
                 n = json.load(open(fn, 'rb'))
-
             except IOError, e:
                 raise ReadError ('Error opening {0}: {1}'.format(fn, str(e)))
-
             except ValueError, e:
                 raise ReadError ('Error reading {0}: {1}'.format(fn, str(e)))
-
             else:
                 # we always have a localkey, also when we don't have a note['key'] yet (no sync)
                 localkey = os.path.splitext(os.path.basename(fn))[0]
@@ -74,7 +71,7 @@ class NotesDB(utils.SubjectMixin):
         # in progress. This variable is only used by the background thread.
         self.threaded_syncing_keys = {}
 
-    def create_note(self, title):
+    def create_note(self, content):
         # need to get a key unique to this database. not really important
         # what it is, as long as it's unique.
         new_key = utils.generate_random_key()
@@ -85,13 +82,13 @@ class NotesDB(utils.SubjectMixin):
 
         # note has no internal key yet.
         new_note = {
-                    'content' : title,
+                    'content'    : content,
                     'modifydate' : timestamp,
                     'createdate' : timestamp,
-                    'savedate' : 0, # never been written to disc
-                    'syncdate' : 0, # never been synced with server
-                    'tags' : []
-                    }
+                    'savedate'   : 0, # never been written to disc
+                    'syncdate'   : 0, # never been synced with server
+                    'tags'       : []
+                   }
 
         self.notes[new_key] = new_note
 
@@ -405,13 +402,10 @@ class NotesDB(utils.SubjectMixin):
             self.flag_what_changed(n, 'systemtags')
 
     def helper_key_to_fname(self, k):
-            return os.path.join(self.config.get_config('db_path'), k) + '.json'
+        return os.path.join(self.config.get_config('db_path'), k) + '.json'
 
     def helper_save_note(self, k, note):
-        """Save a single note to disc.
-
-        """
-
+        # Save a single note to disc.
         fn = self.helper_key_to_fname(k)
         json.dump(note, open(fn, 'wb'), indent=2)
 
@@ -430,6 +424,10 @@ class NotesDB(utils.SubjectMixin):
         # update if note has no key or it has been modified since last sync
         if not note.get('key') or \
            float(note.get('modifydate')) > float(note.get('syncdate')):
+
+            if not note.get('key'):
+                self.log('Sync worker: creating note (temp key = {0})'.format(k))
+
             self.log('Sync worker: updating note {0}'.format(k))
 
             # only send required fields
@@ -437,7 +435,8 @@ class NotesDB(utils.SubjectMixin):
             if 'what_changed' in note:
                 del note['what_changed']
 
-            del cn['minversion']
+            if 'minversion' in cn:
+                del cn['minversion']
             del cn['createdate']
             del cn['syncdate']
             del cn['savedate']
@@ -454,7 +453,6 @@ class NotesDB(utils.SubjectMixin):
                 del cn['what_changed']
 
             uret = self.simplenote.update_note(cn)
-            #uret = self.simplenote.update_note(note)
 
             if uret[1] == 0: # success!
                 n = uret[0]
@@ -469,13 +467,13 @@ class NotesDB(utils.SubjectMixin):
                 self.log('ERROR: Sync worker: update failed for note {0}'.format(k))
                 return None
 
-        else:
+        else: # note has not been modified, check for an update on the server
+
             if not check_for_new:
                 return None
 
             self.log('Sync worker: checking for server update of note {0}'.format(k))
 
-            # our note is synced so lets check if server has something newer
             gret = self.simplenote.get_note(note['key'])
 
             if gret[1] == 0: # success!
@@ -509,7 +507,32 @@ class NotesDB(utils.SubjectMixin):
 
         This follows the recipe in the SimpleNote 2.0 API documentation.
         After this, it could be that local keys have been changed, so
-        reset any views that you might have.
+        reset any views that you might have!
+
+        From Simplenote API v2.1.3...
+
+        To check for changes you can use 'syncnum' and 'version'. 'syncnum' will
+        increment whenever there is any change to a note, content change, tag
+        change, etc. 'version' will increment whenever the content property is
+        changed. You should store both these numbers in your client to track
+        changes and determine when a note needs to be updated or saved.
+
+        Psuedo-code algorithm for syncing:
+
+            1. for any note changed locally, including new notes:
+                   save note to server, update note with response
+                   // (new syncnum, version, possible newly-merged content)
+
+            2. get the note index
+
+            3. for each remote note
+                   if remote syncnum > local syncnum ||
+                       retrieve note, update note with response
+                   if new note, key is not in local store
+                       retrieve note, update note with response
+
+            4. for each local note not in the index
+                   PERMANENT DELETE, remove note from local store
         """
 
         local_updates = {}
@@ -517,6 +540,7 @@ class NotesDB(utils.SubjectMixin):
         now = time.time()
 
         self.notify_observers('progress:sync_full', utils.KeyValueObject(msg='Starting full sync.'))
+
         # 1. go through local notes, if anything changed or new, update to server
         for ni,lk in enumerate(self.notes.keys()):
             n = self.notes[lk]
@@ -551,21 +575,21 @@ class NotesDB(utils.SubjectMixin):
                     self.notify_observers('progress:sync_full',
                             utils.KeyValueObject(msg="SyncError: " + str(uret[0])))
 
-        # 2. if remote syncnum > local syncnum, update our note; if key is new, add note to local.
-        # this gets the FULL note list, even if multiple gets are required
+        # 2. get the note index
         self.notify_observers('progress:sync_full',
-                utils.KeyValueObject(msg='Retrieving full note list from server, could take a while.'))
+                utils.KeyValueObject(msg='Retrieving note list from server.'))
         nl = self.simplenote.get_note_list()
-        if nl[1] == 0:
-            nl = nl[0]
+        if nl[1] == 0: # success
             self.notify_observers('progress:sync_full',
                     utils.KeyValueObject(msg='Retrieved full note list from server.'))
-
         else:
             self.notify_observers('progress:sync_full',
                     utils.KeyValueObject(msg='ERROR: Could not get note list from server.'))
             return 1
+        nl = nl[0]
 
+        # 3. if remote syncnum > local syncnum, update our note; if key is new, add note to local.
+        # this gets the FULL note list, even if multiple gets are required
         server_keys = {}
         lennl = len(nl)
         sync_from_server_errors = 0
@@ -607,7 +631,7 @@ class NotesDB(utils.SubjectMixin):
                             utils.KeyValueObject(msg='ERROR: Failed syncing new note %s from server: %s' % (k,ret[0])))
                     sync_from_server_errors+=1
 
-        # 3. for each local note not in server index, remove.
+        # 4. for each local note not in server index, remove.
         for lk in self.notes.keys():
             if lk not in server_keys:
                 del self.notes[lk]
