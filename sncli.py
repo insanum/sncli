@@ -142,6 +142,9 @@ class sncli:
             existing_msg = \
                 self.master_frame.contents['footer'][0].base_widget.text + u'\n'
 
+        # if we don't do this clear first there can be corruption in the body
+        self.gui_footer_clear()
+
         self.gui_footer_set(urwid.AttrMap(urwid.Text(existing_msg + msg),
                                           'log'))
 
