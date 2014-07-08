@@ -120,17 +120,9 @@ class sncli:
     def log_timeout(self, loop, arg):
         self.log_lock.acquire()
 
-        self.log_alarm = None
-        self.gui_footer_clear()
-
-        self.log_lock.release()
-
-    def log_cancel(self):
-        self.log_lock.acquire()
-
-        if self.log_alarm:
-            self.sncli_loop.remove_alarm(self.log_alarm)
-        self.log_alarm = None
+        self.log_alarms -= 1
+        if self.log_alarms == 0:
+            self.gui_footer_clear()
 
         self.log_lock.release()
 
@@ -145,23 +137,16 @@ class sncli:
 
         # if there is already a message showing then concatenate them
         existing_msg = ''
-        if self.log_alarm and \
+        if self.log_alarms and \
            'footer' in self.master_frame.contents.keys():
             existing_msg = \
                 self.master_frame.contents['footer'][0].base_widget.text + u'\n'
 
-        # cancel any existing state message alarm
-        if self.log_alarm:
-            self.sncli_loop.remove_alarm(self.log_alarm)
-        self.log_alarm = None
-
         self.gui_footer_set(urwid.AttrMap(urwid.Text(existing_msg + msg),
                                           'log'))
 
-        self.log_alarm = \
-            self.sncli_loop.set_alarm_at(time.time() + 5,
-                                         self.log_timeout,
-                                         None)
+        self.sncli_loop.set_alarm_in(5, self.log_timeout, None)
+        self.log_alarms += 1
 
         self.log_lock.release()
 
@@ -471,7 +456,6 @@ class sncli:
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 note = lb.note
 
-            self.log_cancel()
             self.gui_footer_set(
                 urwid.AttrMap(
                     user_input.UserInput(self.config,
@@ -512,7 +496,6 @@ class sncli:
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
                 return key
 
-            self.log_cancel()
             self.gui_footer_set(urwid.AttrMap(
                                 user_input.UserInput(self.config,
                                                      key, '',
@@ -598,7 +581,6 @@ class sncli:
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 note = lb.note
 
-            self.log_cancel()
             self.gui_footer_set(
                 urwid.AttrMap(
                     user_input.UserInput(self.config,
@@ -654,7 +636,7 @@ class sncli:
         self.last_view = []
         self.status_bar = self.config.get_config('status_bar')
 
-        self.log_alarm = None
+        self.log_alarms = 0
         self.log_lock = threading.Lock()
 
         self.thread_save = threading.Thread(target=self.ndb.save_worker)
