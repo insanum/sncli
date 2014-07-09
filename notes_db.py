@@ -2,7 +2,7 @@
 # copyright 2012 by Charl P. Botha <cpbotha@vxlabs.com>
 # new BSD license
 
-import os, time, re, glob, json, copy
+import os, time, re, glob, json, copy, threading
 import utils
 import simplenote
 simplenote.NOTE_FETCH_LENGTH=100
@@ -20,7 +20,9 @@ class NotesDB():
     def __init__(self, config, log):
         self.config    = config
         self.log       = log
+
         self.last_sync = 0 # set to zero to trigger a full sync
+        self.sync_lock = threading.Lock()
 
         # create db dir if it does not exist
         if not os.path.exists(self.config.get_config('db_path')):
@@ -294,22 +296,6 @@ class NotesDB():
     def get_note_content(self, key):
         return self.notes[key].get('content')
 
-    def get_note_status(self, key):
-        n = self.notes[key]
-        o = utils.KeyValueObject(saved=False, synced=False, modified=False)
-        modifydate = float(n['modifydate'])
-        savedate = float(n['savedate'])
-
-        if savedate > modifydate:
-            o.saved = True
-        else:
-            o.modified = True
-
-        if float(n['syncdate']) > modifydate:
-            o.synced = True
-
-        return o
-
     def flag_what_changed(self, note, what_changed):
         if 'what_changed' not in note:
             note['what_changed'] = []
@@ -574,12 +560,42 @@ class NotesDB():
 
         return sync_errors
 
+    def get_note_status(self, key):
+        n = self.notes[key]
+        o = utils.KeyValueObject(saved=False, synced=False, modified=False)
+        modifydate = float(n['modifydate'])
+        savedate   = float(n['savedate'])
+        syncdate   = float(n['syncdate'])
+
+        if savedate > modifydate:
+            o.saved = True
+        else:
+            o.modified = True
+
+        if syncdate > modifydate:
+            o.synced = True
+
+        return o
+
+    def verify_all_saved(self):
+        all_saved = True
+        self.sync_lock.acquire()
+        for k in self.notes.keys():
+            o = self.get_note_status(k)
+            if not o.saved:
+                all_saved = False
+                break
+        self.sync_lock.release()
+        return all_saved
+
     # sync worker thread...
     def sync_worker(self, do_sync):
         time.sleep(1) # give some time to wait for GUI initialization
         self.log('Sync worker: started')
         while True:
+            self.sync_lock.acquire()
             self.sync_notes(server_sync=do_sync,
                             full_sync=True if not self.last_sync else False)
+            self.sync_lock.release()
             time.sleep(5)
 

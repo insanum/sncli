@@ -628,9 +628,13 @@ class sncli:
         self.sncli_loop.draw_screen()
 
     def gui_stop(self):
-        # clear the screen and exit the urwid run loop
-        self.gui_clear()
-        raise urwid.ExitMainLoop()
+        # don't exit if there are any notes not yet saved to the disk
+        if self.ndb.verify_all_saved():
+            # clear the screen and exit the urwid run loop
+            self.gui_clear()
+            raise urwid.ExitMainLoop()
+        else:
+            self.log(u'WARNING: Not all notes saved to disk (wait for sync worker)') 
 
     def gui(self, do_sync):
 
