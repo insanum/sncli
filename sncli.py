@@ -31,6 +31,9 @@ class sncli:
 
         logging.debug('sncli logging initialized')
 
+        self.max_logs = 5
+        self.logs = []
+
         try:
             self.ndb = NotesDB(self.config, self.log)
         except Exception, e:
@@ -107,6 +110,7 @@ class sncli:
         self.log_alarms -= 1
         if self.log_alarms == 0:
             self.gui_footer_clear()
+            self.logs = []
 
         self.log_lock.release()
 
@@ -119,18 +123,16 @@ class sncli:
 
         self.log_lock.acquire()
 
-        # if there is already a message showing then concatenate them
-        existing_msg = ''
-        if self.log_alarms and \
-           'footer' in self.master_frame.contents.keys():
-            existing_msg = \
-                self.master_frame.contents['footer'][0].base_widget.text + u'\n'
+        self.logs.append(msg)
+        if len(self.logs) > self.max_logs:
+            self.logs.pop(0)
 
-        # if we don't do this clear first there can be corruption in the body
-        self.gui_footer_clear()
+        p = urwid.Pile([])
+        log_pile = []
+        for l in self.logs:
+            log_pile.append(urwid.Text(l))
 
-        self.gui_footer_set(urwid.AttrMap(urwid.Text(existing_msg + msg),
-                                          'log'))
+        self.gui_footer_set(urwid.AttrMap(urwid.Pile(log_pile), 'log'))
 
         self.sncli_loop.set_alarm_in(5, self.log_timeout, None)
         self.log_alarms += 1
@@ -215,6 +217,7 @@ class sncli:
             self.ndb.last_sync = 0
 
         elif key == self.config.get_keybind('view_log'):
+            self.view_log.update_log()
             self.gui_switch_frame_body(self.view_log)
 
         elif key == self.config.get_keybind('down'):
