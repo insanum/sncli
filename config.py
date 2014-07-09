@@ -20,6 +20,7 @@ class Config:
          'cfg_status_bar'        : 'yes',
          'cfg_editor'            : 'vim',
          'cfg_pager'             : 'less -c',
+         'cfg_max_logs'          : '5',
          'cfg_log_reversed'      : 'yes',
 
          'kb_help'            : 'h',
@@ -119,6 +120,7 @@ class Config:
          'status_bar'        : [ cp.get(cfg_sec, 'cfg_status_bar'),                  'Status bar location' ],
          'editor'            : [ cp.get(cfg_sec, 'cfg_editor'),                      'Editor' ],
          'pager'             : [ cp.get(cfg_sec, 'cfg_pager'),                       'External pager' ],
+         'max_logs'          : [ cp.get(cfg_sec, 'cfg_max_logs'),                    'Max logs in footer' ],
          'log_reversed'      : [ cp.get(cfg_sec, 'cfg_log_reversed'),                'Log file reversed' ]
         }
 

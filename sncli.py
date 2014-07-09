@@ -31,7 +31,6 @@ class sncli:
 
         logging.debug('sncli logging initialized')
 
-        self.max_logs = 5
         self.logs = []
 
         try:
@@ -124,7 +123,7 @@ class sncli:
         self.log_lock.acquire()
 
         self.logs.append(msg)
-        if len(self.logs) > self.max_logs:
+        if len(self.logs) > self.config.get_config('max_logs'):
             self.logs.pop(0)
 
         p = urwid.Pile([])
