@@ -22,6 +22,7 @@ class ViewNote(urwid.ListBox):
                 urwid.AttrMap(urwid.Text(l.replace('\t', ' ' * self.tabstop)),
                               'note_content',
                               'note_content_focus'))
+        lines.append(urwid.AttrMap(urwid.Divider(u'-'), 'default'))
         return lines
 
     def update_note(self, key):
