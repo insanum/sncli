@@ -74,19 +74,39 @@ class sncli:
     def gui_header_focus(self):
         self.master_frame.focus_position = 'header'
 
-    def gui_footer_clear(self):
-        self.master_frame.contents['footer'] = ( None, None )
+    def gui_footer_log_clear(self):
+        ui = self.gui_footer_input_get()
+        self.master_frame.contents['footer'] = \
+                (urwid.Pile([ urwid.Pile([]), urwid.Pile([ui]) ]), None)
         self.sncli_loop.draw_screen()
 
-    def gui_footer_set(self, w):
-        self.master_frame.contents['footer'] = ( w, None )
+    def gui_footer_log_set(self, pl):
+        ui = self.gui_footer_input_get()
+        self.master_frame.contents['footer'] = \
+                (urwid.Pile([ urwid.Pile(pl), urwid.Pile([ui]) ]), None)
         self.sncli_loop.draw_screen()
 
-    def gui_footer_get(self):
-        return self.master_frame.contents['footer'][0]
+    def gui_footer_log_get(self):
+        return self.master_frame.contents['footer'][0].contents[0][0]
 
-    def gui_footer_focus(self):
+    def gui_footer_input_clear(self):
+        pl = self.gui_footer_log_get()
+        self.master_frame.contents['footer'] = \
+                (urwid.Pile([ urwid.Pile([pl]), urwid.Pile([]) ]), None)
+        self.sncli_loop.draw_screen()
+
+    def gui_footer_input_set(self, ui):
+        pl = self.gui_footer_log_get()
+        self.master_frame.contents['footer'] = \
+                (urwid.Pile([ urwid.Pile([pl]), urwid.Pile([ui]) ]), None)
+        self.sncli_loop.draw_screen()
+
+    def gui_footer_input_get(self):
+        return self.master_frame.contents['footer'][0].contents[1][0]
+
+    def gui_footer_focus_input(self):
         self.master_frame.focus_position = 'footer'
+        self.master_frame.contents['footer'][0].focus_position = 1
 
     def gui_body_clear(self):
         self.master_frame.contents['body'] = ( None, None )
@@ -108,7 +128,7 @@ class sncli:
 
         self.log_alarms -= 1
         if self.log_alarms == 0:
-            self.gui_footer_clear()
+            self.gui_footer_log_clear()
             self.logs = []
 
         self.log_lock.release()
@@ -126,12 +146,11 @@ class sncli:
         if len(self.logs) > self.config.get_config('max_logs'):
             self.logs.pop(0)
 
-        p = urwid.Pile([])
         log_pile = []
         for l in self.logs:
-            log_pile.append(urwid.Text(l))
+            log_pile.append(urwid.AttrMap(urwid.Text(l), 'log'))
 
-        self.gui_footer_set(urwid.AttrMap(urwid.Pile(log_pile), 'log'))
+        self.gui_footer_log_set(log_pile)
 
         self.sncli_loop.set_alarm_in(5, self.log_timeout, None)
         self.log_alarms += 1
@@ -158,7 +177,7 @@ class sncli:
                 self.gui_body_set(new_view)
 
     def gui_search_input(self, search_string):
-        self.gui_footer_clear()
+        self.gui_footer_input_clear()
         self.gui_body_focus()
         self.master_frame.keypress = self.gui_frame_keypress
         if search_string:
@@ -166,7 +185,7 @@ class sncli:
             self.gui_body_set(self.view_titles)
 
     def gui_tags_input(self, tags):
-        self.gui_footer_clear()
+        self.gui_footer_input_clear()
         self.gui_body_focus()
         self.master_frame.keypress = self.gui_frame_keypress
         if tags != None:
@@ -185,7 +204,7 @@ class sncli:
             self.gui_update_status_bar()
 
     def gui_pipe_input(self, cmd):
-        self.gui_footer_clear()
+        self.gui_footer_input_clear()
         self.gui_body_focus()
         self.master_frame.keypress = self.gui_frame_keypress
         if cmd != None:
@@ -445,14 +464,14 @@ class sncli:
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 note = lb.note
 
-            self.gui_footer_set(
+            self.gui_footer_input_set(
                 urwid.AttrMap(
                     user_input.UserInput(self.config,
                                          key, '',
                                          self.gui_pipe_input),
                               'search_bar'))
-            self.gui_footer_focus()
-            self.master_frame.keypress = self.gui_footer_get().keypress
+            self.gui_footer_focus_input()
+            self.master_frame.keypress = self.gui_footer_input_get().keypress
 
         elif key == self.config.get_keybind('view_next_note'):
             if self.gui_body_get().__class__ != view_note.ViewNote:
@@ -485,13 +504,14 @@ class sncli:
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
                 return key
 
-            self.gui_footer_set(urwid.AttrMap(
-                                user_input.UserInput(self.config,
-                                                     key, '',
-                                                     self.gui_search_input),
-                                          'search_bar'))
-            self.gui_footer_focus()
-            self.master_frame.keypress = self.gui_footer_get().keypress
+            self.gui_footer_input_set(
+                    urwid.AttrMap(
+                        user_input.UserInput(self.config,
+                                             key, '',
+                                             self.gui_search_input),
+                                  'search_bar'))
+            self.gui_footer_focus_input()
+            self.master_frame.keypress = self.gui_footer_input_get().keypress
 
         elif key == self.config.get_keybind('note_pin'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
@@ -570,15 +590,15 @@ class sncli:
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 note = lb.note
 
-            self.gui_footer_set(
+            self.gui_footer_input_set(
                 urwid.AttrMap(
                     user_input.UserInput(self.config,
                                          'Tags: ',
                                          '%s' % ','.join(note['tags']),
                                          self.gui_tags_input),
                               'search_bar'))
-            self.gui_footer_focus()
-            self.master_frame.keypress = self.gui_footer_get().keypress
+            self.gui_footer_focus_input()
+            self.master_frame.keypress = self.gui_footer_input_get().keypress
 
         elif key == self.config.get_keybind('clear_search'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
@@ -710,7 +730,8 @@ class sncli:
 
         self.master_frame = urwid.Frame(body=urwid.Filler(urwid.Text(u'')),
                                         header=None,
-                                        footer=None,
+                                        footer=urwid.Pile([ urwid.Pile([]),
+                                                            urwid.Pile([]) ]),
                                         focus_part='body')
 
         self.sncli_loop = urwid.MainLoop(self.master_frame,
