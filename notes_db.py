@@ -2,22 +2,11 @@
 # copyright 2012 by Charl P. Botha <cpbotha@vxlabs.com>
 # new BSD license
 
-import copy
-import glob
-import os
-import json
-from Queue import Queue, Empty
-import re
+import os, time, re, glob, json, copy
+import utils
 import simplenote
 simplenote.NOTE_FETCH_LENGTH=100
 from simplenote import Simplenote
-
-from threading import Thread
-import time
-import utils
-
-class SyncError(RuntimeError):
-    pass
 
 class ReadError(RuntimeError):
     pass
@@ -29,8 +18,9 @@ class NotesDB():
     """NotesDB will take care of the local notes database and syncing with SN.
     """
     def __init__(self, config, log):
-        self.config = config
-        self.log    = log
+        self.config    = config
+        self.log       = log
+        self.last_sync = 0 # set to zero to trigger a full sync
 
         # create db dir if it does not exist
         if not os.path.exists(self.config.get_config('db_path')):
@@ -332,7 +322,7 @@ class NotesDB():
             n['deleted'] = 1
             n['modifydate'] = time.time()
             self.flag_what_changed(n, 'deleted')
-            self.log('Note trashed')
+            self.log('Note trashed (key={0})'.format(key))
 
     def set_note_content(self, key, content):
         n = self.notes[key]
@@ -341,7 +331,7 @@ class NotesDB():
             n['content'] = content
             n['modifydate'] = time.time()
             self.flag_what_changed(n, 'content')
-            self.log('Note content updated')
+            self.log('Note content updated (key={0})'.format(key))
 
     def set_note_tags(self, key, tags):
         n = self.notes[key]
@@ -351,7 +341,7 @@ class NotesDB():
             n['tags'] = tags
             n['modifydate'] = time.time()
             self.flag_what_changed(n, 'tags')
-            self.log('Note tags updated')
+            self.log('Note tags updated (key={0})'.format(key))
 
     def set_note_pinned(self, key, pinned):
         n = self.notes[key]
@@ -366,7 +356,7 @@ class NotesDB():
                 systemtags.remove('pinned')
             n['modifydate'] = time.time()
             self.flag_what_changed(n, 'systemtags')
-            self.log('Note pinned' if pinned else 'Note unpinned')
+            self.log('Note {0} (key={1})'.format('pinned' if pinned else 'unpinned', key))
 
     def set_note_markdown(self, key, markdown):
         n = self.notes[key]
@@ -381,7 +371,7 @@ class NotesDB():
                 systemtags.remove('markdown')
             n['modifydate'] = time.time()
             self.flag_what_changed(n, 'systemtags')
-            self.log('Note markdown flagged' if markdown else 'Note markdown unflagged')
+            self.log('Note markdown {0} (key={1})'.format('flagged' if markdown else 'unflagged', key))
 
     def helper_key_to_fname(self, k):
         return os.path.join(self.config.get_config('db_path'), k) + '.json'
@@ -394,97 +384,7 @@ class NotesDB():
         # record that we saved this to disc.
         note['savedate'] = time.time()
 
-    def sync_note(self, k, check_for_new):
-        """Sync a single note with the server.
-
-        Update existing note in memory with the returned data.
-        This is a sychronous (blocking) call.
-        """
-
-        note = self.notes[k]
-
-        # update if note has no key or it has been modified since last sync
-        if not note.get('key') or \
-           float(note.get('modifydate')) > float(note.get('syncdate')):
-
-            if not note.get('key'):
-                self.log('Sync worker: creating note (temp key = {0})'.format(k))
-
-            self.log('Sync worker: updating note {0}'.format(k))
-
-            # only send required fields
-            cn = copy.deepcopy(note)
-            if 'what_changed' in note:
-                del note['what_changed']
-
-            if 'minversion' in cn:
-                del cn['minversion']
-            del cn['createdate']
-            del cn['syncdate']
-            del cn['savedate']
-
-            if 'what_changed' in cn:
-                if 'deleted' not in cn['what_changed']:
-                    del cn['deleted']
-                if 'systemtags' not in cn['what_changed']:
-                    del cn['systemtags']
-                if 'tags' not in cn['what_changed']:
-                    del cn['tags']
-                if 'content' not in cn['what_changed']:
-                    del cn['content']
-                del cn['what_changed']
-
-            uret = self.simplenote.update_note(cn)
-
-            if uret[1] == 0: # success!
-                n = uret[0]
-                # if content was unchanged there'll be no content sent back
-                new_content = True if n.get('content', None) else False
-                # store when we've synced
-                n['syncdate'] = time.time()
-                note.update(n)
-                self.log('Sync worker: updated note {0}'.format(k))
-                return (k, new_content)
-            else:
-                self.log('ERROR: Sync worker: update failed for note {0}'.format(k))
-                return None
-
-        else: # note has not been modified, check for an update on the server
-
-            if not check_for_new:
-                return None
-
-            self.log('Sync worker: checking for server update of note {0}'.format(k))
-
-            gret = self.simplenote.get_note(note['key'])
-
-            if gret[1] == 0: # success!
-                n = gret[0]
-                if int(n.get('syncnum')) > int(note.get('syncnum')):
-                    # store what we pulled down from the server
-                    n['syncdate'] = time.time()
-                    note.update(n)
-                    self.log('Sync worker: server had an update for note {0}'.format(k))
-                    return (k, True)
-                else:
-                    self.log('Sync worker: server in sync with note {0}'.format(k))
-                    return (k, False)
-            else:
-                self.log('ERROR: Sync worker: get failed for note {0}'.format(k))
-                return None
-
-    # sync worker thread...
-    def sync_worker(self):
-        self.log('Sync worker: started')
-        while True:
-            time.sleep(5)
-            now = time.time()
-            for k,n in self.notes.items():
-                modifydate = float(n.get('modifydate', -1))
-                if (now - modifydate) > 3:
-                    self.sync_note(k, False)
-
-    def sync_full(self):
+    def sync_notes(self, server_sync=True, full_sync=True):
         """Perform a full bi-directional sync with server.
 
         This follows the recipe in the SimpleNote 2.0 API documentation.
@@ -521,7 +421,11 @@ class NotesDB():
         server_keys = {}
         now = time.time()
 
-        self.log('Starting full sync')
+        sync_start_time = time.time()
+        sync_errors = 0
+
+        if server_sync and full_sync:
+            self.log("Starting full sync")
 
         # 1. for any note changed locally, including new notes:
         #        save note to server, update note with response
@@ -529,7 +433,43 @@ class NotesDB():
             n = self.notes[local_key]
             if not n.get('key') or \
                float(n.get('modifydate')) > float(n.get('syncdate')):
-                uret = self.simplenote.update_note(n)
+
+                savedate = float(n.get('savedate'))
+                if float(n.get('modifydate')) > savedate or \
+                   float(n.get('syncdate')) > savedate:
+                    # this will trigger a save to disk after sync algorithm
+                    # we want this note saved even if offline or sync fails
+                    local_updates[local_key] = True
+
+                if not server_sync:
+                    # the 'what_changed' field will be written to disk and
+                    # picked up whenever the next full server sync occurs
+                    continue
+
+                # only send required fields
+                cn = copy.deepcopy(n)
+                if 'what_changed' in n:
+                    del n['what_changed']
+
+                if 'minversion' in cn:
+                    del cn['minversion']
+                del cn['createdate']
+                del cn['syncdate']
+                del cn['savedate']
+
+                if 'what_changed' in cn:
+                    if 'deleted' not in cn['what_changed']:
+                        del cn['deleted']
+                    if 'systemtags' not in cn['what_changed']:
+                        del cn['systemtags']
+                    if 'tags' not in cn['what_changed']:
+                        del cn['tags']
+                    if 'content' not in cn['what_changed']:
+                        del cn['content']
+                    del cn['what_changed']
+
+                uret = self.simplenote.update_note(cn)
+
                 if uret[1] == 0: # success
                     # if this is a new note our local key is not valid anymore
                     # merge the note we got back (content could be empty)
@@ -540,33 +480,36 @@ class NotesDB():
                     n['syncdate'] = now
                     self.notes[k] = n
 
-                    # whatever the case may be, k is now updated
                     local_updates[k] = True
-
                     if local_key != k:
                         # if local_key was a different key it should be deleted
                         local_deletes[local_key] = True
+                        local_updates[local_key] = False
 
                     self.log('Synced note to server (key={0})'.format(local_key))
                 else:
                     self.log('ERROR: Failed to sync note to server (key={0})'.format(local_key))
+                    sync_errors += 1
 
         # 2. get the note index
-        self.log('Retrieving note list from server')
-        nl = self.simplenote.get_note_list()
-        if nl[1] == 0: # success
-            self.log('Retrieved full note list from server')
+        if not server_sync:
+            nl = []
         else:
-            self.log('ERROR: Could not get note list from server')
-            return 1
-        nl = nl[0]
+            nl = self.simplenote.get_note_list(since=None if full_sync else self.last_sync)
+
+            if nl[1] == 0: # success
+                nl = nl[0]
+            else:
+                self.log('ERROR: Failed to get note list from server')
+                sync_errors += 1
+                nl = []
 
         # 3. for each remote note
         #        if remote syncnum > local syncnum ||
         #           a new note and key is not in local store
         #            retrieve note, update note with response
         len_nl = len(nl)
-        sync_from_server_errors = 0
+        sync_errors = 0
         for note_index, n in enumerate(nl):
             k = n.get('key')
             server_keys[k] = True
@@ -585,7 +528,7 @@ class NotesDB():
                         self.log('Synced newer note from server (key={0})'.format(k))
                     else:
                         self.log('ERROR: Failed to sync newer note from server (key={0})'.format(k))
-                        sync_from_server_errors += 1
+                        sync_errors += 1
             else:
                 # this is a new note
                 gret = self.simplenote.get_note(k)
@@ -597,14 +540,16 @@ class NotesDB():
                     self.log('Synced new note from server (key={0})'.format(k))
                 else:
                     self.log('ERROR: Failed syncing new note from server (key={0})'.format(k))
-                    sync_from_server_errors += 1
+                    sync_errors += 1
 
         # 4. for each local note not in the index
         #        PERMANENT DELETE, remove note from local store
-        for local_key in self.notes.keys():
-            if local_key not in server_keys:
-                del self.notes[local_key]
-                local_deletes[local_key] = True
+        # Only do this when a full sync (i.e. entire index) is performed!
+        if server_sync and full_sync:
+            for local_key in self.notes.keys():
+                if local_key not in server_keys:
+                    del self.notes[local_key]
+                    local_deletes[local_key] = True
 
         # sync done, now write changes to db_path
 
@@ -613,31 +558,28 @@ class NotesDB():
                 self.helper_save_note(k, self.notes[k])
             except WriteError, e:
                 raise WriteError (str(e))
+            self.log("Saved note to disk (key={0})".format(k))
 
         for k in local_deletes.keys():
             fn = self.helper_key_to_fname(k)
             if os.path.exists(fn):
                 os.unlink(fn)
+                self.log("Deleted note from disk (key={0})".format(k))
 
-        self.log('Full sync complete')
+        if not sync_errors:
+            self.last_sync = sync_start_time
 
-        return sync_from_server_errors
+        if server_sync and full_sync:
+            self.log("Full sync completed")
 
-    # save worker thread...
-    def save_worker(self):
-        self.log('Save worker: started')
+        return sync_errors
+
+    # sync worker thread...
+    def sync_worker(self, do_sync):
+        time.sleep(1) # give some time to wait for GUI initialization
+        self.log('Sync worker: started')
         while True:
+            self.sync_notes(server_sync=do_sync,
+                            full_sync=True if not self.last_sync else False)
             time.sleep(5)
-            #self.log('Save worker: checking for work')
-            for k,n in self.notes.items():
-                savedate = float(n.get('savedate'))
-                if float(n.get('modifydate')) > savedate or \
-                   float(n.get('syncdate')) > savedate:
-                    try:
-                        # this will write the new savedate into the note
-                        self.helper_save_note(k, n)
-                        self.log('Save worker: saved note {0}'.format(k))
-                    except WriteError, e:
-                        self.log('ERROR: Failed to write file to the filesystem!')
-                        os._exit(1)
 

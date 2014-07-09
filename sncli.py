@@ -7,7 +7,7 @@ import view_titles, view_note, view_help, view_log, user_input
 import utils, temp
 from config import Config
 from simplenote import Simplenote
-from notes_db import NotesDB, SyncError, ReadError, WriteError
+from notes_db import NotesDB, ReadError, WriteError
 from logging.handlers import RotatingFileHandler
 
 class sncli:
@@ -37,14 +37,8 @@ class sncli:
             self.log(str(e))
             sys.exit(1)
 
-    def sync_full(self):
-        self.ndb.sync_full()
-
-    def gui_sync_full_threaded(self):
-        thread.start_new_thread(self.ndb.sync_full, ())
-
-    def gui_sync_full_initial(self, loop, arg):
-        self.gui_sync_full_threaded()
+    def sync_notes(self):
+        self.ndb.sync_notes()
 
     def get_editor(self):
         editor = self.config.get_config('editor')
@@ -175,14 +169,14 @@ class sncli:
         self.gui_body_focus()
         self.master_frame.keypress = self.gui_frame_keypress
         if tags != None:
-            if self.gui_body_get().__class__ != view_titles.ViewTitles:
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 note = self.view_titles.note_list[self.view_titles.focus_position].note
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 note = self.view_note.note
 
             self.ndb.set_note_tags(note['key'], tags)
 
-            if self.gui_body_get().__class__ != view_titles.ViewTitles:
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 self.view_titles.update_note_title(None)
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 self.view_note.update_note(note['key'])
@@ -218,7 +212,7 @@ class sncli:
             self.gui_switch_frame_body(self.view_help)
 
         elif key == self.config.get_keybind('sync'):
-            self.gui_sync_full_threaded()
+            self.ndb.last_sync = 0
 
         elif key == self.config.get_keybind('view_log'):
             self.gui_switch_frame_body(self.view_log)
@@ -601,12 +595,7 @@ class sncli:
         self.master_frame.keypress = self.gui_frame_keypress
         self.gui_body_set(self.view_titles)
 
-        self.thread_save.start()
         self.thread_sync.start()
-
-        if self.do_sync:
-            # start full sync after initial view is up
-            self.sncli_loop.set_alarm_in(1, self.gui_sync_full_initial, None)
 
     def gui_clear(self):
         self.sncli_loop.widget = urwid.Filler(urwid.Text(u''))
@@ -623,8 +612,7 @@ class sncli:
 
     def gui(self, do_sync):
 
-        self.do_gui  = True
-        self.do_sync = do_sync
+        self.do_gui = True
 
         self.last_view = []
         self.status_bar = self.config.get_config('status_bar')
@@ -632,10 +620,8 @@ class sncli:
         self.log_alarms = 0
         self.log_lock = threading.Lock()
 
-        self.thread_save = threading.Thread(target=self.ndb.save_worker)
-        self.thread_save.setDaemon(True)
-
-        self.thread_sync = threading.Thread(target=self.ndb.sync_worker)
+        self.thread_sync = threading.Thread(target=self.ndb.sync_worker,
+                                            args=[do_sync])
         self.thread_sync.setDaemon(True)
 
         self.view_titles = \
@@ -762,7 +748,7 @@ class sncli:
             if content and content != u'\n':
                 self.log(u'New note created')
                 self.ndb.create_note(content)
-                self.ndb.sync_full()
+                self.ndb.sync_notes()
 
         if from_stdin:
 
@@ -832,7 +818,7 @@ def main(argv):
 
     def sncli_start(sync):
         sn = sncli()
-        if sync: sn.sync_full()
+        if sync: sn.sync_notes()
         return sn
 
     if args[0] == 'list':
