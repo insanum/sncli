@@ -19,6 +19,7 @@ class ViewLog(urwid.ListBox):
         if self.config.get_config('log_reversed') == 'yes':
             lines.reverse()
         self.body[:] = urwid.SimpleFocusListWalker(lines)
+        self.focus_position = 0
 
     def get_status_bar(self):
         cur   = -1
