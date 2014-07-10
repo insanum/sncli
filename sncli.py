@@ -189,15 +189,15 @@ class sncli:
                     self.last_view.append(self.gui_body_get())
                 self.gui_body_set(new_view)
 
-    def gui_search_input(self, search_string):
+    def gui_search_input(self, args, search_string):
         self.gui_footer_input_clear()
         self.gui_body_focus()
         self.master_frame.keypress = self.gui_frame_keypress
         if search_string:
-            self.view_titles.update_note_list(search_string)
+            self.view_titles.update_note_list(search_string, args[0])
             self.gui_body_set(self.view_titles)
 
-    def gui_tags_input(self, tags):
+    def gui_tags_input(self, args, tags):
         self.gui_footer_input_clear()
         self.gui_body_focus()
         self.master_frame.keypress = self.gui_frame_keypress
@@ -216,7 +216,7 @@ class sncli:
 
             self.gui_update_status_bar()
 
-    def gui_pipe_input(self, cmd):
+    def gui_pipe_input(self, args, cmd):
         self.gui_footer_input_clear()
         self.gui_body_focus()
         self.master_frame.keypress = self.gui_frame_keypress
@@ -480,8 +480,10 @@ class sncli:
             self.gui_footer_input_set(
                 urwid.AttrMap(
                     user_input.UserInput(self.config,
-                                         key, '',
-                                         self.gui_pipe_input),
+                                         key,
+                                         '',
+                                         self.gui_pipe_input,
+                                         None),
                               'search_bar'))
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
@@ -513,15 +515,20 @@ class sncli:
                 self.view_titles.note_list[self.view_titles.focus_position].note['key'])
             self.gui_switch_frame_body(self.view_note)
 
-        elif key == self.config.get_keybind('search'):
+        elif key == self.config.get_keybind('search_gstyle') or \
+             key == self.config.get_keybind('search_regex'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
                 return key
 
             self.gui_footer_input_set(
                     urwid.AttrMap(
                         user_input.UserInput(self.config,
-                                             key, '',
-                                             self.gui_search_input),
+                                             key,
+                                             '',
+                                             self.gui_search_input,
+                                             [ 'gstyle' \
+                                                   if key == self.config.get_keybind('search_gstyle')
+                                                   else 'regex' ]),
                                   'search_bar'))
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
@@ -608,7 +615,8 @@ class sncli:
                     user_input.UserInput(self.config,
                                          'Tags: ',
                                          '%s' % ','.join(note['tags']),
-                                         self.gui_tags_input),
+                                         self.gui_tags_input,
+                                         None),
                               'search_bar'))
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress

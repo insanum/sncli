@@ -121,6 +121,7 @@ class NotesDB():
                 if t.startswith(tp):
                     tag_pats_matched += 1
                     break
+
         if tag_pats_matched == len(tag_pats):
             # all tag patterns specified matched a tag on this note
             return 1
@@ -129,26 +130,20 @@ class NotesDB():
         return 0
 
     def _helper_gstyle_wordmatch(self, word_pats, content):
-        """If all words / multi-words in word_pats are found in the content,
-        the note goes through, otherwise not.
-
-        @param word_pats:
-        @param content:
-        @return:
-        """
-
-        # no search patterns, so note goes through
         if not word_pats:
             return True
 
-        # search for the first p that does NOT occur in content
-        if next((p for p in word_pats if p not in content), None) is None:
-            # we only found pats that DO occur in content so note goes through
-            return True
+        word_pats_matched = 0
+        lowercase_content = content.lower() # case insensitive search
+        for wp in word_pats:
+            wp = wp.lower() # case insensitive search
+            if wp in lowercase_content:
+                word_pats_matched += 1
 
-        else:
-            # we found the first p that does not occur in content
-            return False
+        if word_pats_matched == len(word_pats):
+            return True;
+
+        return False
 
     def filter_notes_gstyle(self, search_string=None):
 
@@ -206,7 +201,7 @@ class NotesDB():
 
         return filtered_notes, '|'.join(all_pats[1] + all_pats[2]), active_notes
 
-    def filter_notes_regexp(self, search_string=None):
+    def filter_notes_regex(self, search_string=None):
         """
         Return a list of notes filtered using the regex search_string.
         Each element in the list is a tuple (local_key, note).
@@ -234,10 +229,10 @@ class NotesDB():
                 filtered_notes.append(utils.KeyValueObject(key=k, note=n, tagfound=0))
                 continue
 
-            if self.config.search_tags == 'yes':
+            if self.config.get_config('search_tags') == 'yes':
                 tag_matched = False
                 for t in n.get('tags'):
-                    if sspat.seatch(t):
+                    if sspat.search(t):
                         tag_matched = True
                         filtered_notes.append(utils.KeyValueObject(key=k, note=n, tagfound=1))
                         break

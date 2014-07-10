@@ -10,8 +10,8 @@ class Config:
          'cfg_sn_username'       : '',
          'cfg_sn_password'       : '',
          'cfg_db_path'           : os.path.join(self.home, '.sncli'),
-         'cfg_search_tags'       : 'yes',    # with regex searches
-         'cfg_sort_mode'         : 'date',   # 'alpha' or 'date'
+         'cfg_search_tags'       : 'yes',  # with regex searches
+         'cfg_sort_mode'         : 'date', # 'alpha' or 'date'
          'cfg_pinned_ontop'      : 'yes',
          'cfg_tabstop'           : '4',
          'cfg_format_strftime'   : '%Y/%m/%d',
@@ -46,7 +46,8 @@ class Config:
          'kb_tabstop2'        : '2',
          'kb_tabstop4'        : '4',
          'kb_tabstop8'        : '8',
-         'kb_search'          : '/',
+         'kb_search_gstyle'   : '/',
+         'kb_search_regex'    : 'meta /',
          'kb_clear_search'    : 'A',
          'kb_sort_date'       : 'd',
          'kb_sort_alpha'      : 'a',
@@ -149,7 +150,8 @@ class Config:
         self.keybinds['tabstop2'] = [ cp.get(cfg_sec, 'kb_tabstop2'), [ 'notes'  ], 'View with tabstop=2' ]
         self.keybinds['tabstop4'] = [ cp.get(cfg_sec, 'kb_tabstop4'), [ 'notes'  ], 'View with tabstop=4' ]
         self.keybinds['tabstop8'] = [ cp.get(cfg_sec, 'kb_tabstop8'), [ 'notes'  ], 'View with tabstop=8' ]
-        self.keybinds['search'] = [ cp.get(cfg_sec, 'kb_search'), [ 'titles' ], 'Search notes' ]
+        self.keybinds['search_gstyle'] = [ cp.get(cfg_sec, 'kb_search_gstyle'), [ 'titles' ], 'Search using gstyle' ]
+        self.keybinds['search_regex'] = [ cp.get(cfg_sec, 'kb_search_regex'), [ 'titles' ], 'Search using regex' ]
         self.keybinds['clear_search'] = [ cp.get(cfg_sec, 'kb_clear_search'), [ 'titles' ], 'Show all notes' ]
         self.keybinds['sort_date'] = [ cp.get(cfg_sec, 'kb_sort_date'), [ 'titles' ], 'Sort notes by date' ]
         self.keybinds['sort_alpha'] = [ cp.get(cfg_sec, 'kb_sort_alpha'), [ 'titles' ], 'Sort notes by alpha' ]
