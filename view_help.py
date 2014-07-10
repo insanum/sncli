@@ -44,7 +44,7 @@ class ViewHelp(urwid.ListBox):
         lines.append(urwid.AttrMap(urwid.Text(u' ' + header),
                                    'help_header',
                                    'help_focus'))
-        for c in self.config.keybinds.keys():
+        for c in self.config.keybinds:
             if use not in self.config.get_keybind_use(c):
                 continue
             lines.append(
@@ -72,7 +72,7 @@ class ViewHelp(urwid.ListBox):
         lines.append(urwid.AttrMap(urwid.Text(u' Configuration'),
                                    'help_header',
                                    'help_focus'))
-        for c in sorted(self.config.configs):
+        for c in self.config.configs:
             if c in [ 'sn_username', 'sn_password' ]: continue
             lines.append(
                 urwid.AttrMap(urwid.AttrMap(
@@ -100,9 +100,9 @@ class ViewHelp(urwid.ListBox):
                                    'help_header',
                                    'help_focus'))
         fmap = {}
-        for c in sorted(self.config.colors):
+        for c in self.config.colors:
             fmap[re.search('^(.*)(_fg|_bg)$', c).group(1)] = 'help_focus'
-        for c in sorted(self.config.colors):
+        for c in self.config.colors:
             lines.append(
                 urwid.AttrMap(urwid.AttrMap(
                     urwid.Text(

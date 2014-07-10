@@ -9,14 +9,14 @@ class ViewTitles(urwid.ListBox):
         self.ndb = args['ndb']
         self.search_string = args['search_string']
         self.log = args['log']
-        self.note_list, match_regex, self.all_notes_cnt = \
+        self.note_list, self.match_regex, self.all_notes_cnt = \
             self.ndb.filter_notes(self.search_string)
         super(ViewTitles, self).__init__(
                   urwid.SimpleFocusListWalker(self.get_note_titles()))
 
     def update_note_list(self, search_string):
         self.search_string = search_string
-        self.note_list, match_regex, self.all_notes_cnt = \
+        self.note_list, self.match_regex, self.all_notes_cnt = \
             self.ndb.filter_notes(self.search_string)
         self.body[:] = \
             urwid.SimpleFocusListWalker(self.get_note_titles())

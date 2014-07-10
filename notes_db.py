@@ -61,6 +61,195 @@ class NotesDB():
         # in progress. This variable is only used by the background thread.
         self.threaded_syncing_keys = {}
 
+    def filtered_notes_sort(self, filtered_notes, sort_mode='date'):
+        if sort_mode == 'date':
+            if self.config.get_config('pinned_ontop') == 'yes':
+                filtered_notes.sort(utils.sort_by_modify_date_pinned, reverse=True)
+            else:
+                filtered_notes.sort(key=lambda o: -float(o.note.get('modifydate', 0)))
+        else:
+            if self.config.get_config('pinned_ontop') == 'yes':
+                filtered_notes.sort(utils.sort_by_title_pinned)
+            else:
+                filtered_notes.sort(key=lambda o: utils.get_note_title(o.note))
+
+    def filter_notes(self, search_string=None, search_mode='gstyle'):
+        """Return list of notes filtered with search string.
+
+        Based on the search mode that has been selected in self.config,
+        this method will call the appropriate helper method to do the
+        actual work of filtering the notes.
+
+        Returns a list of filtered notes with selected search mode and sorted
+        according to configuration. Two more elements in tuple: a regular
+        expression that can be used for highlighting strings in the text widget
+        and the total number of notes in memory.
+        """
+
+        if search_mode == 'gstyle':
+            filtered_notes, match_regexp, active_notes = \
+                self.filter_notes_gstyle(search_string)
+        else:
+            filtered_notes, match_regexp, active_notes = \
+                self.filter_notes_regex(search_string)
+
+        self.filtered_notes_sort(filtered_notes,
+                                 self.config.get_config('sort_mode'))
+
+        return filtered_notes, match_regexp, active_notes
+
+    def _helper_gstyle_tagmatch(self, tag_pats, note):
+        # Returns:
+        #  2 = match    - no tag patterns specified
+        #  1 = match    - all tag patterns match a tag on this note
+        #  0 = no match - note has no tags or not all tag patterns match
+
+        if not tag_pats:
+            # match because no tag patterns were specified
+            return 2
+
+        note_tags = note.get('tags')
+
+        if not note_tags:
+            # tag patterns specified but note has no tags, so no match
+            return 0
+
+        # for each tag_pat, we have to find a matching tag
+        tag_pats_matched = 0
+        for tp in tag_pats:
+            for t in note_tags:
+                if t.startswith(tp):
+                    tag_pats_matched += 1
+                    break
+        if tag_pats_matched == len(tag_pats):
+            # all tag patterns specified matched a tag on this note
+            return 1
+
+        # note doesn't match
+        return 0
+
+    def _helper_gstyle_wordmatch(self, word_pats, content):
+        """If all words / multi-words in word_pats are found in the content,
+        the note goes through, otherwise not.
+
+        @param word_pats:
+        @param content:
+        @return:
+        """
+
+        # no search patterns, so note goes through
+        if not word_pats:
+            return True
+
+        # search for the first p that does NOT occur in content
+        if next((p for p in word_pats if p not in content), None) is None:
+            # we only found pats that DO occur in content so note goes through
+            return True
+
+        else:
+            # we found the first p that does not occur in content
+            return False
+
+    def filter_notes_gstyle(self, search_string=None):
+
+        filtered_notes = []
+        active_notes = 0 # total number of notes, excluding deleted
+
+        if not search_string:
+            for k in self.notes:
+                n = self.notes[k]
+                if n.get('deleted'):
+                    continue
+                active_notes += 1
+                filtered_notes.append(utils.KeyValueObject(key=k, note=n, tagfound=0))
+
+            return filtered_notes, [], active_notes
+
+        # group0: tag:([^\s]+)
+        # group1: multiple words in quotes
+        # group2: single words
+
+        # example result for: 't:tag1 t:tag2 word1 "word2 word3" tag:tag3'
+        # [ ('tag1', '',            ''),
+        #   ('tag2', '',            ''),
+        #   ('',     '',            'word1'),
+        #   ('',     'word2 word3', ''),
+        #   ('tag3', '',            '') ]
+
+        groups = re.findall('tag:([^\s]+)|"([^"]+)"|([^\s]+)', search_string)
+        all_pats = [[] for _ in range(3)]
+
+        # we end up with [[tag_pats],[multi_word_pats],[single_word_pats]]
+        for g in groups:
+            for i in range(3):
+                if g[i]: all_pats[i].append(g[i])
+
+        for k in self.notes:
+            n = self.notes[k]
+
+            if n.get('deleted'):
+                continue
+
+            active_notes += 1
+
+            tagmatch = self._helper_gstyle_tagmatch(all_pats[0], n)
+
+            word_pats = all_pats[1] + all_pats[2]
+
+            if tagmatch and \
+               self._helper_gstyle_wordmatch(word_pats, n.get('content')):
+                # we have a note that can go through!
+                filtered_notes.append(
+                    utils.KeyValueObject(key=k,
+                                         note=n,
+                                         tagfound=1 if tagmatch == 1 else 0))
+
+        return filtered_notes, '|'.join(all_pats[1] + all_pats[2]), active_notes
+
+    def filter_notes_regexp(self, search_string=None):
+        """
+        Return a list of notes filtered using the regex search_string.
+        Each element in the list is a tuple (local_key, note).
+        """
+        sspat = None
+        if search_string:
+            try:
+                sspat = re.compile(search_string)
+            except re.error:
+                sspat = None
+
+        filtered_notes = []
+        active_notes = 0 # total number of notes, excluding deleted ones
+
+        for k in self.notes:
+            n = self.notes[k]
+
+            # we don't do anything with deleted notes
+            if n.get('deleted'):
+                continue
+
+            active_notes += 1
+
+            if not sspat:
+                filtered_notes.append(utils.KeyValueObject(key=k, note=n, tagfound=0))
+                continue
+
+            if self.config.search_tags == 'yes':
+                tag_matched = False
+                for t in n.get('tags'):
+                    if sspat.seatch(t):
+                        tag_matched = True
+                        filtered_notes.append(utils.KeyValueObject(key=k, note=n, tagfound=1))
+                        break
+                if tag_matched:
+                    continue
+
+            if sspat.search(n.get('content')):
+                filtered_notes.append(utils.KeyValueObject(key=k, note=n, tagfound=0))
+
+        match_regexp = search_string if sspat else ''
+        return filtered_notes, match_regexp, active_notes
+
     def create_note(self, content):
         # need to get a key unique to this database. not really important
         # what it is, as long as it's unique.
@@ -83,207 +272,6 @@ class NotesDB():
         self.notes[new_key] = new_note
 
         return new_key
-
-    def filter_notes(self, search_string=None):
-        """Return list of notes filtered with search string.
-
-        Based on the search mode that has been selected in self.config,
-        this method will call the appropriate helper method to do the
-        actual work of filtering the notes.
-
-        @param search_string: String that will be used for searching.
-         Different meaning depending on the search mode.
-        @return: notes filtered with selected search mode and sorted according
-        to configuration. Two more elements in tuple: a regular expression
-        that can be used for highlighting strings in the text widget; the
-        total number of notes in memory.
-        """
-
-        if self.config.get_config('search_mode') == 'regexp':
-            filtered_notes, match_regexp, active_notes = self.filter_notes_regexp(search_string)
-        else:
-            filtered_notes, match_regexp, active_notes = self.filter_notes_gstyle(search_string)
-
-        if self.config.get_config('sort_mode') == 'alpha':
-            if self.config.get_config('pinned_ontop') == 'no':
-                # sort alphabetically on title
-                filtered_notes.sort(key=lambda o: utils.get_note_title(o.note))
-            else:
-                filtered_notes.sort(utils.sort_by_title_pinned)
-
-        else:
-            if self.config.get_config('pinned_ontop') == 'no':
-                # last modified on top
-                filtered_notes.sort(key=lambda o: -float(o.note.get('modifydate', 0)))
-            else:
-                filtered_notes.sort(utils.sort_by_modify_date_pinned, reverse=True)
-
-        return filtered_notes, match_regexp, active_notes
-
-    def _helper_gstyle_tagmatch(self, tag_pats, note):
-        if tag_pats:
-            tags = note.get('tags')
-
-            # tag: patterns specified, but note has no tags, so no match
-            if not tags:
-                return 0
-
-            # for each tag_pat, we have to find a matching tag
-            for tp in tag_pats:
-                # at the first match between tp and a tag:
-                if next((tag for tag in tags if tag.startswith(tp)), None) is not None:
-                    # we found a tag that matches current tagpat, so we move to the next tagpat
-                    continue
-
-                else:
-                    # we found no tag that matches current tagpat, so we break out of for loop
-                    break
-
-            else:
-                # for loop never broke out due to no match for tagpat, so:
-                # all tag_pats could be matched, so note is a go.
-                return 1
-
-
-            # break out of for loop will have us end up here
-            # for one of the tag_pats we found no matching tag
-            return 0
-
-
-        else:
-            # match because no tag: patterns were specified
-            return 2
-
-    def _helper_gstyle_mswordmatch(self, msword_pats, content):
-        """If all words / multi-words in msword_pats are found in the content,
-        the note goes through, otherwise not.
-
-        @param msword_pats:
-        @param content:
-        @return:
-        """
-
-        # no search patterns, so note goes through
-        if not msword_pats:
-            return True
-
-        # search for the first p that does NOT occur in content
-        if next((p for p in msword_pats if p not in content), None) is None:
-            # we only found pats that DO occur in content so note goes through
-            return True
-
-        else:
-            # we found the first p that does not occur in content
-            return False
-
-    def filter_notes_gstyle(self, search_string=None):
-
-        filtered_notes = []
-        # total number of notes, excluding deleted
-        active_notes = 0
-
-        if not search_string:
-            for k in self.notes:
-                n = self.notes[k]
-                if not n.get('deleted'):
-                    active_notes += 1
-                    filtered_notes.append(utils.KeyValueObject(key=k, note=n, tagfound=0))
-
-            return filtered_notes, [], active_notes
-
-        # group0: ag - not used
-        # group1: t(ag)?:([^\s]+)
-        # group2: multiple words in quotes
-        # group3: single words
-        # example result for 't:tag1 t:tag2 word1 "word2 word3" tag:tag3' ==
-        # [('', 'tag1', '', ''), ('', 'tag2', '', ''), ('', '', '', 'word1'), ('', '', 'word2 word3', ''), ('ag', 'tag3', '', '')]
-
-        groups = re.findall('t(ag)?:([^\s]+)|"([^"]+)"|([^\s]+)', search_string)
-        tms_pats = [[] for _ in range(3)]
-
-        # we end up with [[tag_pats],[multi_word_pats],[single_word_pats]]
-        for gi in groups:
-            for mi in range(1,4):
-                if gi[mi]:
-                    tms_pats[mi-1].append(gi[mi])
-
-        for k in self.notes:
-            n = self.notes[k]
-
-            if not n.get('deleted'):
-                active_notes += 1
-                c = n.get('content')
-
-                tagmatch = self._helper_gstyle_tagmatch(tms_pats[0], n)
-                msword_pats = tms_pats[1] + tms_pats[2]
-
-                if tagmatch and self._helper_gstyle_mswordmatch(msword_pats, c):
-                    # we have a note that can go through!
-
-                    # tagmatch == 1 if a tag was specced and found
-                    # tagmatch == 2 if no tag was specced (so all notes go through)
-                    tagfound = 1 if tagmatch == 1 else 0
-                    # we have to store our local key also
-                    filtered_notes.append(utils.KeyValueObject(key=k, note=n, tagfound=tagfound))
-
-        return filtered_notes, '|'.join(tms_pats[1] + tms_pats[2]), active_notes
-
-    def filter_notes_regexp(self, search_string=None):
-        """Return list of notes filtered with search_string,
-        a regular expression, each a tuple with (local_key, note).
-        """
-
-        if search_string:
-            try:
-                sspat = re.compile(search_string)
-            except re.error:
-                sspat = None
-
-        else:
-            sspat = None
-
-        filtered_notes = []
-        # total number of notes, excluding deleted ones
-        active_notes = 0
-        for k in self.notes:
-            n = self.notes[k]
-            # we don't do anything with deleted notes (yet)
-            if n.get('deleted'):
-                continue
-
-            active_notes += 1
-
-            c = n.get('content')
-            if self.config.search_tags == 'yes':
-                t = n.get('tags')
-                if sspat:
-                    # this used to use a filter(), but that would by definition
-                    # test all elements, whereas we can stop when the first
-                    # matching element is found
-                    # now I'm using this awesome trick by Alex Martelli on
-                    # http://stackoverflow.com/a/2748753/532513
-                    # first parameter of next is a generator
-                    # next() executes one step, but due to the if, this will
-                    # either be first matching element or None (second param)
-                    if t and next((ti for ti in t if sspat.search(ti)), None) is not None:
-                        # we have to store our local key also
-                        filtered_notes.append(utils.KeyValueObject(key=k, note=n, tagfound=1))
-
-                    elif sspat.search(c):
-                        # we have to store our local key also
-                        filtered_notes.append(utils.KeyValueObject(key=k, note=n, tagfound=0))
-
-                else:
-                    # we have to store our local key also
-                    filtered_notes.append(utils.KeyValueObject(key=k, note=n, tagfound=0))
-            else:
-                if (not sspat or sspat.search(c)):
-                    # we have to store our local key also
-                    filtered_notes.append(utils.KeyValueObject(key=k, note=n, tagfound=0))
-
-        match_regexp = search_string if sspat else ''
-
-        return filtered_notes, match_regexp, active_notes
 
     def get_note(self, key):
         return self.notes[key]
