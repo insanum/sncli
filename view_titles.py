@@ -25,6 +25,11 @@ class ViewTitles(urwid.ListBox):
         else:
             self.focus_position = 0
 
+    def sort_note_list(self, sort_mode):
+        self.ndb.filtered_notes_sort(self.note_list, sort_mode)
+        self.body[:] = \
+            urwid.SimpleFocusListWalker(self.get_note_titles())
+
     def format_title(self, note):
         """
         Various formatting tags are supporting for dynamically building

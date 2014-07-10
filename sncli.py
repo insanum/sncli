@@ -620,6 +620,18 @@ class sncli:
             self.view_titles.update_note_list(None)
             self.gui_body_set(self.view_titles)
 
+        elif key == self.config.get_keybind('sort_date'):
+            if self.gui_body_get().__class__ != view_titles.ViewTitles:
+                return key
+
+            self.view_titles.sort_note_list('date')
+
+        elif key == self.config.get_keybind('sort_alpha'):
+            if self.gui_body_get().__class__ != view_titles.ViewTitles:
+                return key
+
+            self.view_titles.sort_note_list('alpha')
+
         else:
             return lb.keypress(size, key)
 
