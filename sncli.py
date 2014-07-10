@@ -34,7 +34,7 @@ class sncli:
         self.logs = []
 
         try:
-            self.ndb = NotesDB(self.config, self.log)
+            self.ndb = NotesDB(self.config, self.log, self.gui_update_view)
         except Exception, e:
             self.log(str(e))
             sys.exit(1)
@@ -156,6 +156,19 @@ class sncli:
         self.log_alarms += 1
 
         self.log_lock.release()
+
+    def gui_update_view(self):
+        if not self.do_gui:
+            return
+
+        cur_key = self.view_titles.note_list[self.view_titles.focus_position].note['key']
+        self.view_titles.update_note_list(self.view_titles.search_string)
+        self.view_titles.focus_note(cur_key)
+
+        if self.gui_body_get().__class__ == view_note.ViewNote:
+            self.view_note.update_note(self.view_note.note['key'])
+
+        self.gui_update_status_bar()
 
     def gui_update_status_bar(self):
         if self.status_bar != 'yes':

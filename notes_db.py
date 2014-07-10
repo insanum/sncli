@@ -17,9 +17,10 @@ class WriteError(RuntimeError):
 class NotesDB():
     """NotesDB will take care of the local notes database and syncing with SN.
     """
-    def __init__(self, config, log):
-        self.config    = config
-        self.log       = log
+    def __init__(self, config, log, update_view):
+        self.config      = config
+        self.log         = log
+        self.update_view = update_view
 
         self.last_sync = 0 # set to zero to trigger a full sync
         self.sync_lock = threading.Lock()
@@ -554,6 +555,10 @@ class NotesDB():
 
         if not sync_errors:
             self.last_sync = sync_start_time
+
+        # if there were any changes then update the current view
+        if len(local_updates) > 0 or len(local_deletes) > 0:
+            self.update_view()
 
         if server_sync and full_sync:
             self.log("Full sync completed")
