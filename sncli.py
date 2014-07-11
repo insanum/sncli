@@ -566,6 +566,7 @@ class sncli:
                 note = lb.note
 
             self.ndb.set_note_pinned(note['key'], 0)
+
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 lb.update_note_title(None)
 
@@ -582,6 +583,7 @@ class sncli:
                 note = lb.note
 
             self.ndb.set_note_markdown(note['key'], 1)
+
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 lb.update_note_title(None)
 
@@ -598,6 +600,7 @@ class sncli:
                 note = lb.note
 
             self.ndb.set_note_markdown(note['key'], 0)
+
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 lb.update_note_title(None)
 
@@ -788,10 +791,11 @@ class sncli:
         self.sncli_loop.run()
 
     def cli_list_notes(self, search_string):
+
         note_list, match_regex, all_notes_cnt = \
             self.ndb.filter_notes(search_string)
         for n in note_list:
-            print n.key + u' - ' + utils.get_note_title(n.note)
+            print n.key + u' ' + utils.get_note_title(n.note)
 
     def cli_dump_notes(self, search_string, key=None):
 
@@ -808,7 +812,11 @@ class sncli:
             for n in note_list:
                 dump_note(n.note)
         else:
-            dump_note(self.ndb.get_note(key))
+            note = self.ndb.get_note(key)
+            if note:
+                dump_note(note)
+            else:
+                self.log(u'ERROR: Key does not exist')
 
     def cli_create_note(self, from_stdin):
 
@@ -847,6 +855,9 @@ class sncli:
         if not editor: return None
 
         note = self.ndb.get_note(key)
+        if not note:
+            self.log(u'ERROR: Key does not exist')
+            return
 
         md5_old = md5.new(note['content']).digest()
         tf = temp.tempfile_create(note)
@@ -864,8 +875,40 @@ class sncli:
             self.log(u'Note updated')
             self.ndb.set_note_content(note['key'], new_content)
             self.sync_notes()
+        else:
+            self.log(u'Note unchanged')
 
         temp.tempfile_delete(tf)
+
+    def cli_trash_untrash_note(self, key, trash):
+
+        note = self.ndb.get_note(key)
+        if not note:
+            self.log(u'ERROR: Key does not exist')
+            return
+
+        self.ndb.set_note_deleted(note['key'], 1 if trash else 0)
+        self.sync_notes()
+
+    def cli_pin_unpin_note(self, key, pin):
+
+        note = self.ndb.get_note(key)
+        if not note:
+            self.log(u'ERROR: Key does not exist')
+            return
+
+        self.ndb.set_note_pinned(note['key'], 1 if pin else 0)
+        self.sync_notes()
+
+    def cli_markdown_unmarkdown_note(self, key, markdown):
+
+        note = self.ndb.get_note(key)
+        if not note:
+            self.log(u'ERROR: Key does not exist')
+            return
+
+        self.ndb.set_note_markdown(note['key'], 1 if markdown else 0)
+        self.sync_notes()
 
 
 def SIGINT_handler(signum, frame):
@@ -877,13 +920,16 @@ signal.signal(signal.SIGINT, SIGINT_handler)
 def usage():
     print u'''
 Usage:
-  sncli [ --nosync ] [ --key=<key> ]         - console gui mode
-  sncli sync                                 - perform a full sync
-  sncli [ --nosync ] list [ search_string ]  - list note titles (w/ search)
-  sncli [ --nosync ] dump [ search_string ]  - dump note content (w/ search)
-  sncli [ --nosync ] --key=<key> dump        - dump a single note content
-  sncli [ --nosync ] create [ - ]            - create a note ('-' from stdin)
-  sncli [ --nosync ] --key=<key> edit        - edit a single note
+  sncli [--nosync] [--key=<key>]               - console gui mode
+  sncli sync                                   - perform a full sync
+  sncli [--nosync] list [search_string]        - list note titles (w/ search)
+  sncli [--nosync] dump [search_string]        - dump notes (w/ search)
+  sncli [--nosync] create [-]                  - create a note (- from stdin)
+  sncli [--nosync] --key=<key> dump            - dump a note
+  sncli [--nosync] --key=<key> edit            - edit a note
+  sncli [--nosync] --key=<key> <trash|untrash> - trash/untrash a note
+  sncli [--nosync] --key=<key> <pin|unpin>     - pin/unpin a note
+  sncli [--nosync] --key=<key> <md|unmd>       - markdown/unmarkdown a note
 '''
     sys.exit(0)
 
@@ -946,11 +992,35 @@ def main(argv):
 
     elif args[0] == 'edit':
 
-        if key:
-            sn = sncli_start(sync)
-            sn.cli_edit_note(key)
-        else:
+        if not key:
             usage()
+
+        sn = sncli_start(sync)
+        sn.cli_edit_note(key)
+
+    elif args[0] == 'trash' or args[0] == 'untrash':
+
+        if not key:
+            usage()
+
+        sn = sncli_start(sync)
+        sn.cli_trash_untrash_note(key, 1 if args[0] == 'trash' else 0)
+
+    elif args[0] == 'pin' or args[0] == 'unpin':
+
+        if not key:
+            usage()
+
+        sn = sncli_start(sync)
+        sn.cli_pin_unpin_note(key, 1 if args[0] == 'pin' else 0)
+
+    elif args[0] == 'md' or args[0] == 'unmd':
+
+        if not key:
+            usage()
+
+        sn = sncli_start(sync)
+        sn.cli_markdown_unmarkdown_note(key, 1 if args[0] == 'md' else 0)
 
     else:
         usage()
