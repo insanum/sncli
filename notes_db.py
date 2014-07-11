@@ -148,7 +148,10 @@ class NotesDB():
     def filter_notes_gstyle(self, search_string=None):
 
         filtered_notes = []
-        active_notes = 0 # total number of notes, excluding deleted
+
+        # total number of notes, excluding deleted
+        # if tag:trash then counts deleted as well
+        active_notes = 0
 
         if not search_string:
             for k in self.notes:
@@ -192,6 +195,15 @@ class NotesDB():
                 continue
 
             active_notes += 1
+
+            if search_trash and len(groups) == 0:
+                # simple search of only 'tag:trash' to get all trashed notes
+                if n.get('deleted'):
+                    filtered_notes.append(
+                        utils.KeyValueObject(key=k,
+                                             note=n,
+                                             tagfound=1))
+                continue
 
             tagmatch = self._helper_gstyle_tagmatch(all_pats[0], n)
 
