@@ -795,18 +795,10 @@ class sncli:
         note_list, match_regex, all_notes_cnt = \
             self.ndb.filter_notes(search_string)
         for n in note_list:
-            note = n.note
-            if 'systemtags' in note:
-                flags = ''
-                if 'pinned' in note['systemtags']:   flags = flags + u'*'
-                else:                                flags = flags + u' '
-                if 'markdown' in note['systemtags']: flags = flags + u'm'
-                else:                                flags = flags + u' '
-            else:
-                flags = '  '
-            print note['key'] + \
+            flags = utils.get_note_flags(n.note)
+            print n.key + \
                   u' [' + flags + u'] ' + \
-                  utils.get_note_title(note)
+                  utils.get_note_title(n.note)
 
     def cli_dump_notes(self, search_string, key=None):
 

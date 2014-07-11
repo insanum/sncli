@@ -66,10 +66,7 @@ class ViewNote(urwid.ListBox):
                                      mod_time,
                                      wrap='clip'),
                           'status_bar')
-        flags = ''
-        if self.note.has_key("systemtags"):
-            if 'pinned' in self.note['systemtags']:   flags = flags + u'*'
-            if 'markdown' in self.note['systemtags']: flags = flags + u'm'
+        flags = utils.get_note_flags(self.note)
         status_tags_flags = \
             ('pack', urwid.AttrMap(urwid.Text(u'[' + tags + u'] [' + flags + u']'),
                                    'status_bar'))

@@ -14,6 +14,16 @@ def generate_random_key():
     """
     return '%030x' % (random.randrange(256**15),)
 
+def get_note_flags(note):
+    flags = ''
+    flags += u'T' if note['deleted'] else u' '
+    if 'systemtags' in note:
+        flags += u'*' if 'pinned'   in note['systemtags'] else u' '
+        flags += u'm' if 'markdown' in note['systemtags'] else u' '
+    else:
+        flags += '  '
+    return flags
+
 def get_note_title(note):
     mo = note_title_re.match(note.get('content', ''))
     if mo:

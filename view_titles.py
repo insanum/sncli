@@ -37,23 +37,14 @@ class ViewTitles(urwid.ListBox):
         specifier (decimal) and a left justification (-) like that
         supported by printf.
 
-        %F -- flags ('*' for pinned, 'm' for markdown)
+        %F -- flags ('T' for trashed, '*' for pinned, 'm' for markdown)
         %T -- tags
         %D -- date
         %N -- note title
         """
 
         title = utils.get_note_title(note)
-
-        # get the note flags
-        if note.has_key("systemtags"):
-            flags = ''
-            if 'pinned' in note['systemtags']:   flags = flags + u'*'
-            else:                                flags = flags + u' '
-            if 'markdown' in note['systemtags']: flags = flags + u'm'
-            else:                                flags = flags + u' '
-        else:
-            flags = '  '
+        flags = utils.get_note_flags(note)
 
         # get the note tags
         tags = '%s' % ','.join(note['tags'])
