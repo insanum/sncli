@@ -271,6 +271,7 @@ class NotesDB():
         # note has no internal key yet.
         new_note = {
                     'content'    : content,
+                    'deleted'    : 0,
                     'modifydate' : timestamp,
                     'createdate' : timestamp,
                     'savedate'   : 0, # never been written to disc

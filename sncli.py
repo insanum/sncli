@@ -12,9 +12,10 @@ from logging.handlers import RotatingFileHandler
 
 class sncli:
 
-    def __init__(self):
+    def __init__(self, do_sync):
         self.config  = Config()
-        self.do_gui = False
+        self.do_sync = do_sync
+        self.do_gui  = False
 
         if not os.path.exists(self.config.get_config('db_path')):
             os.mkdir(self.config.get_config('db_path'))
@@ -40,7 +41,7 @@ class sncli:
             sys.exit(1)
 
     def sync_notes(self):
-        self.ndb.sync_notes()
+        self.ndb.sync_notes(self.do_sync)
 
     def get_editor(self):
         editor = self.config.get_config('editor')
@@ -648,9 +649,13 @@ class sncli:
         self.gui_update_status_bar()
         return None
 
-    def gui_init_view(self, loop, arg):
+    def gui_init_view(self, loop, view_note):
         self.master_frame.keypress = self.gui_frame_keypress
         self.gui_body_set(self.view_titles)
+
+        if view_note:
+            # note that title view set first to prime the view stack
+            self.gui_switch_frame_body(self.view_note)
 
         self.thread_sync.start()
 
@@ -671,7 +676,7 @@ class sncli:
         else:
             self.log(u'WARNING: Not all notes saved to disk (wait for sync worker)') 
 
-    def gui(self, do_sync):
+    def gui(self, key):
 
         self.do_gui = True
 
@@ -682,7 +687,7 @@ class sncli:
         self.log_lock = threading.Lock()
 
         self.thread_sync = threading.Thread(target=self.ndb.sync_worker,
-                                            args=[do_sync])
+                                            args=[self.do_sync])
         self.thread_sync.setDaemon(True)
 
         self.view_titles = \
@@ -696,7 +701,7 @@ class sncli:
             view_note.ViewNote(self.config,
                                {
                                 'ndb' : self.ndb,
-                                'key' : None,
+                                'key' : key, # initial key to view or None
                                 'log' : self.log
                                })
 
@@ -777,7 +782,8 @@ class sncli:
                                          palette,
                                          handle_mouse=False)
 
-        self.sncli_loop.set_alarm_in(0, self.gui_init_view, None)
+        self.sncli_loop.set_alarm_in(0, self.gui_init_view,
+                                     True if key else False)
 
         self.sncli_loop.run()
 
@@ -810,7 +816,7 @@ class sncli:
             if content and content != u'\n':
                 self.log(u'New note created')
                 self.ndb.create_note(content)
-                self.ndb.sync_notes()
+                self.sync_notes()
 
         if from_stdin:
 
@@ -835,6 +841,32 @@ class sncli:
 
         temp.tempfile_delete(tf)
 
+    def cli_edit_note(self, key):
+
+        editor = self.get_editor()
+        if not editor: return None
+
+        note = self.ndb.get_note(key)
+
+        md5_old = md5.new(note['content']).digest()
+        tf = temp.tempfile_create(note)
+
+        try:
+            subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
+        except Exception, e:
+            self.log(u'Editor error: ' + str(e))
+            temp.tempfile_delete(tf)
+            return
+
+        new_content = ''.join(temp.tempfile_content(tf))
+        md5_new = md5.new(new_content).digest()
+        if md5_old != md5_new:
+            self.log(u'Note updated')
+            self.ndb.set_note_content(note['key'], new_content)
+            self.sync_notes()
+
+        temp.tempfile_delete(tf)
+
 
 def SIGINT_handler(signum, frame):
     print u'\nSignal caught, bye!'
@@ -843,17 +875,25 @@ def SIGINT_handler(signum, frame):
 signal.signal(signal.SIGINT, SIGINT_handler)
 
 def usage():
-    print u'Usage: sncli ...'
+    print u'''
+Usage:
+  sncli [ --nosync ] [ --key=<key> ]         - console gui mode
+  sncli sync                                 - perform a full sync
+  sncli [ --nosync ] list [ search_string ]  - list note titles (w/ search)
+  sncli [ --nosync ] dump [ search_string ]  - dump note content (w/ search)
+  sncli [ --nosync ] --key=<key> dump        - dump a single note content
+  sncli [ --nosync ] create [ - ]            - create a note ('-' from stdin)
+  sncli [ --nosync ] --key=<key> edit        - edit a single note
+'''
     sys.exit(0)
 
 def main(argv):
     sync = True
-    gui  = True
-    key  = ''
+    key  = None
 
     try:
         opts, args = getopt.getopt(argv, 'h',
-            [ 'help', 'nosync', 'nogui', 'key=' ])
+            [ 'help', 'nosync', 'key=' ])
     except:
         usage()
 
@@ -862,28 +902,25 @@ def main(argv):
             usage()
         elif opt == '--nosync':
             sync = False
-        elif opt == '--nogui':
-            gui = False
         elif opt == '--key':
             key = arg
         else:
             print u'ERROR: Unhandled option'
             usage()
 
-    if gui and args: usage() # not quite right...
-
-    if gui:
-        sncli().gui(sync)
+    if not args:
+        sncli(sync).gui(key)
         return
 
-    if not args: usage()
-
     def sncli_start(sync):
-        sn = sncli()
+        sn = sncli(sync)
         if sync: sn.sync_notes()
         return sn
 
-    if args[0] == 'list':
+    if args[0] == 'sync':
+        sn = sncli_start(True)
+
+    elif args[0] == 'list':
 
         sn = sncli_start(sync)
         sn.cli_list_notes(' '.join(args[1:]))
@@ -891,10 +928,10 @@ def main(argv):
     elif args[0] == 'dump':
 
         sn = sncli_start(sync)
-        if not key:
-            sn.cli_dump_notes(' '.join(args[1:]))
-        else:
+        if key:
             sn.cli_dump_notes(None, key=key)
+        else:
+            sn.cli_dump_notes(' '.join(args[1:]))
 
     elif args[0] == 'create':
 
@@ -904,6 +941,14 @@ def main(argv):
         elif len(args) == 2 and args[1] == '-':
             sn = sncli_start(sync)
             sn.cli_create_note(True)
+        else:
+            usage()
+
+    elif args[0] == 'edit':
+
+        if key:
+            sn = sncli_start(sync)
+            sn.cli_edit_note(key)
         else:
             usage()
 
