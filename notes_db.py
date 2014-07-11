@@ -214,14 +214,10 @@ class NotesDB():
                 sspat = None
 
         filtered_notes = []
-        active_notes = 0 # total number of notes, excluding deleted ones
+        active_notes = 0 # total number of notes, including deleted ones
 
         for k in self.notes:
             n = self.notes[k]
-
-            # we don't do anything with deleted notes
-            if n.get('deleted'):
-                continue
 
             active_notes += 1
 
