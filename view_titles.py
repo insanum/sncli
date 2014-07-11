@@ -57,6 +57,9 @@ class ViewTitles(urwid.ListBox):
 
         # get the note tags
         tags = '%s' % ','.join(note['tags'])
+        if note['deleted']:
+            if tags: tags += u',trash'
+            else:    tags = u'trash'
 
         # format the note modification date
         t = time.localtime(float(note['modifydate']))

@@ -47,6 +47,9 @@ class ViewNote(urwid.ListBox):
         t = time.localtime(float(self.note['modifydate']))
         mod_time = time.strftime('%a, %d %b %Y %H:%M:%S', t)
         tags = '%s' % ','.join(self.note['tags'])
+        if self.note['deleted']:
+            if tags: tags += u',trash'
+            else:    tags = u'trash'
         status_title = \
             urwid.AttrMap(urwid.Text(u'Title: ' +
                                      utils.get_note_title(self.note),
