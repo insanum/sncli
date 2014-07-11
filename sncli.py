@@ -536,7 +536,8 @@ class sncli:
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
 
-        elif key == self.config.get_keybind('note_pin'):
+        elif key == self.config.get_keybind('note_pin') or \
+             key == self.config.get_keybind('note_unpin'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
                self.gui_body_get().__class__ != view_note.ViewNote:
                 return key
@@ -548,12 +549,14 @@ class sncli:
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 note = lb.note
 
-            self.ndb.set_note_pinned(note['key'], 1)
+            self.ndb.set_note_pinned(note['key'],
+                    1 if key == self.config.get_keybind('note_pin') else 0)
 
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 lb.update_note_title(None)
 
-        elif key == self.config.get_keybind('note_unpin'):
+        elif key == self.config.get_keybind('note_markdown') or \
+             key == self.config.get_keybind('note_unmarkdown'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
                self.gui_body_get().__class__ != view_note.ViewNote:
                 return key
@@ -565,41 +568,8 @@ class sncli:
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 note = lb.note
 
-            self.ndb.set_note_pinned(note['key'], 0)
-
-            if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                lb.update_note_title(None)
-
-        elif key == self.config.get_keybind('note_markdown'):
-            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
-               self.gui_body_get().__class__ != view_note.ViewNote:
-                return key
-
-            if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                if len(lb.body.positions()) <= 0:
-                    return None
-                note = lb.note_list[lb.focus_position].note
-            else: # self.gui_body_get().__class__ == view_note.ViewNote:
-                note = lb.note
-
-            self.ndb.set_note_markdown(note['key'], 1)
-
-            if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                lb.update_note_title(None)
-
-        elif key == self.config.get_keybind('note_unmarkdown'):
-            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
-               self.gui_body_get().__class__ != view_note.ViewNote:
-                return key
-
-            if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                if len(lb.body.positions()) <= 0:
-                    return None
-                note = lb.note_list[lb.focus_position].note
-            else: # self.gui_body_get().__class__ == view_note.ViewNote:
-                note = lb.note
-
-            self.ndb.set_note_markdown(note['key'], 0)
+            self.ndb.set_note_markdown(note['key'],
+                    1 if key == self.config.get_keybind('note_markdown') else 0)
 
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 lb.update_note_title(None)
