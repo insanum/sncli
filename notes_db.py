@@ -174,6 +174,12 @@ class NotesDB():
         groups = re.findall('tag:([^\s]+)|"([^"]+)"|([^\s]+)', search_string)
         all_pats = [[] for _ in range(3)]
 
+        search_trash = False
+        for g in groups:
+            if g[0] == 'trash':
+                groups.remove(g)
+                search_trash = True
+
         # we end up with [[tag_pats],[multi_word_pats],[single_word_pats]]
         for g in groups:
             for i in range(3):
@@ -182,7 +188,7 @@ class NotesDB():
         for k in self.notes:
             n = self.notes[k]
 
-            if n.get('deleted'):
+            if not search_trash and n.get('deleted'):
                 continue
 
             active_notes += 1
