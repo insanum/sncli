@@ -300,13 +300,14 @@ class NotesDB():
         if what_changed not in note['what_changed']:
             note['what_changed'].append(what_changed)
 
-    def set_note_deleted(self, key):
+    def set_note_deleted(self, key, deleted):
         n = self.notes[key]
-        if not n['deleted']:
-            n['deleted'] = 1
+        if (not n['deleted'] and deleted) or \
+           (n['deleted'] and not deleted):
+            n['deleted'] = deleted
             n['modifydate'] = time.time()
             self.flag_what_changed(n, 'deleted')
-            self.log('Note trashed (key={0})'.format(key))
+            self.log('Note {0} (key={1})'.format('trashed' if deleted else 'untrashed', key))
 
     def set_note_content(self, key, content):
         n = self.notes[key]

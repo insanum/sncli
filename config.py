@@ -35,6 +35,7 @@ class Config:
          'kb_top'             : 'g',
          'kb_status'          : 's',
          'kb_trash_note'      : 'T',
+         'kb_untrash_note'    : 'U',
          'kb_create_note'     : 'C',
          'kb_edit_note'       : 'e',
          'kb_view_note'       : 'enter',
@@ -141,6 +142,7 @@ class Config:
         self.keybinds['view_log'] = [ cp.get(cfg_sec, 'kb_view_log'), [ 'common' ], 'View log' ]
         self.keybinds['create_note'] = [ cp.get(cfg_sec, 'kb_create_note'), [ 'titles' ], 'Create a new note' ]
         self.keybinds['trash_note'] = [ cp.get(cfg_sec, 'kb_trash_note'), [ 'titles', 'notes' ], 'Trash a note' ]
+        self.keybinds['untrash_note'] = [ cp.get(cfg_sec, 'kb_untrash_note'), [ 'titles', 'notes' ], 'Untrash a note' ]
         self.keybinds['edit_note'] = [ cp.get(cfg_sec, 'kb_edit_note'), [ 'titles', 'notes' ], 'Edit note' ]
         self.keybinds['view_note'] = [ cp.get(cfg_sec, 'kb_view_note'), [ 'titles' ], 'View note' ]
         self.keybinds['view_note_ext'] = [ cp.get(cfg_sec, 'kb_view_note_ext'), [ 'titles', 'notes' ], 'View note with pager' ]

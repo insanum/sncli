@@ -338,9 +338,10 @@ class sncli:
             else:
                 self.status_bar = self.config.get_config('status_bar')
 
-        elif key == self.config.get_keybind('trash_note'):
+        elif key == self.config.get_keybind('trash_note') or \
+             key == self.config.get_keybind('untrash_note'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
-               self.gui_body_get().__class__ != view_note.ViewNotes:
+               self.gui_body_get().__class__ != view_note.ViewNote:
                 return key
 
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
@@ -350,7 +351,8 @@ class sncli:
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 note = lb.note
 
-            self.ndb.set_note_deleted(note['key'])
+            self.ndb.set_note_deleted(note['key'],
+                    1 if key == self.config.get_keybind('trash_note') else 0)
 
         elif key == self.config.get_keybind('create_note'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
