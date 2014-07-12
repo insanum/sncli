@@ -339,8 +339,7 @@ class sncli:
             else:
                 self.status_bar = self.config.get_config('status_bar')
 
-        elif key == self.config.get_keybind('trash_note') or \
-             key == self.config.get_keybind('untrash_note'):
+        elif key == self.config.get_keybind('note_trash'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
                self.gui_body_get().__class__ != view_note.ViewNote:
                 return key
@@ -353,7 +352,7 @@ class sncli:
                 note = lb.note
 
             self.ndb.set_note_deleted(note['key'],
-                    1 if key == self.config.get_keybind('trash_note') else 0)
+                    1 if not note['deleted'] else 0)
 
         elif key == self.config.get_keybind('create_note'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
@@ -536,8 +535,7 @@ class sncli:
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
 
-        elif key == self.config.get_keybind('note_pin') or \
-             key == self.config.get_keybind('note_unpin'):
+        elif key == self.config.get_keybind('note_pin'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
                self.gui_body_get().__class__ != view_note.ViewNote:
                 return key
@@ -549,14 +547,17 @@ class sncli:
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 note = lb.note
 
-            self.ndb.set_note_pinned(note['key'],
-                    1 if key == self.config.get_keybind('note_pin') else 0)
+            pin = 1
+            if 'systemtags' in note:
+                if 'pinned' in note['systemtags']: pin = 0
+                else:                              pin = 1
+
+            self.ndb.set_note_pinned(note['key'], pin)
 
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 lb.update_note_title(None)
 
-        elif key == self.config.get_keybind('note_markdown') or \
-             key == self.config.get_keybind('note_unmarkdown'):
+        elif key == self.config.get_keybind('note_markdown'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
                self.gui_body_get().__class__ != view_note.ViewNote:
                 return key
@@ -568,8 +569,12 @@ class sncli:
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 note = lb.note
 
-            self.ndb.set_note_markdown(note['key'],
-                    1 if key == self.config.get_keybind('note_markdown') else 0)
+            md = 1
+            if 'systemtags' in note:
+                if 'markdown' in note['systemtags']: md = 0
+                else:                                md = 1
+
+            self.ndb.set_note_markdown(note['key'], md)
 
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 lb.update_note_title(None)
@@ -853,34 +858,34 @@ class sncli:
 
         temp.tempfile_delete(tf)
 
-    def cli_trash_untrash_note(self, key, trash):
+    def cli_note_trash(self, key, trash):
 
         note = self.ndb.get_note(key)
         if not note:
             self.log(u'ERROR: Key does not exist')
             return
 
-        self.ndb.set_note_deleted(note['key'], 1 if trash else 0)
+        self.ndb.set_note_deleted(key, trash)
         self.sync_notes()
 
-    def cli_pin_unpin_note(self, key, pin):
+    def cli_note_pin(self, key, pin):
 
         note = self.ndb.get_note(key)
         if not note:
             self.log(u'ERROR: Key does not exist')
             return
 
-        self.ndb.set_note_pinned(note['key'], 1 if pin else 0)
+        self.ndb.set_note_pinned(key, pin)
         self.sync_notes()
 
-    def cli_markdown_unmarkdown_note(self, key, markdown):
+    def cli_note_markdown(self, key, markdown):
 
         note = self.ndb.get_note(key)
         if not note:
             self.log(u'ERROR: Key does not exist')
             return
 
-        self.ndb.set_note_markdown(note['key'], 1 if markdown else 0)
+        self.ndb.set_note_markdown(key, markdown)
         self.sync_notes()
 
 
@@ -977,7 +982,7 @@ def main(argv):
             usage()
 
         sn = sncli_start(sync)
-        sn.cli_trash_untrash_note(key, 1 if args[0] == 'trash' else 0)
+        sn.cli_note_trash(key, 1 if args[0] == 'trash' else 0)
 
     elif args[0] == 'pin' or args[0] == 'unpin':
 
@@ -985,7 +990,7 @@ def main(argv):
             usage()
 
         sn = sncli_start(sync)
-        sn.cli_pin_unpin_note(key, 1 if args[0] == 'pin' else 0)
+        sn.cli_note_pin(key, 1 if args[0] == 'pin' else 0)
 
     elif args[0] == 'md' or args[0] == 'unmd':
 
@@ -993,7 +998,7 @@ def main(argv):
             usage()
 
         sn = sncli_start(sync)
-        sn.cli_markdown_unmarkdown_note(key, 1 if args[0] == 'md' else 0)
+        sn.cli_note_markdown(key, 1 if args[0] == 'md' else 0)
 
     else:
         usage()

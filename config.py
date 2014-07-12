@@ -34,8 +34,6 @@ class Config:
          'kb_bottom'          : 'G',
          'kb_top'             : 'g',
          'kb_status'          : 's',
-         'kb_trash_note'      : 'T',
-         'kb_untrash_note'    : 'U',
          'kb_create_note'     : 'C',
          'kb_edit_note'       : 'e',
          'kb_view_note'       : 'enter',
@@ -52,10 +50,9 @@ class Config:
          'kb_clear_search'    : 'A',
          'kb_sort_date'       : 'd',
          'kb_sort_alpha'      : 'a',
+         'kb_note_trash'      : 'T',
          'kb_note_pin'        : 'p',
-         'kb_note_unpin'      : 'P',
          'kb_note_markdown'   : 'm',
-         'kb_note_unmarkdown' : 'M',
          'kb_note_tags'       : 't',
 
          'clr_default_fg'            : 'default',
@@ -141,8 +138,6 @@ class Config:
         self.keybinds['status'] = [ cp.get(cfg_sec, 'kb_status'), [ 'common' ], 'Toggle status bar' ]
         self.keybinds['view_log'] = [ cp.get(cfg_sec, 'kb_view_log'), [ 'common' ], 'View log' ]
         self.keybinds['create_note'] = [ cp.get(cfg_sec, 'kb_create_note'), [ 'titles' ], 'Create a new note' ]
-        self.keybinds['trash_note'] = [ cp.get(cfg_sec, 'kb_trash_note'), [ 'titles', 'notes' ], 'Trash a note' ]
-        self.keybinds['untrash_note'] = [ cp.get(cfg_sec, 'kb_untrash_note'), [ 'titles', 'notes' ], 'Untrash a note' ]
         self.keybinds['edit_note'] = [ cp.get(cfg_sec, 'kb_edit_note'), [ 'titles', 'notes' ], 'Edit note' ]
         self.keybinds['view_note'] = [ cp.get(cfg_sec, 'kb_view_note'), [ 'titles' ], 'View note' ]
         self.keybinds['view_note_ext'] = [ cp.get(cfg_sec, 'kb_view_note_ext'), [ 'titles', 'notes' ], 'View note with pager' ]
@@ -157,10 +152,9 @@ class Config:
         self.keybinds['clear_search'] = [ cp.get(cfg_sec, 'kb_clear_search'), [ 'titles' ], 'Show all notes' ]
         self.keybinds['sort_date'] = [ cp.get(cfg_sec, 'kb_sort_date'), [ 'titles' ], 'Sort notes by date' ]
         self.keybinds['sort_alpha'] = [ cp.get(cfg_sec, 'kb_sort_alpha'), [ 'titles' ], 'Sort notes by alpha' ]
+        self.keybinds['note_trash'] = [ cp.get(cfg_sec, 'kb_note_trash'), [ 'titles', 'notes' ], 'Trash a note' ]
         self.keybinds['note_pin'] = [ cp.get(cfg_sec, 'kb_note_pin'), [ 'titles', 'notes' ], 'Pin note' ]
-        self.keybinds['note_unpin'] = [ cp.get(cfg_sec, 'kb_note_unpin'), [ 'titles', 'notes' ], 'Unpin note' ]
         self.keybinds['note_markdown'] = [ cp.get(cfg_sec, 'kb_note_markdown'), [ 'titles', 'notes' ], 'Flag note as markdown' ]
-        self.keybinds['note_unmarkdown'] = [ cp.get(cfg_sec, 'kb_note_unmarkdown'), [ 'titles', 'notes' ], 'Unflag note as markdown' ]
         self.keybinds['note_tags'] = [ cp.get(cfg_sec, 'kb_note_tags'), [ 'titles', 'notes' ], 'Edit note tags' ]
 
         self.colors = collections.OrderedDict()
