@@ -12,9 +12,10 @@ from logging.handlers import RotatingFileHandler
 
 class sncli:
 
-    def __init__(self, do_sync):
+    def __init__(self, do_sync, verbose=False):
         self.config  = Config()
         self.do_sync = do_sync
+        self.verbose = verbose
         self.do_gui  = False
 
         if not os.path.exists(self.config.get_config('db_path')):
@@ -138,7 +139,8 @@ class sncli:
         logging.debug(msg)
 
         if not self.do_gui:
-            print msg
+            if self.verbose:
+                print msg
             return
 
         self.log_lock.acquire()
@@ -898,35 +900,48 @@ signal.signal(signal.SIGINT, SIGINT_handler)
 def usage():
     print u'''
 Usage:
-  sncli [--nosync] [--key=<key>]               - console gui mode
-  sncli sync                                   - perform a full sync
-  sncli [--nosync] list [search_string]        - list note titles (w/ search)
-  sncli [--nosync] dump [search_string]        - dump notes (w/ search)
-  sncli [--nosync] create [-]                  - create a note (- from stdin)
-  sncli [--nosync] --key=<key> dump            - dump a note
-  sncli [--nosync] --key=<key> edit            - edit a note
-  sncli [--nosync] --key=<key> <trash|untrash> - trash/untrash a note
-  sncli [--nosync] --key=<key> <pin|unpin>     - pin/unpin a note
-  sncli [--nosync] --key=<key> <md|unmd>       - markdown/unmarkdown a note
+ sncli [OPTIONS] [COMMAND] [COMMAND_ARGS]
+
+ OPTIONS:
+  -h, --help                 - usage help
+  -v, --verbose              - verbose output (cli mode)
+  -n, --nosync               - don't perform a server sync
+  -k <key>, --key=<key>      - note key
+
+ COMMANDS:
+  <none>                     - console gui mode when no command specified
+  sync                       - perform a full sync with the server
+  list [search_string]       - list notes (refined with search string)
+  dump [search_string]       - dump notes (refined with search string)
+  create [-]                 - create a note ('-' content from stdin)
+  dump                       - dump a note (specified by <key>)
+  edit                       - edit a note (specified by <key>)
+  < trash | untrash >        - trash/untrash a note (specified by <key>)
+  < pin | unpin >            - pin/unpin a note (specified by <key>)
+  < markdown | unmarkdown >  - markdown/unmarkdown a note (specified by <key>)
 '''
     sys.exit(0)
 
 def main(argv):
-    sync = True
-    key  = None
+    sync    = True
+    verbose = False
+    key     = None
 
     try:
-        opts, args = getopt.getopt(argv, 'h',
-            [ 'help', 'nosync', 'key=' ])
+        opts, args = getopt.getopt(argv,
+            'hvnk:',
+            [ 'help', 'verbose' 'nosync', 'key=' ])
     except:
         usage()
 
     for opt, arg in opts:
         if opt in [ '-h', '--help']:
             usage()
-        elif opt == '--nosync':
+        elif opt in [ '-v', '--verbose']:
+            verbose = True
+        elif opt in [ '-n', '--nosync']:
             sync = False
-        elif opt == '--key':
+        elif opt in [ '-k', '--key']:
             key = arg
         else:
             print u'ERROR: Unhandled option'
@@ -936,22 +951,22 @@ def main(argv):
         sncli(sync).gui(key)
         return
 
-    def sncli_start(sync):
-        sn = sncli(sync)
+    def sncli_start(sync, verbose):
+        sn = sncli(sync, verbose)
         if sync: sn.sync_notes()
         return sn
 
     if args[0] == 'sync':
-        sn = sncli_start(True)
+        sn = sncli_start(True, verbose)
 
     elif args[0] == 'list':
 
-        sn = sncli_start(sync)
+        sn = sncli_start(sync, verbose)
         sn.cli_list_notes(' '.join(args[1:]))
 
     elif args[0] == 'dump':
 
-        sn = sncli_start(sync)
+        sn = sncli_start(sync, verbose)
         if key:
             sn.cli_dump_notes(None, key=key)
         else:
@@ -960,10 +975,10 @@ def main(argv):
     elif args[0] == 'create':
 
         if len(args) == 1:
-            sn = sncli_start(sync)
+            sn = sncli_start(sync, verbose)
             sn.cli_create_note(False)
         elif len(args) == 2 and args[1] == '-':
-            sn = sncli_start(sync)
+            sn = sncli_start(sync, verbose)
             sn.cli_create_note(True)
         else:
             usage()
@@ -973,7 +988,7 @@ def main(argv):
         if not key:
             usage()
 
-        sn = sncli_start(sync)
+        sn = sncli_start(sync, verbose)
         sn.cli_edit_note(key)
 
     elif args[0] == 'trash' or args[0] == 'untrash':
@@ -981,7 +996,7 @@ def main(argv):
         if not key:
             usage()
 
-        sn = sncli_start(sync)
+        sn = sncli_start(sync, verbose)
         sn.cli_note_trash(key, 1 if args[0] == 'trash' else 0)
 
     elif args[0] == 'pin' or args[0] == 'unpin':
@@ -989,16 +1004,16 @@ def main(argv):
         if not key:
             usage()
 
-        sn = sncli_start(sync)
+        sn = sncli_start(sync, verbose)
         sn.cli_note_pin(key, 1 if args[0] == 'pin' else 0)
 
-    elif args[0] == 'md' or args[0] == 'unmd':
+    elif args[0] == 'markdown' or args[0] == 'unmarkdown':
 
         if not key:
             usage()
 
-        sn = sncli_start(sync)
-        sn.cli_note_markdown(key, 1 if args[0] == 'md' else 0)
+        sn = sncli_start(sync, verbose)
+        sn.cli_note_markdown(key, 1 if args[0] == 'markdown' else 0)
 
     else:
         usage()
