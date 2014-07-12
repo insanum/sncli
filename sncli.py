@@ -335,26 +335,38 @@ class sncli:
                             offset_inset=0,
                             coming_from='below')
 
+        elif key == self.config.get_keybind('view_next_note'):
+            if self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
+            if len(self.view_titles.body.positions()) <= 0:
+                return None
+            last = len(self.view_titles.body.positions())
+            if self.view_titles.focus_position == (last - 1):
+                return None
+            self.view_titles.focus_position += 1
+            lb.update_note(
+                self.view_titles.note_list[self.view_titles.focus_position].note['key'])
+            self.gui_switch_frame_body(self.view_note)
+
+        elif key == self.config.get_keybind('view_prev_note'):
+            if self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
+            if len(self.view_titles.body.positions()) <= 0:
+                return None
+            if self.view_titles.focus_position == 0:
+                return None
+            self.view_titles.focus_position -= 1
+            lb.update_note(
+                self.view_titles.note_list[self.view_titles.focus_position].note['key'])
+            self.gui_switch_frame_body(self.view_note)
+
         elif key == self.config.get_keybind('status'):
             if self.status_bar == 'yes':
                 self.status_bar = 'no'
             else:
                 self.status_bar = self.config.get_config('status_bar')
-
-        elif key == self.config.get_keybind('note_trash'):
-            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
-               self.gui_body_get().__class__ != view_note.ViewNote:
-                return key
-
-            if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                if len(lb.body.positions()) <= 0:
-                    return None
-                note = lb.note_list[lb.focus_position].note
-            else: # self.gui_body_get().__class__ == view_note.ViewNote:
-                note = lb.note
-
-            self.ndb.set_note_deleted(note['key'],
-                    1 if not note['deleted'] else 0)
 
         elif key == self.config.get_keybind('create_note'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
@@ -492,50 +504,20 @@ class sncli:
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
 
-        elif key == self.config.get_keybind('view_next_note'):
-            if self.gui_body_get().__class__ != view_note.ViewNote:
+        elif key == self.config.get_keybind('note_trash'):
+            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
+               self.gui_body_get().__class__ != view_note.ViewNote:
                 return key
 
-            if len(self.view_titles.body.positions()) <= 0:
-                return None
-            last = len(self.view_titles.body.positions())
-            if self.view_titles.focus_position == (last - 1):
-                return None
-            self.view_titles.focus_position += 1
-            lb.update_note(
-                self.view_titles.note_list[self.view_titles.focus_position].note['key'])
-            self.gui_switch_frame_body(self.view_note)
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                if len(lb.body.positions()) <= 0:
+                    return None
+                note = lb.note_list[lb.focus_position].note
+            else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                note = lb.note
 
-        elif key == self.config.get_keybind('view_prev_note'):
-            if self.gui_body_get().__class__ != view_note.ViewNote:
-                return key
-
-            if len(self.view_titles.body.positions()) <= 0:
-                return None
-            if self.view_titles.focus_position == 0:
-                return None
-            self.view_titles.focus_position -= 1
-            lb.update_note(
-                self.view_titles.note_list[self.view_titles.focus_position].note['key'])
-            self.gui_switch_frame_body(self.view_note)
-
-        elif key == self.config.get_keybind('search_gstyle') or \
-             key == self.config.get_keybind('search_regex'):
-            if self.gui_body_get().__class__ != view_titles.ViewTitles:
-                return key
-
-            self.gui_footer_input_set(
-                    urwid.AttrMap(
-                        user_input.UserInput(self.config,
-                                             key,
-                                             '',
-                                             self.gui_search_input,
-                                             [ 'gstyle' \
-                                                   if key == self.config.get_keybind('search_gstyle')
-                                                   else 'regex' ]),
-                                  'search_bar'))
-            self.gui_footer_focus_input()
-            self.master_frame.keypress = self.gui_footer_input_get().keypress
+            self.ndb.set_note_deleted(note['key'],
+                    1 if not note['deleted'] else 0)
 
         elif key == self.config.get_keybind('note_pin'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
@@ -601,6 +583,24 @@ class sncli:
                                          self.gui_tags_input,
                                          None),
                               'search_bar'))
+            self.gui_footer_focus_input()
+            self.master_frame.keypress = self.gui_footer_input_get().keypress
+
+        elif key == self.config.get_keybind('search_gstyle') or \
+             key == self.config.get_keybind('search_regex'):
+            if self.gui_body_get().__class__ != view_titles.ViewTitles:
+                return key
+
+            self.gui_footer_input_set(
+                    urwid.AttrMap(
+                        user_input.UserInput(self.config,
+                                             key,
+                                             '',
+                                             self.gui_search_input,
+                                             [ 'gstyle' \
+                                                   if key == self.config.get_keybind('search_gstyle')
+                                                   else 'regex' ]),
+                                  'search_bar'))
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
 
