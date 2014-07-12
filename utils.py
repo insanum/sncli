@@ -14,6 +14,13 @@ def generate_random_key():
     """
     return '%030x' % (random.randrange(256**15),)
 
+def get_note_tags(note):
+    tags = '%s' % ','.join(note['tags'])
+    if note['deleted']:
+        if tags: tags += u',trash'
+        else:    tags = u'trash'
+    return tags
+
 def get_note_flags(note):
     flags = ''
     flags += u'T' if note['deleted'] else u' '

@@ -45,14 +45,14 @@ class ViewNote(urwid.ListBox):
             total = len(self.body.positions())
 
         t = time.localtime(float(self.note['modifydate']))
-        mod_time = time.strftime('%a, %d %b %Y %H:%M:%S', t)
-        tags = '%s' % ','.join(self.note['tags'])
-        if self.note['deleted']:
-            if tags: tags += u',trash'
-            else:    tags = u'trash'
+        mod_time = time.strftime(u'Date: %a, %d %b %Y %H:%M:%S', t)
+        title = utils.get_note_title(self.note)
+        flags = utils.get_note_flags(self.note)
+        tags  = utils.get_note_tags(self.note)
+
         status_title = \
             urwid.AttrMap(urwid.Text(u'Title: ' +
-                                     utils.get_note_title(self.note),
+                                     title,
                                      wrap='clip'),
                           'status_bar')
         status_key_index = \
@@ -62,11 +62,9 @@ class ViewNote(urwid.ListBox):
                                               str(total)),
                                    'status_bar'))
         status_date = \
-            urwid.AttrMap(urwid.Text(u'Date: ' +
-                                     mod_time,
+            urwid.AttrMap(urwid.Text(mod_time,
                                      wrap='clip'),
                           'status_bar')
-        flags = utils.get_note_flags(self.note)
         status_tags_flags = \
             ('pack', urwid.AttrMap(urwid.Text(u'[' + tags + u'] [' + flags + u']'),
                                    'status_bar'))

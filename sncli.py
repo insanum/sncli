@@ -777,28 +777,38 @@ class sncli:
                   u' [' + flags + u'] ' + \
                   utils.get_note_title(n.note)
 
-    def cli_dump_notes(self, search_string, key=None):
+    def cli_dump_notes(self, search_string):
 
-        sep = u'+' + u'-'*39 + u'+'
-        def dump_note(note):
-            print sep
-            print u'| Key: ' + note['key'] + u' |'
-            print sep
-            print note['content']
+        note_list, match_regex, all_notes_cnt = \
+            self.ndb.filter_notes(search_string)
+        for n in note_list:
+            self.cli_note_dump(n.key)
 
-        if not key:
-            note_list, match_regex, all_notes_cnt = \
-                self.ndb.filter_notes(search_string)
-            for n in note_list:
-                dump_note(n.note)
-        else:
-            note = self.ndb.get_note(key)
-            if note:
-                dump_note(note)
-            else:
-                self.log(u'ERROR: Key does not exist')
+    def cli_note_dump(self, key):
 
-    def cli_create_note(self, from_stdin):
+        note = self.ndb.get_note(key)
+        if not note:
+            self.log(u'ERROR: Key does not exist')
+            return
+
+        w = 50
+        sep = u'+' + u'-'*(w+2) + u'+'
+        t = time.localtime(float(note['modifydate']))
+        mod_time = time.strftime('%a, %d %b %Y %H:%M:%S', t)
+        title = utils.get_note_title(note)
+        flags = utils.get_note_flags(note)
+        tags  = utils.get_note_tags(note)
+
+        print sep
+        print (u'| {:<' + str(w) + u'} |').format((u'Title: ' + title)[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u'  Key: ' + note['key'])[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u' Date: ' + mod_time)[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u' Tags: ' + tags)[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u'Flags: [' + flags + u']')[:w])
+        print sep
+        print note['content']
+
+    def cli_note_create(self, from_stdin):
 
         def save_new_note(content):
             if content and content != u'\n':
@@ -829,15 +839,15 @@ class sncli:
 
         temp.tempfile_delete(tf)
 
-    def cli_edit_note(self, key):
-
-        editor = self.get_editor()
-        if not editor: return None
+    def cli_note_edit(self, key):
 
         note = self.ndb.get_note(key)
         if not note:
             self.log(u'ERROR: Key does not exist')
             return
+
+        editor = self.get_editor()
+        if not editor: return None
 
         md5_old = md5.new(note['content']).digest()
         tf = temp.tempfile_create(note)
@@ -968,7 +978,7 @@ def main(argv):
 
         sn = sncli_start(sync, verbose)
         if key:
-            sn.cli_dump_notes(None, key=key)
+            sn.cli_note_dump(key)
         else:
             sn.cli_dump_notes(' '.join(args[1:]))
 
@@ -976,10 +986,10 @@ def main(argv):
 
         if len(args) == 1:
             sn = sncli_start(sync, verbose)
-            sn.cli_create_note(False)
+            sn.cli_note_create(False)
         elif len(args) == 2 and args[1] == '-':
             sn = sncli_start(sync, verbose)
-            sn.cli_create_note(True)
+            sn.cli_note_create(True)
         else:
             usage()
 
@@ -989,7 +999,7 @@ def main(argv):
             usage()
 
         sn = sncli_start(sync, verbose)
-        sn.cli_edit_note(key)
+        sn.cli_note_edit(key)
 
     elif args[0] == 'trash' or args[0] == 'untrash':
 

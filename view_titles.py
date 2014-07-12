@@ -43,18 +43,11 @@ class ViewTitles(urwid.ListBox):
         %N -- note title
         """
 
-        title = utils.get_note_title(note)
-        flags = utils.get_note_flags(note)
-
-        # get the note tags
-        tags = '%s' % ','.join(note['tags'])
-        if note['deleted']:
-            if tags: tags += u',trash'
-            else:    tags = u'trash'
-
-        # format the note modification date
         t = time.localtime(float(note['modifydate']))
         mod_time = time.strftime(self.config.get_config('format_strftime'), t)
+        title = utils.get_note_title(note)
+        flags = utils.get_note_flags(note)
+        tags  = utils.get_note_tags(note)
 
         # get the age of the note
         dt = datetime.datetime.fromtimestamp(time.mktime(t))
