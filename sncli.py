@@ -808,10 +808,12 @@ class sncli:
         print sep
         print note['content']
 
-    def cli_note_create(self, from_stdin):
+    def cli_note_create(self, from_stdin, title):
 
-        def save_new_note(content):
-            if content and content != u'\n':
+        def save_new_note(title, content):
+            if title or (content and content != u'\n'):
+                if title:
+                    content = title + '\n\n' + content if content else u''
                 self.log(u'New note created')
                 self.ndb.create_note(content)
                 self.sync_notes()
@@ -819,7 +821,7 @@ class sncli:
         if from_stdin:
 
             content = ''.join(sys.stdin)
-            save_new_note(content)
+            save_new_note(title, content)
             return
 
         editor = self.get_editor()
@@ -835,7 +837,7 @@ class sncli:
             return
 
         content = ''.join(temp.tempfile_content(tf))
-        save_new_note(content)
+        save_new_note(title, content)
 
         temp.tempfile_delete(tf)
 
@@ -913,22 +915,23 @@ Usage:
  sncli [OPTIONS] [COMMAND] [COMMAND_ARGS]
 
  OPTIONS:
-  -h, --help                 - usage help
-  -v, --verbose              - verbose output (cli mode)
-  -n, --nosync               - don't perform a server sync
-  -k <key>, --key=<key>      - note key
+  -h, --help                  - usage help
+  -v, --verbose               - verbose output (cli mode)
+  -n, --nosync                - don't perform a server sync
+  -k <key>, --key=<key>       - note key
+  -t <title>, --title=<title> - title of note for create (cli mode)
 
  COMMANDS:
-  <none>                     - console gui mode when no command specified
-  sync                       - perform a full sync with the server
-  list [search_string]       - list notes (refined with search string)
-  dump [search_string]       - dump notes (refined with search string)
-  create [-]                 - create a note ('-' content from stdin)
-  dump                       - dump a note (specified by <key>)
-  edit                       - edit a note (specified by <key>)
-  < trash | untrash >        - trash/untrash a note (specified by <key>)
-  < pin | unpin >            - pin/unpin a note (specified by <key>)
-  < markdown | unmarkdown >  - markdown/unmarkdown a note (specified by <key>)
+  <none>                      - console gui mode when no command specified
+  sync                        - perform a full sync with the server
+  list [search_string]        - list notes (refined with search string)
+  dump [search_string]        - dump notes (refined with search string)
+  create [-]                  - create a note ('-' content from stdin)
+  dump                        - dump a note (specified by <key>)
+  edit                        - edit a note (specified by <key>)
+  < trash | untrash >         - trash/untrash a note (specified by <key>)
+  < pin | unpin >             - pin/unpin a note (specified by <key>)
+  < markdown | unmarkdown >   - markdown/unmarkdown a note (specified by <key>)
 '''
     sys.exit(0)
 
@@ -936,11 +939,12 @@ def main(argv):
     sync    = True
     verbose = False
     key     = None
+    title   = None
 
     try:
         opts, args = getopt.getopt(argv,
-            'hvnk:',
-            [ 'help', 'verbose' 'nosync', 'key=' ])
+            'hvnk:t:',
+            [ 'help', 'verbose' 'nosync', 'key=', 'title=' ])
     except:
         usage()
 
@@ -953,6 +957,8 @@ def main(argv):
             sync = False
         elif opt in [ '-k', '--key']:
             key = arg
+        elif opt in [ '-t', '--title']:
+            title = arg
         else:
             print u'ERROR: Unhandled option'
             usage()
@@ -986,10 +992,10 @@ def main(argv):
 
         if len(args) == 1:
             sn = sncli_start(sync, verbose)
-            sn.cli_note_create(False)
+            sn.cli_note_create(False, title)
         elif len(args) == 2 and args[1] == '-':
             sn = sncli_start(sync, verbose)
-            sn.cli_note_create(True)
+            sn.cli_note_create(True, title)
         else:
             usage()
 
