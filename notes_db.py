@@ -470,7 +470,7 @@ class NotesDB():
                     if local_key != k:
                         # if local_key was a different key it should be deleted
                         local_deletes[local_key] = True
-                        local_updates[local_key] = False
+                        del local_updates[local_key]
 
                     self.log('Synced note to server (key={0})'.format(local_key))
                 else:
@@ -592,14 +592,17 @@ class NotesDB():
         self.sync_lock.release()
         return all_saved
 
+    def sync_now(self, do_server_sync=True):
+        self.sync_lock.acquire()
+        self.sync_notes(server_sync=do_server_sync,
+                        full_sync=True if not self.last_sync else False)
+        self.sync_lock.release()
+
     # sync worker thread...
-    def sync_worker(self, do_sync):
+    def sync_worker(self, do_server_sync):
         time.sleep(1) # give some time to wait for GUI initialization
         self.log('Sync worker: started')
         while True:
-            self.sync_lock.acquire()
-            self.sync_notes(server_sync=do_sync,
-                            full_sync=True if not self.last_sync else False)
-            self.sync_lock.release()
+            self.sync_now(do_server_sync)
             time.sleep(5)
 

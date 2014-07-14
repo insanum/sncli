@@ -12,11 +12,11 @@ from logging.handlers import RotatingFileHandler
 
 class sncli:
 
-    def __init__(self, do_sync, verbose=False):
-        self.config  = Config()
-        self.do_sync = do_sync
-        self.verbose = verbose
-        self.do_gui  = False
+    def __init__(self, do_server_sync, verbose=False):
+        self.config         = Config()
+        self.do_server_sync = do_server_sync
+        self.verbose        = verbose
+        self.do_gui         = False
 
         if not os.path.exists(self.config.get_config('db_path')):
             os.mkdir(self.config.get_config('db_path'))
@@ -42,7 +42,7 @@ class sncli:
             sys.exit(1)
 
     def sync_notes(self):
-        self.ndb.sync_notes(self.do_sync)
+        self.ndb.sync_now(self.do_server_sync)
 
     def get_editor(self):
         editor = self.config.get_config('editor')
@@ -667,7 +667,7 @@ class sncli:
         self.log_lock = threading.Lock()
 
         self.thread_sync = threading.Thread(target=self.ndb.sync_worker,
-                                            args=[self.do_sync])
+                                            args=[self.do_server_sync])
         self.thread_sync.setDaemon(True)
 
         self.view_titles = \
