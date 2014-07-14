@@ -132,6 +132,14 @@ class sncli:
         if self.log_alarms == 0:
             self.gui_footer_log_clear()
             self.logs = []
+        else:
+            self.logs.pop(0)
+
+            log_pile = []
+            for l in self.logs:
+                log_pile.append(urwid.AttrMap(urwid.Text(l), 'log'))
+
+            self.gui_footer_log_set(log_pile)
 
         self.log_lock.release()
 
