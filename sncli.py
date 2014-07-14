@@ -62,6 +62,29 @@ class sncli:
             return None
         return pager
 
+    def exec_cmd_on_note(self, note, cmd=None):
+
+        if not cmd:
+            cmd = self.get_editor()
+        if not cmd:
+            return None
+
+        tf = temp.tempfile_create(note if note else None)
+
+        try:
+            subprocess.check_call(cmd + u' ' + temp.tempfile_name(tf), shell=True)
+        except Exception, e:
+            self.log(u'Command error: ' + str(e))
+            temp.tempfile_delete(tf)
+            return None
+
+        content = ''.join(temp.tempfile_content(tf))
+        if not content or content == u'\n':
+            content = None
+
+        temp.tempfile_delete(tf)
+        return content
+
     def gui_header_clear(self):
         self.master_frame.contents['header'] = ( None, None )
         self.sncli_loop.draw_screen()
@@ -382,29 +405,16 @@ class sncli:
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
                 return key
 
-            editor = self.get_editor()
-            if not editor: return None
+            self.gui_clear()
+            content = self.exec_cmd_on_note(None)
+            self.gui_reset()
 
-            tf = temp.tempfile_create(None)
-
-            try:
-                self.gui_clear()
-                subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
-            except Exception, e:
-                self.log(u'Editor error: ' + str(e))
-                temp.tempfile_delete(tf)
-                return None
-            finally:
-                self.gui_reset()
-
-            content = ''.join(temp.tempfile_content(tf))
-            if content:
+            if content and content != u'\n':
                 self.log(u'New note created')
                 self.ndb.create_note(content)
 
-            temp.tempfile_delete(tf)
-
-        elif key == self.config.get_keybind('edit_note'):
+        elif key == self.config.get_keybind('edit_note') or \
+             key == self.config.get_keybind('view_note_ext'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
                self.gui_body_get().__class__ != view_note.ViewNote:
                 return key
@@ -416,33 +426,25 @@ class sncli:
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 note = lb.note
 
-            editor = self.get_editor()
-            if not editor: return None
+            self.gui_clear()
+            if key == self.config.get_keybind('edit_note'):
+                content = self.exec_cmd_on_note(note)
+            else:
+                content = self.exec_cmd_on_note(note, cmd=self.get_pager())
+            self.gui_reset()
 
             md5_old = md5.new(note['content']).digest()
-            tf = temp.tempfile_create(note)
+            md5_new = md5.new(content).digest()
 
-            try:
-                self.gui_clear()
-                subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
-            except Exception, e:
-                self.log(u'Editor error: ' + str(e))
-                temp.tempfile_delete(tf)
-                return None
-            finally:
-                self.gui_reset()
-
-            new_content = ''.join(temp.tempfile_content(tf))
-            md5_new = md5.new(new_content).digest()
             if md5_old != md5_new:
                 self.log(u'Note updated')
-                self.ndb.set_note_content(note['key'], new_content)
+                self.ndb.set_note_content(note['key'], content)
                 if self.gui_body_get().__class__ == view_titles.ViewTitles:
                     lb.update_note_title(None)
                 else: # self.gui_body_get().__class__ == view_note.ViewNote:
                     lb.update_note(note['key'])
-
-            temp.tempfile_delete(tf)
+            else:
+                self.log(u'Note unchanged')
 
         elif key == self.config.get_keybind('view_note'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
@@ -453,43 +455,6 @@ class sncli:
             note = lb.note_list[lb.focus_position].note
             self.view_note.update_note(note['key'])
             self.gui_switch_frame_body(self.view_note)
-
-        elif key == self.config.get_keybind('view_note_ext'):
-            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
-               self.gui_body_get().__class__ != view_note.ViewNote:
-                return key
-
-            if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                if len(lb.body.positions()) <= 0:
-                    return None
-                note = lb.note_list[lb.focus_position].note
-            else: # self.gui_body_get().__class__ == view_note.ViewNote:
-                note = lb.note
-
-            pager = self.get_pager()
-            if not pager: return None
-
-            md5_old = md5.new(note['content']).digest()
-            tf = temp.tempfile_create(note)
-
-            try:
-                self.gui_clear()
-                subprocess.check_call(pager + u' ' + temp.tempfile_name(tf), shell=True)
-            except Exception, e:
-                self.log(u'Pager error: ' + str(e))
-                temp.tempfile_delete(tf)
-                return None
-            finally:
-                self.gui_reset()
-
-            new_content = ''.join(temp.tempfile_content(tf))
-            md5_new = md5.new(new_content).digest()
-            if md5_old != md5_new:
-                self.log(u'Note updated')
-                self.ndb.set_note_content(note['key'], new_content)
-                lb.update_note_title(None)
-
-            temp.tempfile_delete(tf)
 
         elif key == self.config.get_keybind('pipe_note'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
@@ -824,36 +789,18 @@ class sncli:
 
     def cli_note_create(self, from_stdin, title):
 
-        def save_new_note(title, content):
-            if title or (content and content != u'\n'):
-                if title:
-                    content = title + '\n\n' + content if content else u''
-                self.log(u'New note created')
-                self.ndb.create_note(content)
-                self.sync_notes()
-
         if from_stdin:
-
             content = ''.join(sys.stdin)
-            save_new_note(title, content)
-            return
+        else:
+            content = self.exec_cmd_on_note(None)
 
-        editor = self.get_editor()
-        if not editor: return
+        if title:
+            content = title + '\n\n' + content if content else u''
 
-        tf = temp.tempfile_create(None)
-
-        try:
-            subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
-        except Exception, e:
-            self.log(u'Editor error: ' + str(e))
-            temp.tempfile_delete(tf)
-            return
-
-        content = ''.join(temp.tempfile_content(tf))
-        save_new_note(title, content)
-
-        temp.tempfile_delete(tf)
+        if content and content != u'\n':
+            self.log(u'New note created')
+            self.ndb.create_note(content)
+            self.sync_notes()
 
     def cli_note_edit(self, key):
 
@@ -862,29 +809,19 @@ class sncli:
             self.log(u'ERROR: Key does not exist')
             return
 
-        editor = self.get_editor()
-        if not editor: return None
-
-        md5_old = md5.new(note['content']).digest()
-        tf = temp.tempfile_create(note)
-
-        try:
-            subprocess.check_call(editor + u' ' + temp.tempfile_name(tf), shell=True)
-        except Exception, e:
-            self.log(u'Editor error: ' + str(e))
-            temp.tempfile_delete(tf)
+        content = self.exec_cmd_on_note(note)
+        if not content:
             return
 
-        new_content = ''.join(temp.tempfile_content(tf))
-        md5_new = md5.new(new_content).digest()
+        md5_old = md5.new(note['content']).digest()
+        md5_new = md5.new(content).digest()
+
         if md5_old != md5_new:
             self.log(u'Note updated')
-            self.ndb.set_note_content(note['key'], new_content)
+            self.ndb.set_note_content(note['key'], content)
             self.sync_notes()
         else:
             self.log(u'Note unchanged')
-
-        temp.tempfile_delete(tf)
 
     def cli_note_trash(self, key, trash):
 
