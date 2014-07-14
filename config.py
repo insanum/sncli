@@ -20,6 +20,7 @@ class Config:
          'cfg_editor'            : 'vim',
          'cfg_pager'             : 'less -c',
          'cfg_max_logs'          : '5',
+         'cfg_log_timeout'       : '5',
          'cfg_log_reversed'      : 'yes',
 
          'kb_help'            : 'h',
@@ -121,6 +122,7 @@ class Config:
         self.configs['editor'] = [ cp.get(cfg_sec, 'cfg_editor'), 'Editor' ]
         self.configs['pager'] = [ cp.get(cfg_sec, 'cfg_pager'), 'External pager' ]
         self.configs['max_logs'] = [ cp.get(cfg_sec, 'cfg_max_logs'), 'Max logs in footer' ]
+        self.configs['log_timeout'] = [ cp.get(cfg_sec, 'cfg_log_timeout'), 'Log timeout' ]
         self.configs['log_reversed'] = [ cp.get(cfg_sec, 'cfg_log_reversed'), 'Log file reversed' ]
 
         self.keybinds = collections.OrderedDict()

@@ -155,7 +155,9 @@ class sncli:
 
         self.gui_footer_log_set(log_pile)
 
-        self.sncli_loop.set_alarm_in(5, self.log_timeout, None)
+        self.sncli_loop.set_alarm_in(
+                int(self.config.get_config('log_timeout')),
+                self.log_timeout, None)
         self.log_alarms += 1
 
         self.log_lock.release()
