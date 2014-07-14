@@ -470,7 +470,8 @@ class NotesDB():
                     if local_key != k:
                         # if local_key was a different key it should be deleted
                         local_deletes[local_key] = True
-                        del local_updates[local_key]
+                        if local_key in local_updates:
+                            del local_updates[local_key]
 
                     self.log('Synced note to server (key={0})'.format(local_key))
                 else:
