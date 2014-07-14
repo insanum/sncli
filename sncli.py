@@ -152,6 +152,7 @@ class sncli:
         self.log_lock.acquire()
 
         self.log_alarms -= 1
+
         if self.log_alarms == 0:
             self.gui_footer_log_clear()
             self.logs = []
@@ -176,8 +177,11 @@ class sncli:
 
         self.log_lock.acquire()
 
+        self.log_alarms += 1
         self.logs.append(msg)
+
         if len(self.logs) > self.config.get_config('max_logs'):
+            self.log_alarms -= 1
             self.logs.pop(0)
 
         log_pile = []
@@ -189,7 +193,6 @@ class sncli:
         self.sncli_loop.set_alarm_in(
                 int(self.config.get_config('log_timeout')),
                 self.log_timeout, None)
-        self.log_alarms += 1
 
         self.log_lock.release()
 
