@@ -25,10 +25,11 @@ def get_note_flags(note):
     flags = ''
     flags += u'T' if note['deleted'] else u' '
     if 'systemtags' in note:
-        flags += u'*' if 'pinned'   in note['systemtags'] else u' '
-        flags += u'm' if 'markdown' in note['systemtags'] else u' '
+        flags += u'*' if 'pinned'    in note['systemtags'] else u' '
+        flags += u'S' if 'published' in note['systemtags'] else u' '
+        flags += u'm' if 'markdown'  in note['systemtags'] else u' '
     else:
-        flags += '  '
+        flags += '   '
     return flags
 
 def get_note_title(note):
@@ -89,27 +90,23 @@ def human_date(timestamp):
         # not today or this year, so we do "Dec 11, 2011"
         return '%s %d, %d' % (dt.strftime('%b'), dt.day, dt.year)
 
-def note_pinned(n):
+def note_published(n):
     asystags = n.get('systemtags', 0)
-    # no systemtag at all
     if not asystags:
         return 0
+    return 1 if 'published' in asystags else 0
 
-    if 'pinned' in asystags:
-        return 1
-    else:
+def note_pinned(n):
+    asystags = n.get('systemtags', 0)
+    if not asystags:
         return 0
+    return 1 if 'pinned' in asystags else 0
 
 def note_markdown(n):
     asystags = n.get('systemtags', 0)
-    # no systemtag at all
     if not asystags:
         return 0
-
-    if 'markdown' in asystags:
-        return 1
-    else:
-        return 0
+    return 1 if 'markdown' in asystags else 0
 
 tags_illegal_chars = re.compile(r'[\s]')
 def sanitise_tags(tags):

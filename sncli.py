@@ -761,7 +761,7 @@ class sncli:
             self.log(u'ERROR: Key does not exist')
             return
 
-        w = 50
+        w = 60
         sep = u'+' + u'-'*(w+2) + u'+'
         t = time.localtime(float(note['modifydate']))
         mod_time = time.strftime('%a, %d %b %Y %H:%M:%S', t)
@@ -770,12 +770,16 @@ class sncli:
         tags  = utils.get_note_tags(note)
 
         print sep
-        print (u'| {:<' + str(w) + u'} |').format((u'  Title: ' + title)[:w])
-        print (u'| {:<' + str(w) + u'} |').format((u'    Key: ' + note['key'])[:w])
-        print (u'| {:<' + str(w) + u'} |').format((u'   Date: ' + mod_time)[:w])
-        print (u'| {:<' + str(w) + u'} |').format((u'   Tags: ' + tags)[:w])
-        print (u'| {:<' + str(w) + u'} |').format((u'Version: v' + str(note['version']))[:w])
-        print (u'| {:<' + str(w) + u'} |').format((u'  Flags: [' + flags + u']')[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u'    Title: ' + title)[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u'      Key: ' + note['key'])[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u'     Date: ' + mod_time)[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u'     Tags: ' + tags)[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u'  Version: v' + str(note['version']))[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u'    Flags: [' + flags + u']')[:w])
+        if utils.note_published(note) and 'publishkey' in note:
+            print (u'| {:<' + str(w) + u'} |').format((u'Published: http://simp.ly/publish/' + note['publishkey'])[:w])
+        else:
+            print (u'| {:<' + str(w) + u'} |').format((u'Published: n/a')[:w])
         print sep
         print note['content']
 

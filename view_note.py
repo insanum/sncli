@@ -78,9 +78,19 @@ class ViewNote(urwid.ListBox):
                                    'status_bar'))
         pile_top = urwid.Columns([ status_title, status_key_index ])
         pile_bottom = urwid.Columns([ status_date, status_tags_flags ])
-        return \
-            urwid.AttrMap(urwid.Pile([ pile_top, pile_bottom ]),
-                          'status_bar')
+
+        if utils.note_published(self.note) and 'publishkey' in self.note:
+            pile_publish = \
+                urwid.AttrMap(urwid.Text(u'Published: http://simp.ly/publish/' +
+                                         self.note['publishkey']),
+                              'status_bar')
+            return \
+                urwid.AttrMap(urwid.Pile([ pile_top, pile_bottom, pile_publish ]),
+                              'status_bar')
+        else:
+            return \
+                urwid.AttrMap(urwid.Pile([ pile_top, pile_bottom ]),
+                              'status_bar')
 
     def keypress(self, size, key):
         if key == self.config.get_keybind('tabstop2'):
