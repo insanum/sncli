@@ -412,6 +412,7 @@ class sncli:
             if content and content != u'\n':
                 self.log(u'New note created')
                 self.ndb.create_note(content)
+                self.gui_update_view()
 
         elif key == self.config.get_keybind('edit_note') or \
              key == self.config.get_keybind('view_note_ext'):
@@ -493,6 +494,9 @@ class sncli:
 
             self.ndb.set_note_deleted(note['key'],
                     1 if not note['deleted'] else 0)
+
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                lb.update_note_title(None)
 
         elif key == self.config.get_keybind('note_pin'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
