@@ -1,0 +1,4 @@
+sncli
+=====
+
+Simplenote CLI
