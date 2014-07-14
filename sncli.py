@@ -767,20 +767,24 @@ class sncli:
 
         self.sncli_loop.run()
 
-    def cli_list_notes(self, search_string):
+    def cli_list_notes(self, regex, search_string):
 
         note_list, match_regex, all_notes_cnt = \
-            self.ndb.filter_notes(search_string)
+            self.ndb.filter_notes(
+                    search_string,
+                    search_mode='regex' if regex else 'gstyle')
         for n in note_list:
             flags = utils.get_note_flags(n.note)
             print n.key + \
                   u' [' + flags + u'] ' + \
                   utils.get_note_title(n.note)
 
-    def cli_dump_notes(self, search_string):
+    def cli_dump_notes(self, regex, search_string):
 
         note_list, match_regex, all_notes_cnt = \
-            self.ndb.filter_notes(search_string)
+            self.ndb.filter_notes(
+                    search_string,
+                    search_mode='regex' if regex else 'gstyle')
         for n in note_list:
             self.cli_note_dump(n.key)
 
@@ -918,6 +922,7 @@ Usage:
   -h, --help                  - usage help
   -v, --verbose               - verbose output (cli mode)
   -n, --nosync                - don't perform a server sync
+  -r, --regex                 - search string is a regular expression
   -k <key>, --key=<key>       - note key
   -t <title>, --title=<title> - title of note for create (cli mode)
 
@@ -936,15 +941,16 @@ Usage:
     sys.exit(0)
 
 def main(argv):
-    sync    = True
     verbose = False
+    sync    = True
+    regex   = False
     key     = None
     title   = None
 
     try:
         opts, args = getopt.getopt(argv,
-            'hvnk:t:',
-            [ 'help', 'verbose' 'nosync', 'key=', 'title=' ])
+            'hvnrk:t:',
+            [ 'help', 'verbose' 'nosync', 'regex', 'key=', 'title=' ])
     except:
         usage()
 
@@ -955,6 +961,8 @@ def main(argv):
             verbose = True
         elif opt in [ '-n', '--nosync']:
             sync = False
+        elif opt in [ '-r', '--regex']:
+            regex = True
         elif opt in [ '-k', '--key']:
             key = arg
         elif opt in [ '-t', '--title']:
@@ -978,7 +986,7 @@ def main(argv):
     elif args[0] == 'list':
 
         sn = sncli_start(sync, verbose)
-        sn.cli_list_notes(' '.join(args[1:]))
+        sn.cli_list_notes(regex, ' '.join(args[1:]))
 
     elif args[0] == 'dump':
 
@@ -986,7 +994,7 @@ def main(argv):
         if key:
             sn.cli_note_dump(key)
         else:
-            sn.cli_dump_notes(' '.join(args[1:]))
+            sn.cli_dump_notes(regex, ' '.join(args[1:]))
 
     elif args[0] == 'create':
 
