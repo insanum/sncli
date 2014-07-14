@@ -754,15 +754,6 @@ class sncli:
                   u' [' + flags + u'] ' + \
                   utils.get_note_title(n.note)
 
-    def cli_dump_notes(self, regex, search_string):
-
-        note_list, match_regex, all_notes_cnt = \
-            self.ndb.filter_notes(
-                    search_string,
-                    search_mode='regex' if regex else 'gstyle')
-        for n in note_list:
-            self.cli_note_dump(n.key)
-
     def cli_note_dump(self, key):
 
         note = self.ndb.get_note(key)
@@ -779,13 +770,23 @@ class sncli:
         tags  = utils.get_note_tags(note)
 
         print sep
-        print (u'| {:<' + str(w) + u'} |').format((u'Title: ' + title)[:w])
-        print (u'| {:<' + str(w) + u'} |').format((u'  Key: ' + note['key'])[:w])
-        print (u'| {:<' + str(w) + u'} |').format((u' Date: ' + mod_time)[:w])
-        print (u'| {:<' + str(w) + u'} |').format((u' Tags: ' + tags)[:w])
-        print (u'| {:<' + str(w) + u'} |').format((u'Flags: [' + flags + u']')[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u'  Title: ' + title)[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u'    Key: ' + note['key'])[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u'   Date: ' + mod_time)[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u'   Tags: ' + tags)[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u'Version: v' + str(note['version']))[:w])
+        print (u'| {:<' + str(w) + u'} |').format((u'  Flags: [' + flags + u']')[:w])
         print sep
         print note['content']
+
+    def cli_dump_notes(self, regex, search_string):
+
+        note_list, match_regex, all_notes_cnt = \
+            self.ndb.filter_notes(
+                    search_string,
+                    search_mode='regex' if regex else 'gstyle')
+        for n in note_list:
+            self.cli_note_dump(n.key)
 
     def cli_note_create(self, from_stdin, title):
 

@@ -56,7 +56,9 @@ class ViewNote(urwid.ListBox):
                                      wrap='clip'),
                           'status_bar')
         status_key_index = \
-            ('pack', urwid.AttrMap(urwid.Text(u' [' + self.note['key'] + u'] ' +
+            ('pack', urwid.AttrMap(urwid.Text(u' [' + 
+                                              self.note['key'] + 
+                                              u'] ' +
                                               str(cur + 1) +
                                               u'/' +
                                               str(total)),
@@ -66,7 +68,13 @@ class ViewNote(urwid.ListBox):
                                      wrap='clip'),
                           'status_bar')
         status_tags_flags = \
-            ('pack', urwid.AttrMap(urwid.Text(u'[' + tags + u'] [' + flags + u']'),
+            ('pack', urwid.AttrMap(urwid.Text(u'[' + 
+                                              tags + 
+                                              u'] [v' + 
+                                              str(self.note['version']) + 
+                                              u'] [' + 
+                                              flags + 
+                                              u']'),
                                    'status_bar'))
         pile_top = urwid.Columns([ status_title, status_key_index ])
         pile_bottom = urwid.Columns([ status_date, status_tags_flags ])
