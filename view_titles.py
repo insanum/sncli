@@ -37,7 +37,7 @@ class ViewTitles(urwid.ListBox):
         specifier (decimal) and a left justification (-) like that
         supported by printf.
 
-        %F -- flags ('T' for trashed, '*' for pinned, 'm' for markdown)
+        %F -- flags
         %T -- tags
         %D -- date
         %N -- note title

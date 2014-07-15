@@ -24,8 +24,15 @@ def get_note_tags(note):
         tags = u''
     return tags
 
+# Returns a fixed length string:
+#   'X' - needs sync
+#   'T' - trashed
+#   '*' - pinned
+#   'S' - published/shared
+#   'm' - markdown
 def get_note_flags(note):
     flags = ''
+    flags += u'X' if float(note['modifydate']) > float(note['syncdate']) else u' '
     flags += u'T' if 'deleted' in note and note['deleted'] else u' '
     if 'systemtags' in note:
         flags += u'*' if 'pinned'    in note['systemtags'] else u' '
