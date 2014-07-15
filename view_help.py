@@ -6,6 +6,9 @@ class ViewHelp(urwid.ListBox):
     def __init__(self, config):
         self.config = config
 
+        self.descr_width  = 26
+        self.config_width = 29
+
         lines = []
         lines.extend(self.create_kb_help_lines(u'Keybinds Common', 'common'))
         lines.extend(self.create_kb_help_lines(u'Keybinds Note List', 'titles'))
@@ -51,8 +54,8 @@ class ViewHelp(urwid.ListBox):
                 urwid.AttrMap(urwid.AttrMap(
                     urwid.Text(
                     [
-                     ('help_descr',  '{:>24}  '.format(self.config.get_keybind_descr(c))),
-                     ('help_config', '{:>25}  '.format(u'kb_' + c)),
+                     ('help_descr',  ('{:>' + str(self.descr_width) + '} ').format(self.config.get_keybind_descr(c))),
+                     ('help_config', ('{:>' + str(self.config_width) + '} ').format(u'kb_' + c)),
                      ('help_value',  u"'" + self.config.get_keybind(c) + u"'")
                     ]
                     ),
@@ -78,8 +81,8 @@ class ViewHelp(urwid.ListBox):
                 urwid.AttrMap(urwid.AttrMap(
                     urwid.Text(
                     [
-                     ('help_descr',  '{:>24}  '.format(self.config.get_config_descr(c))),
-                     ('help_config', '{:>25}  '.format(u'cfg_' + c)),
+                     ('help_descr',  ('{:>' + str(self.descr_width) + '} ').format(self.config.get_config_descr(c))),
+                     ('help_config', ('{:>' + str(self.config_width) + '} ').format(u'cfg_' + c)),
                      ('help_value',  u"'" + self.config.get_config(c) + u"'")
                     ]
                     ),
@@ -107,10 +110,9 @@ class ViewHelp(urwid.ListBox):
                 urwid.AttrMap(urwid.AttrMap(
                     urwid.Text(
                     [
-                     ('help_descr',  '{:>24}  '.format(self.config.get_color_descr(c))),
-                     ('help_config', '{:>25}  '.format(u'clr_' + c)),
-                     (re.search('^(.*)(_fg|_bg)$', c).group(1),
-                          u"'" + self.config.get_color(c) + u"'")
+                     ('help_descr',  ('{:>' + str(self.descr_width) + '} ').format(self.config.get_color_descr(c))),
+                     ('help_config', ('{:>' + str(self.config_width) + '} ').format(u'clr_' + c)),
+                     (re.search('^(.*)(_fg|_bg)$', c).group(1), u"'" + self.config.get_color(c) + u"'")
                     ]
                     ),
                     attr_map = None,
