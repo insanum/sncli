@@ -205,7 +205,7 @@ class sncli:
         self.view_titles.focus_note(cur_key)
 
         if self.gui_body_get().__class__ == view_note.ViewNote:
-            self.view_note.update_note(self.view_note.note)
+            self.view_note.update_note_view()
 
         self.gui_update_status_bar()
 
@@ -236,18 +236,18 @@ class sncli:
             self.view_titles.update_note_list(search_string, args[0])
             self.gui_body_set(self.view_titles)
 
-    def gui_version_input(self, args, next_note_version):
+    def gui_version_input(self, args, version):
         self.gui_footer_input_clear()
         self.gui_body_focus()
         self.master_frame.keypress = self.gui_frame_keypress
-        if next_note_version:
-            # XXX verify version number
-            self.log(u'Fetching version v{0} of note (key={1})'.
-                     format(next_note_version, self.view_note.key))
-            next_note = self.ndb.get_note_version(self.view_note.key, next_note_version)
-            self.view_note.old_note_version = next_note_version
-            self.view_note.old_note         = next_note
-            self.view_note.update_note()
+        if version:
+            try:
+                # verify input is a number
+                int(version)
+            except ValueError, e:
+                self.log(u'ERROR: Invalid version value')
+                return
+            self.view_note.update_note_view(version=version)
             self.gui_update_status_bar()
 
     def gui_tags_input(self, args, tags):
@@ -263,9 +263,9 @@ class sncli:
             self.ndb.set_note_tags(note['key'], tags)
 
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                self.view_titles.update_note_title(None)
+                self.view_titles.update_note_title()
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
-                self.view_note.update_note(note['key'])
+                self.view_note.update_note_view()
 
             self.gui_update_status_bar()
 
@@ -395,7 +395,7 @@ class sncli:
             if self.view_titles.focus_position == (last - 1):
                 return None
             self.view_titles.focus_position += 1
-            lb.update_note(
+            lb.update_note_view(
                 self.view_titles.note_list[self.view_titles.focus_position].note['key'])
             self.gui_switch_frame_body(self.view_note)
 
@@ -408,7 +408,7 @@ class sncli:
             if self.view_titles.focus_position == 0:
                 return None
             self.view_titles.focus_position -= 1
-            lb.update_note(
+            lb.update_note_view(
                 self.view_titles.note_list[self.view_titles.focus_position].note['key'])
             self.gui_switch_frame_body(self.view_note)
 
@@ -417,47 +417,19 @@ class sncli:
             if self.gui_body_get().__class__ != view_note.ViewNote:
                 return key
 
-            diff = -1 if key == self.config.get_keybind('prev_version') \
-                      else 1
-            limit = 0 if key == self.config.get_keybind('prev_version') \
-                      else self.view_note.note['version'] + 1
+            diff = -1 if key == self.config.get_keybind('prev_version') else 1
 
-            if not self.view_note.old_note_version:
-                next_note_version = self.view_note.note['version'] + diff
-            else:
-                next_note_version = self.view_note.old_note_version + diff
+            version = diff + (self.view_note.old_note['version']
+                              if self.view_note.old_note else
+                                 self.view_note.note['version'])
 
-            if next_note_version == limit:
-                self.log(u'Version v{0} is unavailable (key={1})'.
-                         format(next_note_version, self.view_note.key))
-                return None
-
-            self.log(u'Fetching version v{0} of note (key={1})'.
-                     format(next_note_version, self.view_note.key))
-            next_note = self.ndb.get_note_version(self.view_note.key, next_note_version)
-
-            if not next_note:
-                self.log(u'Failed to get version v{0} of note (key={1})'.
-                         format(next_note_version, self.view_note.key))
-                return None
-
-            if next_note_version != self.view_note.note['version']:
-                self.view_note.old_note_version = next_note_version
-                self.view_note.old_note         = next_note
-            else:
-                self.view_note.old_note_version = None
-                self.view_note.old_note         = None
-
-            lb.update_note()
+            lb.update_note_view(version=version)
 
         elif key == self.config.get_keybind('latest_version'):
             if self.gui_body_get().__class__ != view_note.ViewNote:
                 return key
 
-            self.view_note.old_note_version = None
-            self.view_note.old_note         = None
-
-            lb.update_note()
+            lb.update_note_view(version=None)
 
         elif key == self.config.get_keybind('select_version'):
             if self.gui_body_get().__class__ != view_note.ViewNote:
@@ -520,9 +492,9 @@ class sncli:
                 self.log(u'Note updated')
                 self.ndb.set_note_content(note['key'], content)
                 if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                    lb.update_note_title(None)
+                    lb.update_note_title()
                 else: # self.gui_body_get().__class__ == view_note.ViewNote:
-                    lb.update_note(note['key'])
+                    lb.update_note_view()
             else:
                 self.log(u'Note unchanged')
 
@@ -532,8 +504,8 @@ class sncli:
 
             if len(lb.body.positions()) <= 0:
                 return None
-            note = lb.note_list[lb.focus_position].note
-            self.view_note.update_note(note['key'])
+            self.view_note.update_note_view(
+                    lb.note_list[lb.focus_position].note['key'])
             self.gui_switch_frame_body(self.view_note)
 
         elif key == self.config.get_keybind('pipe_note'):
@@ -575,7 +547,7 @@ class sncli:
                     1 if not note['deleted'] else 0)
 
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                lb.update_note_title(None)
+                lb.update_note_title()
 
         elif key == self.config.get_keybind('note_pin'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
@@ -597,7 +569,7 @@ class sncli:
             self.ndb.set_note_pinned(note['key'], pin)
 
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                lb.update_note_title(None)
+                lb.update_note_title()
 
         elif key == self.config.get_keybind('note_markdown'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
@@ -619,7 +591,7 @@ class sncli:
             self.ndb.set_note_markdown(note['key'], md)
 
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                lb.update_note_title(None)
+                lb.update_note_title()
 
         elif key == self.config.get_keybind('note_tags'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \

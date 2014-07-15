@@ -165,7 +165,7 @@ class ViewTitles(urwid.ListBox):
             urwid.AttrMap(urwid.Columns([ status_title, status_index ]),
                           'status_bar')
 
-    def update_note_title(self, key):
+    def update_note_title(self, key=None):
         if not key:
             self.body[self.focus_position] = \
                 self.get_note_title(self.note_list[self.focus_position].note)

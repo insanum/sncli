@@ -9,9 +9,8 @@ class ViewNote(urwid.ListBox):
         self.ndb = args['ndb']
         self.key = args['key']
         self.log = args['log']
-        self.old_note_version = None
-        self.old_note = None
         self.note = self.ndb.get_note(self.key) if self.key else None
+        self.old_note = None
         self.tabstop = int(self.config.get_config('tabstop'))
         super(ViewNote, self).__init__(
                   urwid.SimpleFocusListWalker(self.get_note_content_as_list()))
@@ -35,10 +34,36 @@ class ViewNote(urwid.ListBox):
         lines.append(urwid.AttrMap(urwid.Divider(u'-'), 'default'))
         return lines
 
-    def update_note(self, key=None):
-        if key:
-            self.key = key
-            self.note = self.ndb.get_note(self.key) if self.key else None
+    def update_note_view(self, key=None, version=None):
+        if key: # setting a new note
+            self.key      = key
+            self.note     = self.ndb.get_note(self.key)
+            self.old_note = None
+
+        if self.key and version:
+            # verify version is within range
+            if int(version) <= 0 or int(version) >= self.note['version'] + 1:
+                self.log(u'Version v{0} is unavailable (key={1})'.
+                         format(version, self.key))
+                return
+
+        if (not version and self.old_note) or \
+           (self.key and version and version == self.note['version']):
+            self.log(u'Displaying latest version v{0} of note (key={1})'.
+                     format(self.note['version'], self.key))
+            self.old_note = None
+        elif self.key and version:
+            # get a previous version of the note
+            self.log(u'Fetching version v{0} of note (key={1})'.
+                     format(version, self.key))
+            version_note = self.ndb.get_note_version(self.key, version)
+            if not version_note:
+                self.log(u'Failed to get version v{0} of note (key={1})'.
+                         format(version, self.key))
+                # don't do anything, keep current note/version
+            else:
+                self.old_note = version_note
+
         self.body[:] = \
             urwid.SimpleFocusListWalker(self.get_note_content_as_list())
         self.focus_position = 0
