@@ -1,14 +1,20 @@
 
-import os, tempfile
+import os, json, tempfile
 
-def tempfile_create(note):
-    ext = '.txt'
-    if note and 'markdown' in note['systemtags']:
-        ext = '.mkd'
-    tf = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
-    if note:
-        tf.write(note['content'])
-    tf.flush()
+def tempfile_create(note, raw=False):
+    if raw:
+        # dump the raw json of the note
+        tf = tempfile.NamedTemporaryFile(suffix='.json', delete=False)
+        json.dump(note, tf, indent=2)
+        tf.flush()
+    else:
+        ext = '.txt'
+        if note and 'markdown' in note['systemtags']:
+            ext = '.mkd'
+        tf = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
+        if note:
+            tf.write(note['content'])
+        tf.flush()
     return tf
 
 def tempfile_delete(tf):

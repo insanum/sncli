@@ -39,6 +39,7 @@ class Config:
          'kb_edit_note'       : 'e',
          'kb_view_note'       : 'enter',
          'kb_view_note_ext'   : 'meta enter',
+         'kb_view_note_json'  : 'R',
          'kb_pipe_note'       : '|',
          'kb_view_next_note'  : 'J',
          'kb_view_prev_note'  : 'K',
@@ -151,6 +152,7 @@ class Config:
         self.keybinds['edit_note'] = [ cp.get(cfg_sec, 'kb_edit_note'), [ 'titles', 'notes' ], 'Edit note' ]
         self.keybinds['view_note'] = [ cp.get(cfg_sec, 'kb_view_note'), [ 'titles' ], 'View note' ]
         self.keybinds['view_note_ext'] = [ cp.get(cfg_sec, 'kb_view_note_ext'), [ 'titles', 'notes' ], 'View note with pager' ]
+        self.keybinds['view_note_json'] = [ cp.get(cfg_sec, 'kb_view_note_json'), [ 'titles', 'notes' ], 'View note raw json' ]
         self.keybinds['pipe_note'] = [ cp.get(cfg_sec, 'kb_pipe_note'), [ 'titles', 'notes' ], 'Pipe note contents' ]
         self.keybinds['view_next_note'] = [ cp.get(cfg_sec, 'kb_view_next_note'), [ 'notes' ], 'View next note' ]
         self.keybinds['view_prev_note'] = [ cp.get(cfg_sec, 'kb_view_prev_note'), [ 'notes' ], 'View previous note' ]

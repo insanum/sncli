@@ -62,14 +62,14 @@ class sncli:
             return None
         return pager
 
-    def exec_cmd_on_note(self, note, cmd=None):
+    def exec_cmd_on_note(self, note, cmd=None, raw=False):
 
         if not cmd:
             cmd = self.get_editor()
         if not cmd:
             return None
 
-        tf = temp.tempfile_create(note if note else None)
+        tf = temp.tempfile_create(note if note else None, raw=raw)
 
         try:
             subprocess.check_call(cmd + u' ' + temp.tempfile_name(tf), shell=True)
@@ -78,9 +78,11 @@ class sncli:
             temp.tempfile_delete(tf)
             return None
 
-        content = ''.join(temp.tempfile_content(tf))
-        if not content or content == u'\n':
-            content = None
+        content = None
+        if not raw:
+            content = ''.join(temp.tempfile_content(tf))
+            if not content or content == u'\n':
+                content = None
 
         temp.tempfile_delete(tf)
         return content
@@ -460,13 +462,14 @@ class sncli:
             content = self.exec_cmd_on_note(None)
             self.gui_reset()
 
-            if content and content != u'\n':
+            if content:
                 self.log(u'New note created')
                 self.ndb.create_note(content)
                 self.gui_update_view()
 
         elif key == self.config.get_keybind('edit_note') or \
-             key == self.config.get_keybind('view_note_ext'):
+             key == self.config.get_keybind('view_note_ext') or \
+             key == self.config.get_keybind('view_note_json'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
                self.gui_body_get().__class__ != view_note.ViewNote:
                 return key
@@ -481,9 +484,15 @@ class sncli:
             self.gui_clear()
             if key == self.config.get_keybind('edit_note'):
                 content = self.exec_cmd_on_note(note)
-            else:
+            elif key == self.config.get_keybind('view_note_ext'):
                 content = self.exec_cmd_on_note(note, cmd=self.get_pager())
+            else: # key == self.config.get_keybind('view_note_json')
+                content = self.exec_cmd_on_note(note, cmd=self.get_pager(), raw=True)
+
             self.gui_reset()
+
+            if not content:
+                return None
 
             md5_old = md5.new(note['content']).digest()
             md5_new = md5.new(content).digest()
@@ -863,7 +872,7 @@ class sncli:
         if title:
             content = title + '\n\n' + content if content else u''
 
-        if content and content != u'\n':
+        if content:
             self.log(u'New note created')
             self.ndb.create_note(content)
             self.sync_notes()
