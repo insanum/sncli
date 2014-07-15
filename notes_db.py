@@ -565,6 +565,10 @@ class NotesDB():
 
         return sync_errors
 
+    def get_note_version(self, key, version):
+        gret = self.simplenote.get_note(key, version)
+        return gret[0] if gret[1] == 0 else None
+
     def get_note_status(self, key):
         n = self.notes[key]
         o = utils.KeyValueObject(saved=False, synced=False, modified=False)

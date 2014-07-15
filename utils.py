@@ -15,15 +15,18 @@ def generate_random_key():
     return '%030x' % (random.randrange(256**15),)
 
 def get_note_tags(note):
-    tags = '%s' % ','.join(note['tags'])
-    if note['deleted']:
-        if tags: tags += u',trash'
-        else:    tags = u'trash'
+    if 'tags' in note:
+        tags = '%s' % ','.join(note['tags'])
+        if 'deleted' in note and note['deleted']:
+            if tags: tags += u',trash'
+            else:    tags = u'trash'
+    else:
+        tags = u''
     return tags
 
 def get_note_flags(note):
     flags = ''
-    flags += u'T' if note['deleted'] else u' '
+    flags += u'T' if 'deleted' in note and note['deleted'] else u' '
     if 'systemtags' in note:
         flags += u'*' if 'pinned'    in note['systemtags'] else u' '
         flags += u'S' if 'published' in note['systemtags'] else u' '

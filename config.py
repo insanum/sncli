@@ -46,6 +46,9 @@ class Config:
          'kb_tabstop2'        : '2',
          'kb_tabstop4'        : '4',
          'kb_tabstop8'        : '8',
+         'kb_prev_version'    : '<',
+         'kb_next_version'    : '>',
+         'kb_latest_version'  : 'L',
          'kb_search_gstyle'   : '/',
          'kb_search_regex'    : 'meta /',
          'kb_clear_search'    : 'A',
@@ -56,46 +59,50 @@ class Config:
          'kb_note_markdown'   : 'm',
          'kb_note_tags'       : 't',
 
-         'clr_default_fg'            : 'default',
-         'clr_default_bg'            : 'default',
-         'clr_status_bar_fg'         : 'dark gray',
-         'clr_status_bar_bg'         : 'light gray',
-         'clr_log_fg'                : 'dark gray',
-         'clr_log_bg'                : 'light gray',
-         'clr_search_bar_fg'         : 'white',
-         'clr_search_bar_bg'         : 'light red',
-         'clr_note_focus_fg'         : 'white',
-         'clr_note_focus_bg'         : 'light red',
-         'clr_note_title_day_fg'     : 'light red',
-         'clr_note_title_day_bg'     : 'default',
-         'clr_note_title_week_fg'    : 'light green',
-         'clr_note_title_week_bg'    : 'default',
-         'clr_note_title_month_fg'   : 'brown',
-         'clr_note_title_month_bg'   : 'default',
-         'clr_note_title_year_fg'    : 'light blue',
-         'clr_note_title_year_bg'    : 'default',
-         'clr_note_title_ancient_fg' : 'light blue',
-         'clr_note_title_ancient_bg' : 'default',
-         'clr_note_date_fg'          : 'dark blue',
-         'clr_note_date_bg'          : 'default',
-         'clr_note_flags_fg'         : 'dark magenta',
-         'clr_note_flags_bg'         : 'default',
-         'clr_note_tags_fg'          : 'dark red',
-         'clr_note_tags_bg'          : 'default',
-         'clr_note_content_fg'       : 'default',
-         'clr_note_content_bg'       : 'default',
-         'clr_note_content_focus_fg' : 'white',
-         'clr_note_content_focus_bg' : 'light red',
-         'clr_help_focus_fg'         : 'white',
-         'clr_help_focus_bg'         : 'light red',
-         'clr_help_header_fg'        : 'dark blue',
-         'clr_help_header_bg'        : 'default',
-         'clr_help_config_fg'        : 'dark green',
-         'clr_help_config_bg'        : 'default',
-         'clr_help_value_fg'         : 'dark red',
-         'clr_help_value_bg'         : 'default',
-         'clr_help_descr_fg'         : 'default',
-         'clr_help_descr_bg'         : 'default'
+         'clr_default_fg'                : 'default',
+         'clr_default_bg'                : 'default',
+         'clr_status_bar_fg'             : 'dark gray',
+         'clr_status_bar_bg'             : 'light gray',
+         'clr_log_fg'                    : 'dark gray',
+         'clr_log_bg'                    : 'light gray',
+         'clr_search_bar_fg'             : 'white',
+         'clr_search_bar_bg'             : 'light red',
+         'clr_note_focus_fg'             : 'white',
+         'clr_note_focus_bg'             : 'light red',
+         'clr_note_title_day_fg'         : 'light red',
+         'clr_note_title_day_bg'         : 'default',
+         'clr_note_title_week_fg'        : 'light green',
+         'clr_note_title_week_bg'        : 'default',
+         'clr_note_title_month_fg'       : 'brown',
+         'clr_note_title_month_bg'       : 'default',
+         'clr_note_title_year_fg'        : 'light blue',
+         'clr_note_title_year_bg'        : 'default',
+         'clr_note_title_ancient_fg'     : 'light blue',
+         'clr_note_title_ancient_bg'     : 'default',
+         'clr_note_date_fg'              : 'dark blue',
+         'clr_note_date_bg'              : 'default',
+         'clr_note_flags_fg'             : 'dark magenta',
+         'clr_note_flags_bg'             : 'default',
+         'clr_note_tags_fg'              : 'dark red',
+         'clr_note_tags_bg'              : 'default',
+         'clr_note_content_fg'           : 'default',
+         'clr_note_content_bg'           : 'default',
+         'clr_note_content_focus_fg'     : 'white',
+         'clr_note_content_focus_bg'     : 'light red',
+         'clr_note_content_old_fg'       : 'yellow',
+         'clr_note_content_old_bg'       : 'dark gray',
+         'clr_note_content_old_focus_fg' : 'white',
+         'clr_note_content_old_focus_bg' : 'light red',
+         'clr_help_focus_fg'             : 'white',
+         'clr_help_focus_bg'             : 'light red',
+         'clr_help_header_fg'            : 'dark blue',
+         'clr_help_header_bg'            : 'default',
+         'clr_help_config_fg'            : 'dark green',
+         'clr_help_config_bg'            : 'default',
+         'clr_help_value_fg'             : 'dark red',
+         'clr_help_value_bg'             : 'default',
+         'clr_help_descr_fg'             : 'default',
+         'clr_help_descr_bg'             : 'default'
         }
 
         cp = ConfigParser.SafeConfigParser(defaults)
@@ -134,7 +141,7 @@ class Config:
         self.keybinds['page_down'] = [ cp.get(cfg_sec, 'kb_page_down'), [ 'common' ], 'Page down' ]
         self.keybinds['page_up'] = [ cp.get(cfg_sec, 'kb_page_up'), [ 'common' ], 'Page up' ]
         self.keybinds['half_page_down'] = [ cp.get(cfg_sec, 'kb_half_page_down'), [ 'common' ], 'Half page down' ]
-        self.keybinds['half_page_up']   = [ cp.get(cfg_sec, 'kb_half_page_up'), [ 'common' ], 'Half page up' ]
+        self.keybinds['half_page_up'] = [ cp.get(cfg_sec, 'kb_half_page_up'), [ 'common' ], 'Half page up' ]
         self.keybinds['bottom'] = [ cp.get(cfg_sec, 'kb_bottom'), [ 'common' ], 'Goto bottom' ]
         self.keybinds['top'] = [ cp.get(cfg_sec, 'kb_top'), [ 'common' ], 'Goto top' ]
         self.keybinds['status'] = [ cp.get(cfg_sec, 'kb_status'), [ 'common' ], 'Toggle status bar' ]
@@ -144,11 +151,14 @@ class Config:
         self.keybinds['view_note'] = [ cp.get(cfg_sec, 'kb_view_note'), [ 'titles' ], 'View note' ]
         self.keybinds['view_note_ext'] = [ cp.get(cfg_sec, 'kb_view_note_ext'), [ 'titles', 'notes' ], 'View note with pager' ]
         self.keybinds['pipe_note'] = [ cp.get(cfg_sec, 'kb_pipe_note'), [ 'titles', 'notes' ], 'Pipe note contents' ]
-        self.keybinds['view_next_note'] = [ cp.get(cfg_sec, 'kb_view_next_note'), [ 'notes'  ], 'View next note' ]
-        self.keybinds['view_prev_note'] = [ cp.get(cfg_sec, 'kb_view_prev_note'),  [ 'notes'  ], 'View previous note' ]
-        self.keybinds['tabstop2'] = [ cp.get(cfg_sec, 'kb_tabstop2'), [ 'notes'  ], 'View with tabstop=2' ]
-        self.keybinds['tabstop4'] = [ cp.get(cfg_sec, 'kb_tabstop4'), [ 'notes'  ], 'View with tabstop=4' ]
-        self.keybinds['tabstop8'] = [ cp.get(cfg_sec, 'kb_tabstop8'), [ 'notes'  ], 'View with tabstop=8' ]
+        self.keybinds['view_next_note'] = [ cp.get(cfg_sec, 'kb_view_next_note'), [ 'notes' ], 'View next note' ]
+        self.keybinds['view_prev_note'] = [ cp.get(cfg_sec, 'kb_view_prev_note'), [ 'notes' ], 'View previous note' ]
+        self.keybinds['tabstop2'] = [ cp.get(cfg_sec, 'kb_tabstop2'), [ 'notes' ], 'View with tabstop=2' ]
+        self.keybinds['tabstop4'] = [ cp.get(cfg_sec, 'kb_tabstop4'), [ 'notes' ], 'View with tabstop=4' ]
+        self.keybinds['tabstop8'] = [ cp.get(cfg_sec, 'kb_tabstop8'), [ 'notes' ], 'View with tabstop=8' ]
+        self.keybinds['prev_version'] = [ cp.get(cfg_sec, 'kb_prev_version'), [ 'notes' ], 'View previous version' ]
+        self.keybinds['next_version'] = [ cp.get(cfg_sec, 'kb_next_version'), [ 'notes' ], 'View next version' ]
+        self.keybinds['latest_version'] = [ cp.get(cfg_sec, 'kb_latest_version'), [ 'notes' ], 'View latest version' ]
         self.keybinds['search_gstyle'] = [ cp.get(cfg_sec, 'kb_search_gstyle'), [ 'titles' ], 'Search using gstyle' ]
         self.keybinds['search_regex'] = [ cp.get(cfg_sec, 'kb_search_regex'), [ 'titles' ], 'Search using regex' ]
         self.keybinds['clear_search'] = [ cp.get(cfg_sec, 'kb_clear_search'), [ 'titles' ], 'Show all notes' ]
@@ -190,6 +200,10 @@ class Config:
         self.colors['note_content_bg'] = [ cp.get(cfg_sec, 'clr_note_content_bg'), 'Note content bg' ]
         self.colors['note_content_focus_fg'] = [ cp.get(cfg_sec, 'clr_note_content_focus_fg'), 'Note content focus fg' ]
         self.colors['note_content_focus_bg'] = [ cp.get(cfg_sec, 'clr_note_content_focus_bg'), 'Note content focus bg' ]
+        self.colors['note_content_old_fg'] = [ cp.get(cfg_sec, 'clr_note_content_old_fg'), 'Old note content fg' ]
+        self.colors['note_content_old_bg'] = [ cp.get(cfg_sec, 'clr_note_content_old_bg'), 'Old note content bg' ]
+        self.colors['note_content_old_focus_fg'] = [ cp.get(cfg_sec, 'clr_note_content_old_focus_fg'), 'Old note content focus fg' ]
+        self.colors['note_content_old_focus_bg'] = [ cp.get(cfg_sec, 'clr_note_content_old_focus_bg'), 'Old note content focus bg' ]
         self.colors['help_focus_fg'] = [ cp.get(cfg_sec, 'clr_help_focus_fg'), 'Help focus fg' ]
         self.colors['help_focus_bg'] = [ cp.get(cfg_sec, 'clr_help_focus_bg'), 'Help focus bg' ]
         self.colors['help_header_fg'] = [ cp.get(cfg_sec, 'clr_help_header_fg'), 'Help header fg' ]

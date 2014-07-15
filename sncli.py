@@ -205,7 +205,7 @@ class sncli:
         self.view_titles.focus_note(cur_key)
 
         if self.gui_body_get().__class__ == view_note.ViewNote:
-            self.view_note.update_note(self.view_note.note['key'])
+            self.view_note.update_note(self.view_note.note)
 
         self.gui_update_status_bar()
 
@@ -397,6 +397,53 @@ class sncli:
             lb.update_note(
                 self.view_titles.note_list[self.view_titles.focus_position].note['key'])
             self.gui_switch_frame_body(self.view_note)
+
+        elif key == self.config.get_keybind('latest_version'):
+            if self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
+            self.view_note.old_note_version = None
+            self.view_note.old_note         = None
+
+            lb.update_note()
+
+        elif key == self.config.get_keybind('prev_version') or \
+             key == self.config.get_keybind('next_version'):
+            if self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
+            diff = -1 if key == self.config.get_keybind('prev_version') \
+                      else 1
+            limit = 0 if key == self.config.get_keybind('prev_version') \
+                      else self.view_note.note['version'] + 1
+
+            if not self.view_note.old_note_version:
+                next_note_version = self.view_note.note['version'] + diff
+            else:
+                next_note_version = self.view_note.old_note_version + diff
+
+            if next_note_version == limit:
+                self.log(u'Version v{0} is unavailable (key={1})'.
+                         format(next_note_version, self.view_note.key))
+                return None
+
+            self.log(u'Fetching version v{0} of note (key={1})'.
+                     format(next_note_version, self.view_note.key))
+            next_note = self.ndb.get_note_version(self.view_note.key, next_note_version)
+
+            if not next_note:
+                self.log(u'Failed to get version v{0} of note (key={1})'.
+                         format(next_note_version, self.view_note.key))
+                return None
+
+            if next_note_version != self.view_note.note['version']:
+                self.view_note.old_note_version = next_note_version
+                self.view_note.old_note         = next_note
+            else:
+                self.view_note.old_note_version = None
+                self.view_note.old_note         = None
+
+            lb.update_note()
 
         elif key == self.config.get_keybind('status'):
             if self.status_bar == 'yes':
@@ -717,6 +764,12 @@ class sncli:
             ('note_content_focus',
                 self.config.get_color('note_content_focus_fg'),
                 self.config.get_color('note_content_focus_bg') ),
+            ('note_content_old',
+                self.config.get_color('note_content_old_fg'),
+                self.config.get_color('note_content_old_bg') ),
+            ('note_content_old_focus',
+                self.config.get_color('note_content_old_focus_fg'),
+                self.config.get_color('note_content_old_focus_bg') ),
             ('help_focus',
                 self.config.get_color('help_focus_fg'),
                 self.config.get_color('help_focus_bg') ),
