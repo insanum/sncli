@@ -49,6 +49,7 @@ class Config:
          'kb_prev_version'    : '<',
          'kb_next_version'    : '>',
          'kb_latest_version'  : 'L',
+         'kb_select_version'  : '#',
          'kb_search_gstyle'   : '/',
          'kb_search_regex'    : 'meta /',
          'kb_clear_search'    : 'A',
@@ -65,8 +66,8 @@ class Config:
          'clr_status_bar_bg'             : 'light gray',
          'clr_log_fg'                    : 'dark gray',
          'clr_log_bg'                    : 'light gray',
-         'clr_search_bar_fg'             : 'white',
-         'clr_search_bar_bg'             : 'light red',
+         'clr_user_input_bar_fg'         : 'white',
+         'clr_user_input_bar_bg'         : 'light red',
          'clr_note_focus_fg'             : 'white',
          'clr_note_focus_bg'             : 'light red',
          'clr_note_title_day_fg'         : 'light red',
@@ -159,6 +160,7 @@ class Config:
         self.keybinds['prev_version'] = [ cp.get(cfg_sec, 'kb_prev_version'), [ 'notes' ], 'View previous version' ]
         self.keybinds['next_version'] = [ cp.get(cfg_sec, 'kb_next_version'), [ 'notes' ], 'View next version' ]
         self.keybinds['latest_version'] = [ cp.get(cfg_sec, 'kb_latest_version'), [ 'notes' ], 'View latest version' ]
+        self.keybinds['select_version'] = [ cp.get(cfg_sec, 'kb_select_version'), [ 'notes' ], 'Select version' ]
         self.keybinds['search_gstyle'] = [ cp.get(cfg_sec, 'kb_search_gstyle'), [ 'titles' ], 'Search using gstyle' ]
         self.keybinds['search_regex'] = [ cp.get(cfg_sec, 'kb_search_regex'), [ 'titles' ], 'Search using regex' ]
         self.keybinds['clear_search'] = [ cp.get(cfg_sec, 'kb_clear_search'), [ 'titles' ], 'Show all notes' ]
@@ -176,8 +178,8 @@ class Config:
         self.colors['status_bar_bg'] = [ cp.get(cfg_sec, 'clr_status_bar_bg'), 'Status bar bg' ]
         self.colors['log_fg'] = [ cp.get(cfg_sec, 'clr_log_fg'), 'Log message fg' ]
         self.colors['log_bg'] = [ cp.get(cfg_sec, 'clr_log_bg'), 'Log message bg' ]
-        self.colors['search_bar_fg'] = [ cp.get(cfg_sec, 'clr_search_bar_fg'), 'Search bar fg' ]
-        self.colors['search_bar_bg'] = [ cp.get(cfg_sec, 'clr_search_bar_bg'), 'Search bar bg' ]
+        self.colors['user_input_bar_fg'] = [ cp.get(cfg_sec, 'clr_user_input_bar_fg'), 'User input bar fg' ]
+        self.colors['user_input_bar_bg'] = [ cp.get(cfg_sec, 'clr_user_input_bar_bg'), 'User input bar bg' ]
         self.colors['note_focus_fg'] = [ cp.get(cfg_sec, 'clr_note_focus_fg'), 'Note title focus fg' ]
         self.colors['note_focus_bg'] = [ cp.get(cfg_sec, 'clr_note_focus_bg'), 'Note title focus bg' ]
         self.colors['note_title_day_fg'] = [ cp.get(cfg_sec, 'clr_note_title_day_fg'), 'Day old note title fg' ]

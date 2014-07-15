@@ -236,6 +236,20 @@ class sncli:
             self.view_titles.update_note_list(search_string, args[0])
             self.gui_body_set(self.view_titles)
 
+    def gui_version_input(self, args, next_note_version):
+        self.gui_footer_input_clear()
+        self.gui_body_focus()
+        self.master_frame.keypress = self.gui_frame_keypress
+        if next_note_version:
+            # XXX verify version number
+            self.log(u'Fetching version v{0} of note (key={1})'.
+                     format(next_note_version, self.view_note.key))
+            next_note = self.ndb.get_note_version(self.view_note.key, next_note_version)
+            self.view_note.old_note_version = next_note_version
+            self.view_note.old_note         = next_note
+            self.view_note.update_note()
+            self.gui_update_status_bar()
+
     def gui_tags_input(self, args, tags):
         self.gui_footer_input_clear()
         self.gui_body_focus()
@@ -398,15 +412,6 @@ class sncli:
                 self.view_titles.note_list[self.view_titles.focus_position].note['key'])
             self.gui_switch_frame_body(self.view_note)
 
-        elif key == self.config.get_keybind('latest_version'):
-            if self.gui_body_get().__class__ != view_note.ViewNote:
-                return key
-
-            self.view_note.old_note_version = None
-            self.view_note.old_note         = None
-
-            lb.update_note()
-
         elif key == self.config.get_keybind('prev_version') or \
              key == self.config.get_keybind('next_version'):
             if self.gui_body_get().__class__ != view_note.ViewNote:
@@ -444,6 +449,30 @@ class sncli:
                 self.view_note.old_note         = None
 
             lb.update_note()
+
+        elif key == self.config.get_keybind('latest_version'):
+            if self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
+            self.view_note.old_note_version = None
+            self.view_note.old_note         = None
+
+            lb.update_note()
+
+        elif key == self.config.get_keybind('select_version'):
+            if self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
+            self.gui_footer_input_set(
+                    urwid.AttrMap(
+                        user_input.UserInput(self.config,
+                                             key,
+                                             '',
+                                             self.gui_version_input,
+                                             None),
+                                  'user_input_bar'))
+            self.gui_footer_focus_input()
+            self.master_frame.keypress = self.gui_footer_input_get().keypress
 
         elif key == self.config.get_keybind('status'):
             if self.status_bar == 'yes':
@@ -526,7 +555,7 @@ class sncli:
                                          '',
                                          self.gui_pipe_input,
                                          None),
-                              'search_bar'))
+                              'user_input_bar'))
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
 
@@ -611,7 +640,7 @@ class sncli:
                                          '%s' % ','.join(note['tags']),
                                          self.gui_tags_input,
                                          None),
-                              'search_bar'))
+                              'user_input_bar'))
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
 
@@ -629,7 +658,7 @@ class sncli:
                                              [ 'gstyle' \
                                                    if key == self.config.get_keybind('search_gstyle')
                                                    else 'regex' ]),
-                                  'search_bar'))
+                                  'user_input_bar'))
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
 
@@ -728,9 +757,9 @@ class sncli:
             ('log',
                 self.config.get_color('log_fg'),
                 self.config.get_color('log_bg') ),
-            ('search_bar',
-                self.config.get_color('search_bar_fg'),
-                self.config.get_color('search_bar_bg') ),
+            ('user_input_bar',
+                self.config.get_color('user_input_bar_fg'),
+                self.config.get_color('user_input_bar_bg') ),
             ('note_focus',
                 self.config.get_color('note_focus_fg'),
                 self.config.get_color('note_focus_bg') ),
