@@ -81,23 +81,24 @@ class ViewNote(urwid.ListBox):
             total = len(self.body.positions())
 
         if self.old_note:
-            tnote = self.old_note
-            t = time.localtime(float(tnote['versiondate']))
+            t = time.localtime(float(self.old_note['versiondate']))
+            title    = utils.get_note_title(self.old_note)
+            version  = self.old_note['version']
         else:
-            tnote = self.note
-            t = time.localtime(float(tnote['modifydate']))
+            t = time.localtime(float(self.note['modifydate']))
+            title    = utils.get_note_title(self.note)
+            flags    = utils.get_note_flags(self.note)
+            tags     = utils.get_note_tags(self.note)
+            version  = self.note['version']
 
         mod_time = time.strftime(u'Date: %a, %d %b %Y %H:%M:%S', t)
-        title    = utils.get_note_title(tnote)
-        flags    = utils.get_note_flags(tnote)
-        tags     = utils.get_note_tags(tnote)
-        version  = tnote['version']
 
         status_title = \
             urwid.AttrMap(urwid.Text(u'Title: ' +
                                      title,
                                      wrap='clip'),
                           'status_bar')
+
         status_key_index = \
             ('pack', urwid.AttrMap(urwid.Text(u' [' + 
                                               self.key + 
@@ -106,34 +107,44 @@ class ViewNote(urwid.ListBox):
                                               u'/' +
                                               str(total)),
                                    'status_bar'))
+
         status_date = \
             urwid.AttrMap(urwid.Text(mod_time,
                                      wrap='clip'),
                           'status_bar')
-        status_tags_flags = \
-            ('pack', urwid.AttrMap(urwid.Text(u'[' + 
-                                              tags + 
-                                              u'] [v' + 
-                                              str(version) + 
-                                              u'] [' + 
-                                              flags + 
-                                              u']'),
-                                   'status_bar'))
+
+        if self.old_note:
+            status_tags_flags = \
+                ('pack', urwid.AttrMap(urwid.Text(u'[OLD:v' + 
+                                                  str(version) + 
+                                                  u']'),
+                                       'status_bar'))
+        else:
+            status_tags_flags = \
+                ('pack', urwid.AttrMap(urwid.Text(u'[' + 
+                                                  tags + 
+                                                  u'] [v' + 
+                                                  str(version) + 
+                                                  u'] [' + 
+                                                  flags + 
+                                                  u']'),
+                                       'status_bar'))
+
         pile_top = urwid.Columns([ status_title, status_key_index ])
         pile_bottom = urwid.Columns([ status_date, status_tags_flags ])
 
-        if utils.note_published(tnote) and 'publishkey' in tnote:
-            pile_publish = \
-                urwid.AttrMap(urwid.Text(u'Published: http://simp.ly/publish/' +
-                                         tnote['publishkey']),
-                              'status_bar')
-            return \
-                urwid.AttrMap(urwid.Pile([ pile_top, pile_bottom, pile_publish ]),
-                              'status_bar')
-        else:
-            return \
-                urwid.AttrMap(urwid.Pile([ pile_top, pile_bottom ]),
-                              'status_bar')
+        if self.old_note or \
+           not (utils.note_published(self.note) and 'publishkey' in self.note):
+            return urwid.AttrMap(urwid.Pile([ pile_top, pile_bottom ]),
+                                 'status_bar')
+
+        pile_publish = \
+            urwid.AttrMap(urwid.Text(u'Published: http://simp.ly/publish/' +
+                                     self.note['publishkey']),
+                          'status_bar')
+        return \
+            urwid.AttrMap(urwid.Pile([ pile_top, pile_bottom, pile_publish ]),
+                          'status_bar')
 
     def keypress(self, size, key):
         if key == self.config.get_keybind('tabstop2'):
