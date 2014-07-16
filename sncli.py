@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 
 import os, sys, getopt, re, signal, time, datetime, shlex, md5
 import subprocess, thread, threading, logging
@@ -1126,7 +1125,4 @@ def main(argv):
 
     else:
         usage()
-
-if __name__ == '__main__':
-    main(sys.argv[1:])
 
