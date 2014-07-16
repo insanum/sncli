@@ -19,6 +19,7 @@ class Config:
          'cfg_status_bar'        : 'yes',
          'cfg_editor'            : 'vim',
          'cfg_pager'             : 'less -c',
+         'cfg_diff'              : 'diff -b -U10',
          'cfg_max_logs'          : '5',
          'cfg_log_timeout'       : '5',
          'cfg_log_reversed'      : 'yes',
@@ -49,6 +50,7 @@ class Config:
          'kb_tabstop8'        : '8',
          'kb_prev_version'    : '<',
          'kb_next_version'    : '>',
+         'kb_diff_version'    : 'D',
          'kb_restore_version' : 'R',
          'kb_latest_version'  : 'L',
          'kb_select_version'  : '#',
@@ -129,8 +131,9 @@ class Config:
         self.configs['format_strftime'] = [ cp.get(cfg_sec, 'cfg_format_strftime', raw=True), 'Date strftime format' ]
         self.configs['format_note_title'] = [ cp.get(cfg_sec, 'cfg_format_note_title', raw=True), 'Note title format' ]
         self.configs['status_bar'] = [ cp.get(cfg_sec, 'cfg_status_bar'), 'Show the status bar' ]
-        self.configs['editor'] = [ cp.get(cfg_sec, 'cfg_editor'), 'Editor' ]
-        self.configs['pager'] = [ cp.get(cfg_sec, 'cfg_pager'), 'External pager' ]
+        self.configs['editor'] = [ cp.get(cfg_sec, 'cfg_editor'), 'Editor command' ]
+        self.configs['pager'] = [ cp.get(cfg_sec, 'cfg_pager'), 'External pager command' ]
+        self.configs['diff'] = [ cp.get(cfg_sec, 'cfg_diff'), 'External diff command' ]
         self.configs['max_logs'] = [ cp.get(cfg_sec, 'cfg_max_logs'), 'Max logs in footer' ]
         self.configs['log_timeout'] = [ cp.get(cfg_sec, 'cfg_log_timeout'), 'Log timeout' ]
         self.configs['log_reversed'] = [ cp.get(cfg_sec, 'cfg_log_reversed'), 'Log file reversed' ]
@@ -162,6 +165,7 @@ class Config:
         self.keybinds['tabstop8'] = [ cp.get(cfg_sec, 'kb_tabstop8'), [ 'notes' ], 'View with tabstop=8' ]
         self.keybinds['prev_version'] = [ cp.get(cfg_sec, 'kb_prev_version'), [ 'notes' ], 'View previous version' ]
         self.keybinds['next_version'] = [ cp.get(cfg_sec, 'kb_next_version'), [ 'notes' ], 'View next version' ]
+        self.keybinds['diff_version'] = [ cp.get(cfg_sec, 'kb_diff_version'), [ 'notes' ], 'Diff version of note' ]
         self.keybinds['restore_version'] = [ cp.get(cfg_sec, 'kb_restore_version'), [ 'notes' ], 'Restore version of note' ]
         self.keybinds['latest_version'] = [ cp.get(cfg_sec, 'kb_latest_version'), [ 'notes' ], 'View latest version' ]
         self.keybinds['select_version'] = [ cp.get(cfg_sec, 'kb_select_version'), [ 'notes' ], 'Select version' ]

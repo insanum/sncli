@@ -61,6 +61,13 @@ class sncli:
             return None
         return pager
 
+    def get_diff(self):
+        diff = self.config.get_config('diff')
+        if not diff:
+            self.log(u'No diff command configured!')
+            return None
+        return diff
+
     def exec_cmd_on_note(self, note, cmd=None, raw=False):
 
         if not cmd:
@@ -85,6 +92,41 @@ class sncli:
 
         temp.tempfile_delete(tf)
         return content
+
+    def exec_diff_on_note(self, note, old_note):
+
+        diff = self.get_diff()
+        if not diff:
+            return None
+
+        pager = self.get_pager()
+        if not pager:
+            return None
+
+        ltf = temp.tempfile_create(note)
+        otf = temp.tempfile_create(old_note)
+        out = temp.tempfile_create(None)
+
+        try:
+            subprocess.call(diff + u' ' + 
+                            temp.tempfile_name(ltf) + u' ' +
+                            temp.tempfile_name(otf) + u' > ' +
+                            temp.tempfile_name(out),
+                            shell=True)
+            subprocess.check_call(pager + u' ' +
+                                  temp.tempfile_name(out),
+                                  shell=True)
+        except Exception, e:
+            self.log(u'Command error: ' + str(e))
+            temp.tempfile_delete(ltf)
+            temp.tempfile_delete(otf)
+            temp.tempfile_delete(out)
+            return None
+
+        temp.tempfile_delete(ltf)
+        temp.tempfile_delete(otf)
+        temp.tempfile_delete(out)
+        return None
 
     def gui_header_clear(self):
         self.master_frame.contents['header'] = ( None, None )
@@ -458,6 +500,20 @@ class sncli:
                                  self.view_note.note['version'])
 
             lb.update_note_view(version=version)
+
+        elif key == self.config.get_keybind('diff_version'):
+            if self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
+            if not self.view_note.old_note:
+                self.log(u'Already at latest version (key={0})'.
+                         format(self.view_note.key))
+                return None
+
+            self.gui_clear()
+            self.exec_diff_on_note(self.view_note.note,
+                                   self.view_note.old_note)
+            self.gui_reset()
 
         elif key == self.config.get_keybind('restore_version'):
             if self.gui_body_get().__class__ != view_note.ViewNote:

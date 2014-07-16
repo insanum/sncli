@@ -9,7 +9,9 @@ def tempfile_create(note, raw=False):
         tf.flush()
     else:
         ext = '.txt'
-        if note and 'markdown' in note['systemtags']:
+        if note and \
+           'systemtags' in note and \
+           'markdown' in note['systemtags']:
             ext = '.mkd'
         tf = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
         if note:
