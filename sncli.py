@@ -350,7 +350,11 @@ class sncli:
         self.gui_body_focus()
         self.master_frame.keypress = self.gui_frame_keypress
         if cmd != None:
-            note = self.view_titles.note_list[self.view_titles.focus_position].note
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                note = self.view_titles.note_list[self.view_titles.focus_position].note
+            else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                note = self.view_note.old_note if self.view_note.old_note \
+                                               else self.view_note.note
             args = shlex.split(cmd)
             try:
                 self.gui_clear()
@@ -589,7 +593,10 @@ class sncli:
                     return None
                 note = lb.note_list[lb.focus_position].note
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
-                note = lb.note
+                if key == self.config.get_keybind('edit_note'):
+                    note = lb.note
+                else:
+                    note = lb.old_note if lb.old_note else lb.note
 
             self.gui_clear()
             if key == self.config.get_keybind('edit_note'):
@@ -637,7 +644,7 @@ class sncli:
                     return None
                 note = lb.note_list[lb.focus_position].note
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
-                note = lb.note
+                note = lb.old_note if lb.old_note else lb.note
 
             self.gui_footer_input_set(
                 urwid.AttrMap(
