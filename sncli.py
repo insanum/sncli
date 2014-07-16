@@ -427,6 +427,22 @@ class sncli:
 
             lb.update_note_view(version=version)
 
+        elif key == self.config.get_keybind('restore_version'):
+            if self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
+            if not self.view_note.old_note:
+                self.log(u'Already at latest version (key={0})'.
+                         format(self.view_note.note['key']))
+                return None
+
+            self.log(u'Restoring version v{0} (key={1})'.
+                     format(self.view_note.old_note['version'],
+                            self.view_note.note['key']))
+            self.ndb.set_note_content(self.view_note.note['key'],
+                                      self.view_note.old_note['content'])
+            lb.update_note_view()
+
         elif key == self.config.get_keybind('latest_version'):
             if self.gui_body_get().__class__ != view_note.ViewNote:
                 return key

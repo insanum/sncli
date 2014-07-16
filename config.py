@@ -39,7 +39,7 @@ class Config:
          'kb_edit_note'       : 'e',
          'kb_view_note'       : 'enter',
          'kb_view_note_ext'   : 'meta enter',
-         'kb_view_note_json'  : 'R',
+         'kb_view_note_json'  : 'O',
          'kb_pipe_note'       : '|',
          'kb_view_next_note'  : 'J',
          'kb_view_prev_note'  : 'K',
@@ -49,6 +49,7 @@ class Config:
          'kb_tabstop8'        : '8',
          'kb_prev_version'    : '<',
          'kb_next_version'    : '>',
+         'kb_restore_version' : 'R',
          'kb_latest_version'  : 'L',
          'kb_select_version'  : '#',
          'kb_search_gstyle'   : '/',
@@ -161,6 +162,7 @@ class Config:
         self.keybinds['tabstop8'] = [ cp.get(cfg_sec, 'kb_tabstop8'), [ 'notes' ], 'View with tabstop=8' ]
         self.keybinds['prev_version'] = [ cp.get(cfg_sec, 'kb_prev_version'), [ 'notes' ], 'View previous version' ]
         self.keybinds['next_version'] = [ cp.get(cfg_sec, 'kb_next_version'), [ 'notes' ], 'View next version' ]
+        self.keybinds['restore_version'] = [ cp.get(cfg_sec, 'kb_restore_version'), [ 'notes' ], 'Restore version of note' ]
         self.keybinds['latest_version'] = [ cp.get(cfg_sec, 'kb_latest_version'), [ 'notes' ], 'View latest version' ]
         self.keybinds['select_version'] = [ cp.get(cfg_sec, 'kb_select_version'), [ 'notes' ], 'Select version' ]
         self.keybinds['search_gstyle'] = [ cp.get(cfg_sec, 'kb_search_gstyle'), [ 'titles' ], 'Search using gstyle' ]
