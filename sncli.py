@@ -230,6 +230,39 @@ class sncli:
                     self.last_view.append(self.gui_body_get())
                 self.gui_body_set(new_view)
 
+    def trash_note_callback(self, key, yes):
+        if not yes:
+            return
+
+        # toggle the deleted flag
+        note = self.ndb.get_note(key)
+        self.ndb.set_note_deleted(key, 0 if note['deleted'] else 1)
+
+        if self.gui_body_get().__class__ == view_titles.ViewTitles:
+            self.view_titles.update_note_title()
+
+        self.gui_update_status_bar()
+
+    def restore_note_callback(self, key, yes):
+        if not yes:
+            return
+
+        # restore the contents of the old_note
+        self.log(u'Restoring version v{0} (key={1})'.
+                 format(self.view_note.old_note['version'], key))
+        self.ndb.set_note_content(key, self.view_note.old_note['content'])
+
+        self.view_note.update_note_view()
+        self.gui_update_status_bar()
+
+    def gui_yes_no_input(self, args, yes_no):
+        self.gui_footer_input_clear()
+        self.gui_body_focus()
+        self.master_frame.keypress = self.gui_frame_keypress
+        args[0](args[1],
+                True if yes_no in [ 'YES', 'Yes', 'yes', 'Y', 'y' ] 
+                     else False)
+
     def gui_search_input(self, args, search_string):
         self.gui_footer_input_clear()
         self.gui_body_focus()
@@ -433,15 +466,20 @@ class sncli:
 
             if not self.view_note.old_note:
                 self.log(u'Already at latest version (key={0})'.
-                         format(self.view_note.note['key']))
+                         format(self.view_note.key))
                 return None
 
-            self.log(u'Restoring version v{0} (key={1})'.
-                     format(self.view_note.old_note['version'],
-                            self.view_note.note['key']))
-            self.ndb.set_note_content(self.view_note.note['key'],
-                                      self.view_note.old_note['content'])
-            lb.update_note_view()
+            self.gui_footer_input_set(
+                urwid.AttrMap(
+                    user_input.UserInput(
+                        self.config,
+                        'Restore v{0} (y/n): '.format(self.view_note.old_note['version']),
+                        '',
+                        self.gui_yes_no_input,
+                        [ self.restore_note_callback, self.view_note.key ]),
+                    'user_input_bar'))
+            self.gui_footer_focus_input()
+            self.master_frame.keypress = self.gui_footer_input_get().keypress
 
         elif key == self.config.get_keybind('latest_version'):
             if self.gui_body_get().__class__ != view_note.ViewNote:
@@ -454,13 +492,14 @@ class sncli:
                 return key
 
             self.gui_footer_input_set(
-                    urwid.AttrMap(
-                        user_input.UserInput(self.config,
-                                             key,
-                                             '',
-                                             self.gui_version_input,
-                                             None),
-                                  'user_input_bar'))
+                urwid.AttrMap(
+                    user_input.UserInput(
+                        self.config,
+                        key,
+                        '',
+                        self.gui_version_input,
+                        None),
+                    'user_input_bar'))
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
 
@@ -547,12 +586,13 @@ class sncli:
 
             self.gui_footer_input_set(
                 urwid.AttrMap(
-                    user_input.UserInput(self.config,
-                                         key,
-                                         '',
-                                         self.gui_pipe_input,
-                                         None),
-                              'user_input_bar'))
+                    user_input.UserInput(
+                        self.config,
+                        key,
+                        '',
+                        self.gui_pipe_input,
+                        None),
+                    'user_input_bar'))
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
 
@@ -568,11 +608,17 @@ class sncli:
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 note = lb.note
 
-            self.ndb.set_note_deleted(note['key'],
-                    1 if not note['deleted'] else 0)
-
-            if self.gui_body_get().__class__ == view_titles.ViewTitles:
-                lb.update_note_title()
+            self.gui_footer_input_set(
+                urwid.AttrMap(
+                    user_input.UserInput(
+                        self.config,
+                        '{0} (y/n): '.format('Untrash' if note['deleted'] else 'Trash'),
+                        '',
+                        self.gui_yes_no_input,
+                        [ self.trash_note_callback, note['key'] ]),
+                    'user_input_bar'))
+            self.gui_footer_focus_input()
+            self.master_frame.keypress = self.gui_footer_input_get().keypress
 
         elif key == self.config.get_keybind('note_pin'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
@@ -632,12 +678,13 @@ class sncli:
 
             self.gui_footer_input_set(
                 urwid.AttrMap(
-                    user_input.UserInput(self.config,
-                                         'Tags: ',
-                                         '%s' % ','.join(note['tags']),
-                                         self.gui_tags_input,
-                                         None),
-                              'user_input_bar'))
+                    user_input.UserInput(
+                        self.config,
+                        'Tags: ',
+                        '%s' % ','.join(note['tags']),
+                        self.gui_tags_input,
+                        None),
+                    'user_input_bar'))
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
 
@@ -647,15 +694,15 @@ class sncli:
                 return key
 
             self.gui_footer_input_set(
-                    urwid.AttrMap(
-                        user_input.UserInput(self.config,
-                                             key,
-                                             '',
-                                             self.gui_search_input,
-                                             [ 'gstyle' \
-                                                   if key == self.config.get_keybind('search_gstyle')
-                                                   else 'regex' ]),
-                                  'user_input_bar'))
+                urwid.AttrMap(
+                    user_input.UserInput(
+                        self.config,
+                        key,
+                        '',
+                        self.gui_search_input,
+                        [ 'gstyle' if key == self.config.get_keybind('search_gstyle')
+                                   else 'regex' ]),
+                    'user_input_bar'))
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
 
