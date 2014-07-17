@@ -3,9 +3,14 @@ sncli
 
 Simplenote Command Line Interface
 
-sncli is a Python application that gives you access to your Simplenote account via the command line. You can access your notes via a customizable console GUI that implements vi-like keybinds or via a simple command line interface that you can script.
+sncli is a Python application that gives you access to your Simplenote account
+via the command line. You can access your notes via a customizable console GUI
+that implements vi-like keybinds or via a simple command line interface that
+you can script.
 
-Notes can be viewed/created/edited in *both an* **online** *and* **offline** *mode*. All changes are saved to a local cache on disk and automatically sync'ed when sncli is brought online.
+Notes can be viewed/created/edited in *both an* **online** *and* **offline**
+*mode*. All changes are saved to a local cache on disk and automatically
+sync'ed when sncli is brought online.
 
 **Pull requests are welcome!**
 
@@ -83,26 +88,89 @@ Usage:
 
 #### Configuration
 
-The current Simplenote API does not support oauth authentication so your Simplenote account information must live in the configuration file. Please be sure to protect this file.
+The current Simplenote API does not support oauth authentication so your
+Simplenote account information must live in the configuration file. Please be
+sure to protect this file.
 
-sncli pulls in configuration from the `.snclirc` file located in your $HOME directory. At the very least, the following example `.snclirc` will get you going (using your account information):
+sncli pulls in configuration from the `.snclirc` file located in your $HOME
+directory. At the very least, the following example `.snclirc` will get you
+going (using your account information):
 
 ```
 [sncli]
 cfg_sn_username = lebowski@thedude.com
-cfg_sn_username = nihilist
+cfg_sn_password = nihilist
 ```
 
-Start sncli with no arguments which starts the console GUI mode. sncli with start sync'ing all your existing notes and you'll see log messages at the bottom of the console. You can view these log messages at any time by pressing the 'l' key.
+Start sncli with no arguments which starts the console GUI mode. sncli with
+start sync'ing all your existing notes and you'll see log messages at the
+bottom of the console. You can view these log messages at any time by pressing
+the `l` key.
 
-View the help by pressing 'h'. Here you'll see all the keybinds and configuration items. The middle column shows the config name that can be used in your `.snclirc` to overide the default setting.
+View the help by pressing `h`. Here you'll see all the keybinds and
+configuration items. The middle column shows the config name that can be used
+in your `.snclirc` to override the default setting.
+
+#### Note Title Format
+
+The format of each line in the note list is driven by the
+`cfg_format_note_title` config item. Various formatting tags are supported for
+dynamically building the title string. Each of these formatting tags supports
+a width specifier (decimal) and a left justification (-) like that supported
+by printf:
+
+```
+  %F - flags (fixed 5 char width)
+       X - needs sync
+       T - trashed
+       * - pinned
+       S - published/shared
+       m - markdown
+  %T - tags  
+  %D - date
+  %N - title
+```
+
+The default note title format pushes the note tags to the far right of the
+terminal and left justifies the note title after the date and flags:
+
+```
+cfg_format_note_title = '[%D] %F %-N %T'
+```
+
+Note that the `%D` date format is further defined by the strftime format
+specified in `cfg_format_strftime`.
 
 #### Colors
 
-sncli utilizes the Python [Uwrid](http://urwid.org) module to implement the console user interface.
+sncli utilizes the Python [Uwrid](http://urwid.org) module to implement the
+console user interface.
 
-At this time, sncli does not yet support 256-color terminals and is limited to just 16-colors. Color names that can be specified in the `.snclirc` file are listed [here](http://urwid.org/manual/displayattributes.html#standard-foreground-colors).
+At this time, sncli does not yet support 256-color terminals and is limited to
+just 16-colors. Color names that can be specified in the `.snclirc` file are
+listed [here](http://urwid.org/manual/displayattributes.html#standard-foreground-colors).
+
+#### Tricks
+
+I personally store a lot of my notes in
+[Votl/VimOutliner](https://github.com/insanum/votl) format. Specific to Vim, I
+put a modeline at the end of these notes (note that Emacs also supports
+modelines):
+
+```
+; vim:ft=votl
+```
+
+Now when I edit this note Vim will automatically load the votl plugin. Lots of
+possibilities here...
+
 
 ### Thanks
 
-This application pulls in and uses the [simplenote.py](https://github.com/mrtazz/simplenote.py) module by [mrtazz](https://github.com/mrtazz) and the [notes_db.py](https://github.com/cpbotha/nvpy/blob/master/nvpy/notes_db.py) module from [nvpy](https://github.com/cpbotha/nvpy) by [cpbotha](https://github.com/cpbotha).
+This application pulls in and uses the
+[simplenote.py](https://github.com/mrtazz/simplenote.py) module by
+[mrtazz](https://github.com/mrtazz) and the
+[notes_db.py](https://github.com/cpbotha/nvpy/blob/master/nvpy/notes_db.py)
+module from [nvpy](https://github.com/cpbotha/nvpy) by
+[cpbotha](https://github.com/cpbotha).
+
