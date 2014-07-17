@@ -167,7 +167,7 @@ class NotesDB():
         # group1: multiple words in quotes
         # group2: single words
 
-        # example result for: 't:tag1 t:tag2 word1 "word2 word3" tag:tag3'
+        # example result for: 'tag:tag1 tag:tag2 word1 "word2 word3" tag:tag3'
         # [ ('tag1', '',            ''),
         #   ('tag2', '',            ''),
         #   ('',     '',            'word1'),

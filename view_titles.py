@@ -32,7 +32,7 @@ class ViewTitles(urwid.ListBox):
 
     def format_title(self, note):
         """
-        Various formatting tags are supporting for dynamically building
+        Various formatting tags are supported for dynamically building
         the title string. Each of these formatting tags supports a width
         specifier (decimal) and a left justification (-) like that
         supported by printf.

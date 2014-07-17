@@ -150,7 +150,20 @@ At this time, sncli does not yet support 256-color terminals and is limited to
 just 16-colors. Color names that can be specified in the `.snclirc` file are
 listed [here](http://urwid.org/manual/displayattributes.html#standard-foreground-colors).
 
-#### Tricks
+### Searching
+
+sncli supports two styles of search strings. First is a Google style search
+string and second is a Regular Expression.
+
+A Google style search string is a group of tokens (separated by spaces) with
+an implied *AND* between each token. This style search is case insensitive. For
+example:
+
+```
+/tag:tag1 tag:tag2 word1 "word2 word3" tag:tag3
+```
+
+### Tricks
 
 I personally store a lot of my notes in
 [Votl/VimOutliner](https://github.com/insanum/votl) format. Specific to Vim, I
