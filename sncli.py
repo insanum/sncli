@@ -243,7 +243,11 @@ class sncli:
         if not self.do_gui:
             return
 
-        cur_key = self.view_titles.note_list[self.view_titles.focus_position].note['key']
+        try:
+            cur_key = self.view_titles.note_list[self.view_titles.focus_position].note['key']
+        except IndexError, e:
+            cur_key = None
+            pass
         self.view_titles.update_note_list(self.view_titles.search_string)
         self.view_titles.focus_note(cur_key)
 
