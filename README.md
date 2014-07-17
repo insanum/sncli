@@ -47,6 +47,13 @@ Check your OS distribution for installation packages.
   - pin/unpin a note
   - flag note as markdown or not
 
+### Screenshots
+
+![sncli](https://github.com/insanum/sncli/raw/master/screenshots/screenshot1.png)
+![sncli](https://github.com/insanum/sncli/raw/master/screenshots/screenshot2.png)
+![sncli](https://github.com/insanum/sncli/raw/master/screenshots/screenshot3.png)
+![sncli](https://github.com/insanum/sncli/raw/master/screenshots/screenshot4.png)
+
 ### HowTo
 
 ```
