@@ -1,4 +1,7 @@
 
+# Copyright (c) 2014 Eric Davis
+# Licensed under the MIT License
+
 import time, urwid
 import utils
 

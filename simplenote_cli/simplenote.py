@@ -1,3 +1,7 @@
+
+# Copyright (c) 2014 Eric Davis
+# This file is *slightly* modified from simplynote.py.
+
 # -*- coding: utf-8 -*-
 """
     simplenote.py

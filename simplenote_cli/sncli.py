@@ -1,4 +1,7 @@
 
+# Copyright (c) 2014 Eric Davis
+# Licensed under the MIT License
+
 import os, sys, getopt, re, signal, time, datetime, shlex, md5
 import subprocess, thread, threading, logging
 import copy, json, urwid, datetime

@@ -1,3 +1,7 @@
+
+# Copyright (c) 2014 Eric Davis
+# This file is *heavily* modified from nvpy.
+
 # nvPY: cross-platform note-taking app with simplenote syncing
 # copyright 2012 by Charl P. Botha <cpbotha@vxlabs.com>
 # new BSD license

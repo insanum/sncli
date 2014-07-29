@@ -1,4 +1,7 @@
 
+# Copyright (c) 2014 Eric Davis
+# Licensed under the MIT License
+
 import re, time, datetime, urwid, subprocess
 import utils, view_note
 

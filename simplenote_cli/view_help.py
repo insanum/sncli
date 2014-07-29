@@ -1,4 +1,7 @@
 
+# Copyright (c) 2014 Eric Davis
+# Licensed under the MIT License
+
 import re, urwid
 
 class ViewHelp(urwid.ListBox):
