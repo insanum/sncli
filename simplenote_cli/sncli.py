@@ -290,6 +290,7 @@ class sncli:
             self.view_titles.update_note_title()
 
         self.gui_update_status_bar()
+        self.ndb.sync_worker_go()
 
     def restore_note_callback(self, key, yes):
         if not yes:
@@ -302,6 +303,7 @@ class sncli:
 
         self.view_note.update_note_view()
         self.gui_update_status_bar()
+        self.ndb.sync_worker_go()
 
     def gui_yes_no_input(self, args, yes_no):
         self.gui_footer_input_clear()
@@ -351,6 +353,7 @@ class sncli:
                 self.view_note.update_note_view()
 
             self.gui_update_status_bar()
+            self.ndb.sync_worker_go()
 
     def gui_pipe_input(self, args, cmd):
         self.gui_footer_input_clear()
@@ -386,6 +389,7 @@ class sncli:
 
         elif key == self.config.get_keybind('sync'):
             self.ndb.last_sync = 0
+            self.ndb.sync_worker_go()
 
         elif key == self.config.get_keybind('view_log'):
             self.view_log.update_log()
@@ -587,6 +591,7 @@ class sncli:
                 self.log(u'New note created')
                 self.ndb.create_note(content)
                 self.gui_update_view()
+                self.ndb.sync_worker_go()
 
         elif key == self.config.get_keybind('edit_note') or \
              key == self.config.get_keybind('view_note_ext') or \
@@ -628,6 +633,7 @@ class sncli:
                     lb.update_note_title()
                 else: # self.gui_body_get().__class__ == view_note.ViewNote:
                     lb.update_note_view()
+                self.ndb.sync_worker_go()
             else:
                 self.log(u'Note unchanged')
 
@@ -711,6 +717,8 @@ class sncli:
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 lb.update_note_title()
 
+            self.ndb.sync_worker_go()
+
         elif key == self.config.get_keybind('note_markdown'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
                self.gui_body_get().__class__ != view_note.ViewNote:
@@ -732,6 +740,8 @@ class sncli:
 
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 lb.update_note_title()
+
+            self.ndb.sync_worker_go()
 
         elif key == self.config.get_keybind('note_tags'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \

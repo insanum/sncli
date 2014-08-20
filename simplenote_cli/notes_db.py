@@ -28,6 +28,7 @@ class NotesDB():
 
         self.last_sync = 0 # set to zero to trigger a full sync
         self.sync_lock = threading.Lock()
+        self.go_cond   = threading.Condition()
 
         # create db dir if it does not exist
         if not os.path.exists(self.config.get_config('db_path')):
@@ -611,7 +612,15 @@ class NotesDB():
     def sync_worker(self, do_server_sync):
         time.sleep(1) # give some time to wait for GUI initialization
         self.log('Sync worker: started')
+        self.sync_now(do_server_sync)
         while True:
+            self.go_cond.acquire()
+            self.go_cond.wait(15)
             self.sync_now(do_server_sync)
-            time.sleep(5)
+            self.go_cond.release()
+
+    def sync_worker_go(self):
+        self.go_cond.acquire()
+        self.go_cond.notify()
+        self.go_cond.release()
 
