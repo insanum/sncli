@@ -623,8 +623,8 @@ class sncli:
             if not content:
                 return None
 
-            md5_old = md5.new(note['content']).digest()
-            md5_new = md5.new(content).digest()
+            md5_old = md5.new(note['content'].encode('utf-8')).digest()
+            md5_new = md5.new(content.encode('utf-8')).digest()
 
             if md5_old != md5_new:
                 self.log(u'Note updated')
@@ -1030,8 +1030,8 @@ class sncli:
         if not content:
             return
 
-        md5_old = md5.new(note['content']).digest()
-        md5_new = md5.new(content).digest()
+        md5_old = md5.new(note['content'].encode('utf-8')).hexdigest()
+        md5_new = md5.new(content.encode('utf-8')).hexdigest()
 
         if md5_old != md5_new:
             self.log(u'Note updated')

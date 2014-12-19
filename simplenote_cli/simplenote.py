@@ -62,7 +62,7 @@ class Simplenote(object):
         values = base64.encodestring(auth_params)
         request = Request(AUTH_URL, values)
         try:
-            res = urllib2.urlopen(request).read()
+            res = urllib2.urlopen(request).read().decode('utf-8')
             token = urllib2.quote(res)
         except HTTPError:
             raise SimplenoteLoginFailed('Login to Simplenote API failed!')
@@ -115,9 +115,9 @@ class Simplenote(object):
         except IOError, e:
             #logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
-        note = json.loads(response.read())
+        note = json.loads(response.read().decode('utf-8'))
         # use UTF-8 encoding
-        note["content"] = note["content"].encode('utf-8')
+        # note["content"] = note["content"].encode('utf-8')
         # For early versions of notes, tags not always available
         if note.has_key("tags"):
             note["tags"] = [t.encode('utf-8') for t in note["tags"]]
@@ -169,12 +169,7 @@ class Simplenote(object):
         except IOError, e:
             #logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
-        note = json.loads(response.read())
-        if note.has_key("content"):
-            # use UTF-8 encoding
-            note["content"] = note["content"].encode('utf-8')
-        if note.has_key("tags"):
-            note["tags"] = [t.encode('utf-8') for t in note["tags"]]
+        note = json.loads(response.read().decode('utf-8'))
         #logging.debug('RESPONSE OK: ' + str(note))
         return note, 0
 
@@ -241,7 +236,7 @@ class Simplenote(object):
         try:
             #logging.debug('REQUEST: ' + INDX_URL+params)
             request = Request(INDX_URL+params)
-            response = json.loads(urllib2.urlopen(request).read())
+            response = json.loads(urllib2.urlopen(request).read().decode('utf-8'))
             #logging.debug('RESPONSE OK: ' + str(response))
             notes["data"].extend(response["data"])
         except IOError:
@@ -258,7 +253,7 @@ class Simplenote(object):
             try:
                 #logging.debug('REQUEST: ' + INDX_URL+params)
                 request = Request(INDX_URL+params)
-                response = json.loads(urllib2.urlopen(request).read())
+                response = json.loads(urllib2.urlopen(request).read().decode('utf-8'))
                 #logging.debug('RESPONSE OK: ' + str(response))
                 notes["data"].extend(response["data"])
             except IOError:
