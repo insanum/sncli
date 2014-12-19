@@ -18,7 +18,7 @@ def tempfile_create(note, raw=False):
             ext = '.mkd'
         tf = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
         if note:
-            tf.write(note['content'])
+            tf.write(note['content'].encode('utf-8'))
         tf.flush()
     return tf
 
@@ -35,6 +35,6 @@ def tempfile_content(tf):
     tf.seek(0)
     lines = []
     for line in tf:
-        lines.append(line)
+        lines.append(line.decode('utf-8'))
     return lines
 
