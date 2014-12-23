@@ -12,7 +12,7 @@ setup(
       version=simplenote_cli.__version__,
       author=simplenote_cli.__author__,
       author_email=simplenote_cli.__author_email__,
-      utl=simplenote_cli.__url__,
+      url=simplenote_cli.__url__,
       requires=[ 'urwid' ],
       packages=[ 'simplenote_cli' ],
       scripts=[ 'sncli' ]
