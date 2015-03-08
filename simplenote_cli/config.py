@@ -61,6 +61,10 @@ class Config:
          'kb_select_version'  : '#',
          'kb_search_gstyle'   : '/',
          'kb_search_regex'    : 'meta /',
+         'kb_search_prev_gstyle'   : '?',
+         'kb_search_prev_regex'   : 'meta ?',
+         'kb_search_next'     : 'n',
+         'kb_search_prev'     : 'N',
          'kb_clear_search'    : 'A',
          'kb_sort_date'       : 'd',
          'kb_sort_alpha'      : 'a',
@@ -174,8 +178,12 @@ class Config:
         self.keybinds['restore_version'] = [ cp.get(cfg_sec, 'kb_restore_version'), [ 'notes' ], 'Restore version of note' ]
         self.keybinds['latest_version'] = [ cp.get(cfg_sec, 'kb_latest_version'), [ 'notes' ], 'View latest version' ]
         self.keybinds['select_version'] = [ cp.get(cfg_sec, 'kb_select_version'), [ 'notes' ], 'Select version' ]
-        self.keybinds['search_gstyle'] = [ cp.get(cfg_sec, 'kb_search_gstyle'), [ 'titles' ], 'Search using gstyle' ]
-        self.keybinds['search_regex'] = [ cp.get(cfg_sec, 'kb_search_regex'), [ 'titles' ], 'Search using regex' ]
+        self.keybinds['search_gstyle'] = [ cp.get(cfg_sec, 'kb_search_gstyle'), [ 'titles', 'notes' ], 'Search using gstyle' ]
+        self.keybinds['search_prev_gstyle'] = [ cp.get(cfg_sec, 'kb_search_prev_gstyle'), [ 'notes' ], 'Search backwards using gstyle' ]
+        self.keybinds['search_regex'] = [ cp.get(cfg_sec, 'kb_search_regex'), [ 'titles', 'notes' ], 'Search using regex' ]
+        self.keybinds['search_prev_regex'] = [ cp.get(cfg_sec, 'kb_search_regex'), [ 'titles', 'notes' ], 'Search using regex' ]
+        self.keybinds['search_next'] = [ cp.get(cfg_sec, 'kb_search_next'), [ 'notes' ], 'Go to next search result' ]
+        self.keybinds['search_prev'] = [ cp.get(cfg_sec, 'kb_search_prev'), [ 'notes' ], 'Go to previous search result' ]
         self.keybinds['clear_search'] = [ cp.get(cfg_sec, 'kb_clear_search'), [ 'titles' ], 'Show all notes' ]
         self.keybinds['sort_date'] = [ cp.get(cfg_sec, 'kb_sort_date'), [ 'titles' ], 'Sort notes by date' ]
         self.keybinds['sort_alpha'] = [ cp.get(cfg_sec, 'kb_sort_alpha'), [ 'titles' ], 'Sort notes by alpha' ]

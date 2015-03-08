@@ -320,7 +320,8 @@ class sncli:
         self.master_frame.keypress = self.gui_frame_keypress
         if search_string:
             if (self.gui_body_get() == self.view_note):
-                self.view_note.update_note_view(search_string=search_string, search_mode=args[0])
+                self.search_direction = args[1]
+                self.view_note.search_note_view_next(search_string=search_string, search_mode=args[0])
             else:
                 self.view_titles.update_note_list(search_string, args[0])
                 self.gui_body_set(self.view_titles)
@@ -772,10 +773,19 @@ class sncli:
             self.master_frame.keypress = self.gui_footer_input_get().keypress
 
         elif key == self.config.get_keybind('search_gstyle') or \
-             key == self.config.get_keybind('search_regex'):
+             key == self.config.get_keybind('search_regex') or \
+             key == self.config.get_keybind('search_prev_gstyle') or \
+             key == self.config.get_keybind('search_prev_regex'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
-                self.gui_body_get().__class__ != view_note.ViewNote:
+                 self.gui_body_get().__class__ != view_note.ViewNote:
                 return key
+
+            if self.gui_body_get().__class__ == view_note.ViewNote:
+                if key == self.config.get_keybind('search_prev_gstyle') or \
+                     key == self.config.get_keybind('search_prev_regex'):
+                    self.view_note.search_direction = 'backward'
+                else:
+                    self.view_note.search_direction = 'forward'
 
             self.gui_footer_input_set(
                 urwid.AttrMap(
@@ -785,10 +795,26 @@ class sncli:
                         '',
                         self.gui_search_input,
                         [ 'gstyle' if key == self.config.get_keybind('search_gstyle')
-                                   else 'regex' ]),
+                                   or key == self.config.get_keybind('search_prev_gstyle')
+                                   else 'regex',
+                          'backward' if key == self.config.get_keybind('search_prev_gstyle')
+                                    or key == self.config.get_keybind('search_prev_regex')
+                                    else 'forward' ]),
                     'user_input_bar'))
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
+
+        elif key == self.config.get_keybind('search_next'):
+            if self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
+            self.view_note.search_note_view_next()
+
+        elif key == self.config.get_keybind('search_prev'):
+            if self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
+            self.view_note.search_note_view_prev()
 
         elif key == self.config.get_keybind('clear_search'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles:

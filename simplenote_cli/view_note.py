@@ -13,6 +13,7 @@ class ViewNote(urwid.ListBox):
         self.key = args['key']
         self.log = args['log']
         self.search_string = ''
+        self.search_direction = ''
         self.note = self.ndb.get_note(self.key) if self.key else None
         self.old_note = None
         self.tabstop = int(self.config.get_config('tabstop'))
@@ -38,8 +39,7 @@ class ViewNote(urwid.ListBox):
         lines.append(urwid.AttrMap(urwid.Divider(u'-'), 'default'))
         return lines
 
-    def update_note_view(self, key=None, version=None, search_string=None, search_mode='gstyle'):
-        self.search_string = search_string
+    def update_note_view(self, key=None, version=None):
         if key: # setting a new note
             self.key      = key
             self.note     = self.ndb.get_note(self.key)
@@ -71,14 +71,38 @@ class ViewNote(urwid.ListBox):
 
         self.body[:] = \
             urwid.SimpleFocusListWalker(self.get_note_content_as_list())
-        if self.search_string:
-            for line in range(self.focus_position, len(self.body.positions())):
-                line_content = self.note['content'].split('\n')[line]
-                if (search_string in line_content):
-                    self.focus_position = line
-                    break
-        else:
+        if not self.search_string:
             self.focus_position = 0
+
+    def lines_after_current_position(self):
+        lines_after_current_position = range(self.focus_position + 1, len(self.body.positions()) - 1)
+        return lines_after_current_position
+
+    def lines_before_current_position(self):
+        lines_before_current_position = range(0, self.focus_position)
+        lines_before_current_position.reverse()
+        return lines_before_current_position
+
+    def search_note_view_next(self, search_string=None, search_mode='gstyle'):
+        if search_string:
+            self.search_string = search_string
+        note_range = self.lines_after_current_position() if self.search_direction == 'forward' else self.lines_before_current_position()
+        self.search_note_range(note_range, search_mode)
+
+    def search_note_view_prev(self, search_string=None, search_mode='gstyle'):
+        if search_string:
+            self.search_string = search_string
+        note_range = self.lines_after_current_position() if self.search_direction == 'backward' else self.lines_before_current_position()
+        self.search_note_range(note_range, search_mode)
+
+    def search_note_range(self, note_range, search_mode='gstyle'):
+        for line in note_range:
+            line_content = self.note['content'].split('\n')[line]
+            if (self.search_string in line_content):
+                self.focus_position = line
+                break
+        self.update_note_view()
+
 
     def get_status_bar(self):
         if not self.key:
