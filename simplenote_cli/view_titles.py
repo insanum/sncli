@@ -26,7 +26,7 @@ class ViewTitles(urwid.ListBox):
         if len(self.note_list) == 0:
             self.log(u'No notes found!')
         else:
-            self.focus_position = 1 #TESTING
+            self.focus_position = 0
 
     def sort_note_list(self, sort_mode):
         self.ndb.filtered_notes_sort(self.note_list, sort_mode)
