@@ -11,6 +11,7 @@ from config import Config
 from simplenote import Simplenote
 from notes_db import NotesDB, ReadError, WriteError
 from logging.handlers import RotatingFileHandler
+import pdb
 
 class sncli:
 
@@ -111,7 +112,7 @@ class sncli:
         out = temp.tempfile_create(None)
 
         try:
-            subprocess.call(diff + u' ' + 
+            subprocess.call(diff + u' ' +
                             temp.tempfile_name(ltf) + u' ' +
                             temp.tempfile_name(otf) + u' > ' +
                             temp.tempfile_name(out),
@@ -310,7 +311,7 @@ class sncli:
         self.gui_body_focus()
         self.master_frame.keypress = self.gui_frame_keypress
         args[0](args[1],
-                True if yes_no in [ 'YES', 'Yes', 'yes', 'Y', 'y' ] 
+                True if yes_no in [ 'YES', 'Yes', 'yes', 'Y', 'y' ]
                      else False)
 
     def gui_search_input(self, args, search_string):
@@ -318,8 +319,11 @@ class sncli:
         self.gui_body_focus()
         self.master_frame.keypress = self.gui_frame_keypress
         if search_string:
-            self.view_titles.update_note_list(search_string, args[0])
-            self.gui_body_set(self.view_titles)
+            if (self.gui_body_get() == self.view_note):
+                self.view_note.update_note_view()
+            else:
+                self.view_titles.update_note_list(search_string, args[0])
+                self.gui_body_set(self.view_titles)
 
     def gui_version_input(self, args, version):
         self.gui_footer_input_clear()
@@ -769,7 +773,8 @@ class sncli:
 
         elif key == self.config.get_keybind('search_gstyle') or \
              key == self.config.get_keybind('search_regex'):
-            if self.gui_body_get().__class__ != view_titles.ViewTitles:
+            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
+                self.gui_body_get().__class__ != view_note.ViewNote:
                 return key
 
             self.gui_footer_input_set(
@@ -835,7 +840,7 @@ class sncli:
             self.gui_clear()
             raise urwid.ExitMainLoop()
         else:
-            self.log(u'WARNING: Not all notes saved to disk (wait for sync worker)') 
+            self.log(u'WARNING: Not all notes saved to disk (wait for sync worker)')
 
     def gui(self, key):
 
