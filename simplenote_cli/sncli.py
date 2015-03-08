@@ -11,7 +11,6 @@ from config import Config
 from simplenote import Simplenote
 from notes_db import NotesDB, ReadError, WriteError
 from logging.handlers import RotatingFileHandler
-import pdb
 
 class sncli:
 
@@ -112,7 +111,7 @@ class sncli:
         out = temp.tempfile_create(None)
 
         try:
-            subprocess.call(diff + u' ' +
+            subprocess.call(diff + u' ' + 
                             temp.tempfile_name(ltf) + u' ' +
                             temp.tempfile_name(otf) + u' > ' +
                             temp.tempfile_name(out),
@@ -866,7 +865,7 @@ class sncli:
             self.gui_clear()
             raise urwid.ExitMainLoop()
         else:
-            self.log(u'WARNING: Not all notes saved to disk (wait for sync worker)')
+            self.log(u'WARNING: Not all notes saved to disk (wait for sync worker)') 
 
     def gui(self, key):
 

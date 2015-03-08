@@ -21,8 +21,7 @@ class Config:
          'cfg_format_note_title' : '[%D] %F %-N %T',
          'cfg_status_bar'        : 'yes',
          'cfg_editor'            : 'vim',
-         # 'cfg_pager'             : 'less -c',
-         'cfg_pager'             : 'vim -R',
+         'cfg_pager'             : 'less -c',
          'cfg_diff'              : 'diff -b -U10',
          'cfg_max_logs'          : '5',
          'cfg_log_timeout'       : '5',
@@ -42,9 +41,8 @@ class Config:
          'kb_status'          : 's',
          'kb_create_note'     : 'C',
          'kb_edit_note'       : 'e',
-        # TODO - update this
          'kb_view_note'       : 'enter',
-         'kb_view_note_ext'   : 'a',
+         'kb_view_note_ext'   : 'meta enter',
          'kb_view_note_json'  : 'O',
          'kb_pipe_note'       : '|',
          'kb_view_next_note'  : 'J',
@@ -181,7 +179,7 @@ class Config:
         self.keybinds['search_gstyle'] = [ cp.get(cfg_sec, 'kb_search_gstyle'), [ 'titles', 'notes' ], 'Search using gstyle' ]
         self.keybinds['search_prev_gstyle'] = [ cp.get(cfg_sec, 'kb_search_prev_gstyle'), [ 'notes' ], 'Search backwards using gstyle' ]
         self.keybinds['search_regex'] = [ cp.get(cfg_sec, 'kb_search_regex'), [ 'titles', 'notes' ], 'Search using regex' ]
-        self.keybinds['search_prev_regex'] = [ cp.get(cfg_sec, 'kb_search_prev_regex'), [ 'titles', 'notes' ], 'Search using regex' ]
+        self.keybinds['search_prev_regex'] = [ cp.get(cfg_sec, 'kb_search_prev_regex'), [ 'notes' ], 'Search backwards using regex' ]
         self.keybinds['search_next'] = [ cp.get(cfg_sec, 'kb_search_next'), [ 'notes' ], 'Go to next search result' ]
         self.keybinds['search_prev'] = [ cp.get(cfg_sec, 'kb_search_prev'), [ 'notes' ], 'Go to previous search result' ]
         self.keybinds['clear_search'] = [ cp.get(cfg_sec, 'kb_clear_search'), [ 'titles' ], 'Show all notes' ]
