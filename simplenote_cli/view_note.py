@@ -12,6 +12,7 @@ class ViewNote(urwid.ListBox):
         self.ndb = args['ndb']
         self.key = args['key']
         self.log = args['log']
+        self.search_string = ''
         self.note = self.ndb.get_note(self.key) if self.key else None
         self.old_note = None
         self.tabstop = int(self.config.get_config('tabstop'))
@@ -37,7 +38,8 @@ class ViewNote(urwid.ListBox):
         lines.append(urwid.AttrMap(urwid.Divider(u'-'), 'default'))
         return lines
 
-    def update_note_view(self, key=None, version=None):
+    def update_note_view(self, key=None, version=None, search_string=None, search_mode='gstyle'):
+        self.search_string = search_string
         if key: # setting a new note
             self.key      = key
             self.note     = self.ndb.get_note(self.key)
@@ -69,7 +71,14 @@ class ViewNote(urwid.ListBox):
 
         self.body[:] = \
             urwid.SimpleFocusListWalker(self.get_note_content_as_list())
-        # self.focus_position = 0 # TODO -I need to set this on update
+        if self.search_string:
+            for line in range(self.focus_position, len(self.body.positions())):
+                line_content = self.note['content'].split('\n')[line]
+                if (search_string in line_content):
+                    self.focus_position = line
+                    break
+        else:
+            self.focus_position = 0
 
     def get_status_bar(self):
         if not self.key:

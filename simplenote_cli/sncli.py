@@ -320,7 +320,7 @@ class sncli:
         self.master_frame.keypress = self.gui_frame_keypress
         if search_string:
             if (self.gui_body_get() == self.view_note):
-                self.view_note.update_note_view()
+                self.view_note.update_note_view(search_string=search_string, search_mode=args[0])
             else:
                 self.view_titles.update_note_list(search_string, args[0])
                 self.gui_body_set(self.view_titles)
