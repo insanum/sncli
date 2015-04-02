@@ -4,6 +4,7 @@
 
 import time, urwid
 import utils
+import re
 
 class ViewNote(urwid.ListBox):
 
@@ -12,6 +13,9 @@ class ViewNote(urwid.ListBox):
         self.ndb = args['ndb']
         self.key = args['key']
         self.log = args['log']
+        self.search_string = ''
+        self.search_mode = 'gstyle'
+        self.search_direction = ''
         self.note = self.ndb.get_note(self.key) if self.key else None
         self.old_note = None
         self.tabstop = int(self.config.get_config('tabstop'))
@@ -69,7 +73,48 @@ class ViewNote(urwid.ListBox):
 
         self.body[:] = \
             urwid.SimpleFocusListWalker(self.get_note_content_as_list())
-        self.focus_position = 0
+        if not self.search_string:
+            self.focus_position = 0
+
+    def lines_after_current_position(self):
+        lines_after_current_position = range(self.focus_position + 1, len(self.body.positions()) - 1)
+        return lines_after_current_position
+
+    def lines_before_current_position(self):
+        lines_before_current_position = range(0, self.focus_position)
+        lines_before_current_position.reverse()
+        return lines_before_current_position
+
+    def search_note_view_next(self, search_string=None, search_mode=None):
+        if search_string:
+            self.search_string = search_string
+        if search_mode:
+            self.search_mode = search_mode
+        note_range = self.lines_after_current_position() if self.search_direction == 'forward' else self.lines_before_current_position()
+        self.search_note_range(note_range)
+
+    def search_note_view_prev(self, search_string=None, search_mode=None):
+        if search_string:
+            self.search_string = search_string
+        if search_mode:
+            self.search_mode = search_mode
+        note_range = self.lines_after_current_position() if self.search_direction == 'backward' else self.lines_before_current_position()
+        self.search_note_range(note_range)
+
+    def search_note_range(self, note_range):
+        for line in note_range:
+            line_content = self.note['content'].split('\n')[line]
+            if (self.is_match(self.search_string, line_content)):
+                self.focus_position = line
+                break
+        self.update_note_view()
+
+    def is_match(self, term, full_text):
+        if self.search_mode == 'gstyle':
+            return term in full_text
+        else:
+            results = re.search(term, full_text)
+            return ( results is not None )
 
     def get_status_bar(self):
         if not self.key:
