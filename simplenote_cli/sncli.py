@@ -1126,7 +1126,7 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv,
             'hvnrk:t:',
-            [ 'help', 'verbose' 'nosync', 'regex', 'key=', 'title=' ])
+            [ 'help', 'verbose', 'nosync', 'regex', 'key=', 'title=' ])
     except:
         usage()
 
