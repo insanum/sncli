@@ -19,9 +19,11 @@ class sncli:
         self.do_server_sync = do_server_sync
         self.verbose        = verbose
         self.do_gui         = False
+        force_full_sync     = False
 
         if not os.path.exists(self.config.get_config('db_path')):
             os.mkdir(self.config.get_config('db_path'))
+            force_full_sync = True
 
         # configure the logging module
         self.logfile = os.path.join(self.config.get_config('db_path'), 'sncli.log')
@@ -42,6 +44,16 @@ class sncli:
         except Exception, e:
             self.log(str(e))
             sys.exit(1)
+
+        if force_full_sync:
+            # The note database doesn't exist so force a full sync. Itis
+            # important to do this outside of the gui because an account
+            # with hundreds of notes will cause a recursion panic under
+            # urwid. This simple workaround gets the job done. :-)
+            self.verbose = True
+            self.log(u'sncli database doesn\'t exist, forcing full sync...')
+            self.sync_notes()
+            self.verbose = verbose
 
     def sync_notes(self):
         self.ndb.sync_now(self.do_server_sync)
