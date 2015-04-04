@@ -13,7 +13,7 @@ setup(
       author=simplenote_cli.__author__,
       author_email=simplenote_cli.__author_email__,
       url=simplenote_cli.__url__,
-      requires=[ 'urwid', 'pyperclip' ],
+      requires=[ 'urwid' ],
       packages=[ 'simplenote_cli' ],
       scripts=[ 'sncli' ]
      )
