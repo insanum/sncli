@@ -5,6 +5,7 @@
 import time, urwid
 import utils
 import re
+from clipboard import Clipboard
 
 class ViewNote(urwid.ListBox):
 
@@ -19,6 +20,7 @@ class ViewNote(urwid.ListBox):
         self.note = self.ndb.get_note(self.key) if self.key else None
         self.old_note = None
         self.tabstop = int(self.config.get_config('tabstop'))
+        self.clipboard = Clipboard()
         super(ViewNote, self).__init__(
                   urwid.SimpleFocusListWalker(self.get_note_content_as_list()))
 
@@ -194,6 +196,10 @@ class ViewNote(urwid.ListBox):
             urwid.AttrMap(urwid.Pile([ pile_top, pile_bottom, pile_publish ]),
                           'status_bar')
 
+    def copy_note_text(self):
+        line_content = self.note['content'].split('\n')[self.focus_position]
+        self.clipboard.copy(line_content)
+
     def keypress(self, size, key):
         if key == self.config.get_keybind('tabstop2'):
             self.tabstop = 2
@@ -214,4 +220,3 @@ class ViewNote(urwid.ListBox):
             return key
 
         return None
-
