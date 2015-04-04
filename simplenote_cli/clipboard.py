@@ -9,6 +9,8 @@ class Clipboard(object):
     def get_copy_command(self):
         if (spawn.find_executable('xsel')):
             return 'echo "%s" | xsel -ib'
+        if (spawn.find_executable('pbcopy')):
+            return 'echo "%s" | pbcopy'
         return None
     
     def copy(self, text):
