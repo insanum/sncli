@@ -60,7 +60,7 @@ class sncli:
 
     def get_editor(self):
         editor = self.config.get_config('editor')
-        if os.environ['EDITOR']:
+        if os.environ.has_key('EDITOR'):
             editor = os.environ['EDITOR']
         if not editor:
             self.log(u'No editor configured!')
@@ -69,7 +69,7 @@ class sncli:
 
     def get_pager(self):
         pager = self.config.get_config('pager')
-        if os.environ['PAGER']:
+        if os.environ.has_key('PAGER'):
             pager = os.environ['PAGER']
         if not pager:
             self.log(u'No pager configured!')
