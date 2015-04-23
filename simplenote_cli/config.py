@@ -70,6 +70,7 @@ class Config:
          'kb_note_pin'        : 'p',
          'kb_note_markdown'   : 'm',
          'kb_note_tags'       : 't',
+         'kb_copy_note_text'  : 'y',
 
          'clr_default_fg'                : 'default',
          'clr_default_bg'                : 'default',
@@ -189,6 +190,7 @@ class Config:
         self.keybinds['note_pin'] = [ cp.get(cfg_sec, 'kb_note_pin'), [ 'titles', 'notes' ], 'Pin note' ]
         self.keybinds['note_markdown'] = [ cp.get(cfg_sec, 'kb_note_markdown'), [ 'titles', 'notes' ], 'Flag note as markdown' ]
         self.keybinds['note_tags'] = [ cp.get(cfg_sec, 'kb_note_tags'), [ 'titles', 'notes' ], 'Edit note tags' ]
+        self.keybinds['copy_note_text'] = [ cp.get(cfg_sec, 'kb_copy_note_text'), [ 'notes' ], 'Copy line (xsel/pbcopy)' ]
 
         self.colors = collections.OrderedDict()
         self.colors['default_fg'] = [ cp.get(cfg_sec, 'clr_default_fg'), 'Default fg' ]

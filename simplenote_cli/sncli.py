@@ -846,6 +846,12 @@ class sncli:
 
             self.view_titles.sort_note_list('alpha')
 
+        elif key == self.config.get_keybind('copy_note_text'):
+            if self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
+            self.view_note.copy_note_text()
+
         else:
             return lb.keypress(size, key)
 
