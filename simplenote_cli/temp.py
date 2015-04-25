@@ -37,9 +37,8 @@ def tempfile_name(tf):
     return ''
 
 def tempfile_content(tf):
-    tf.seek(0)
-    lines = []
-    for line in tf:
-        lines.append(line)
-    return lines
-
+    # This seems like a hack. When editing with Gedit, tf file contents weren't getting 
+    # updated in memory, even though it successfully saved on disk.
+    updated_tf_contents = open(tf.name, 'r').read()
+    tf.write(updated_tf_contents)
+    return updated_tf_contents
