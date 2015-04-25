@@ -18,9 +18,14 @@ def tempfile_create(note, raw=False):
             ext = '.mkd'
         tf = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
         if note:
-            tf.write(note['content'])
+            contents = note['content']
+            tf.write(encode_utf_8(contents))
         tf.flush()
     return tf
+
+def encode_utf_8(string):
+    # This code also exists in sncli.py. Move into an encoding or utility class if other areas need encoding.
+    return string.encode("utf-8") if isinstance(string, unicode) else string
 
 def tempfile_delete(tf):
     if tf:
