@@ -414,6 +414,7 @@ class NotesDB():
 
         sync_start_time = time.time()
         sync_errors = 0
+        skip_remote_syncing = False
 
         if server_sync and full_sync:
             self.log("Starting full sync")
@@ -489,55 +490,56 @@ class NotesDB():
         else:
             nl = self.simplenote.get_note_list(since=None if full_sync else self.last_sync)
 
-            if nl[1] == 0: # success
+            if nl[1] == 0:  # success
                 nl = nl[0]
             else:
                 self.log('ERROR: Failed to get note list from server')
                 sync_errors += 1
                 nl = []
+                skip_remote_syncing = True
 
         # 3. for each remote note
         #        if remote syncnum > local syncnum ||
         #           a new note and key is not in local store
         #            retrieve note, update note with response
-        len_nl = len(nl)
-        sync_errors = 0
-        for note_index, n in enumerate(nl):
-            k = n.get('key')
-            server_keys[k] = True
-            # this works because in the prior step we rewrite local keys to
-            # server keys when we get an updated note back from the server
-            if k in self.notes:
-                # we already have this note
-                # if the server note has a newer syncnum we need to get it
-                if int(n.get('syncnum')) > int(self.notes[k].get('syncnum', -1)):
+        if not skip_remote_syncing:
+            len_nl = len(nl)
+            for note_index, n in enumerate(nl):
+                k = n.get('key')
+                server_keys[k] = True
+                # this works because in the prior step we rewrite local keys to
+                # server keys when we get an updated note back from the server
+                if k in self.notes:
+                    # we already have this note
+                    # if the server note has a newer syncnum we need to get it
+                    if int(n.get('syncnum')) > int(self.notes[k].get('syncnum', -1)):
+                        gret = self.simplenote.get_note(k)
+                        if gret[1] == 0:
+                            self.notes[k].update(gret[0])
+                            local_updates[k] = True
+                            self.notes[k]['syncdate'] = now
+
+                            self.log('Synced newer note from server (key={0})'.format(k))
+                        else:
+                            self.log('ERROR: Failed to sync newer note from server (key={0})'.format(k))
+                            sync_errors += 1
+                else:
+                    # this is a new note
                     gret = self.simplenote.get_note(k)
                     if gret[1] == 0:
-                        self.notes[k].update(gret[0])
+                        self.notes[k] = gret[0]
                         local_updates[k] = True
                         self.notes[k]['syncdate'] = now
 
-                        self.log('Synced newer note from server (key={0})'.format(k))
+                        self.log('Synced new note from server (key={0})'.format(k))
                     else:
-                        self.log('ERROR: Failed to sync newer note from server (key={0})'.format(k))
+                        self.log('ERROR: Failed syncing new note from server (key={0})'.format(k))
                         sync_errors += 1
-            else:
-                # this is a new note
-                gret = self.simplenote.get_note(k)
-                if gret[1] == 0:
-                    self.notes[k] = gret[0]
-                    local_updates[k] = True
-                    self.notes[k]['syncdate'] = now
-
-                    self.log('Synced new note from server (key={0})'.format(k))
-                else:
-                    self.log('ERROR: Failed syncing new note from server (key={0})'.format(k))
-                    sync_errors += 1
 
         # 4. for each local note not in the index
         #        PERMANENT DELETE, remove note from local store
         # Only do this when a full sync (i.e. entire index) is performed!
-        if server_sync and full_sync:
+        if server_sync and full_sync and not skip_remote_syncing:
             for local_key in self.notes.keys():
                 if local_key not in server_keys:
                     del self.notes[local_key]
