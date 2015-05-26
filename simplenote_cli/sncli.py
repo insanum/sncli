@@ -46,7 +46,7 @@ class sncli:
             sys.exit(1)
 
         if force_full_sync:
-            # The note database doesn't exist so force a full sync. Itis
+            # The note database doesn't exist so force a full sync. It is
             # important to do this outside of the gui because an account
             # with hundreds of notes will cause a recursion panic under
             # urwid. This simple workaround gets the job done. :-)
@@ -218,10 +218,12 @@ class sncli:
             self.logs.pop(0)
 
             log_pile = []
+
             for l in self.logs:
                 log_pile.append(urwid.AttrMap(urwid.Text(l), 'log'))
 
-            self.gui_footer_log_set(log_pile)
+            if self.verbose:
+                self.gui_footer_log_set(log_pile)
 
         self.log_lock.release()
 
@@ -246,7 +248,8 @@ class sncli:
         for l in self.logs:
             log_pile.append(urwid.AttrMap(urwid.Text(l), 'log'))
 
-        self.gui_footer_log_set(log_pile)
+        if self.verbose:
+            self.gui_footer_log_set(log_pile)
 
         self.sncli_loop.set_alarm_in(
                 int(self.config.get_config('log_timeout')),
@@ -1136,7 +1139,7 @@ Usage:
 
  OPTIONS:
   -h, --help                  - usage help
-  -v, --verbose               - verbose output (cli mode)
+  -v, --verbose               - verbose output
   -n, --nosync                - don't perform a server sync
   -r, --regex                 - search string is a regular expression
   -k <key>, --key=<key>       - note key
