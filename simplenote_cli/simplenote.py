@@ -30,9 +30,6 @@ except ImportError:
         # For Google AppEngine
         from django.utils import simplejson as json
 
-AUTH_URL = 'https://simple-note.appspot.com/api/login'
-DATA_URL = 'https://simple-note.appspot.com/api2/data'
-INDX_URL = 'https://simple-note.appspot.com/api2/index?'
 NOTE_FETCH_LENGTH = 100
 
 class SimplenoteLoginFailed(Exception):
@@ -41,10 +38,13 @@ class SimplenoteLoginFailed(Exception):
 class Simplenote(object):
     """ Class for interacting with the simplenote web service """
 
-    def __init__(self, username, password):
+    def __init__(self, username, password, host):
         """ object constructor """
         self.username = urllib2.quote(username)
         self.password = urllib2.quote(password)
+        self.AUTH_URL = 'https://{0}/api/login'.format(host)
+        self.DATA_URL = 'https://{0}/api2/data'.format(host)
+        self.INDX_URL = 'https://{0}/api2/index?'.format(host)
         self.token = None
 
     def authenticate(self, user, password):
@@ -60,7 +60,7 @@ class Simplenote(object):
         """
         auth_params = "email=%s&password=%s" % (user, password)
         values = base64.encodestring(auth_params)
-        request = Request(AUTH_URL, values)
+        request = Request(self.AUTH_URL, values)
         try:
             res = urllib2.urlopen(request).read()
             token = urllib2.quote(res)
@@ -105,8 +105,8 @@ class Simplenote(object):
             params_version = '/' + str(version)
          
         params = '/%s%s?auth=%s&email=%s' % (str(noteid), params_version, self.get_token(), self.username)
-        #logging.debug('REQUEST: ' + DATA_URL+params)
-        request = Request(DATA_URL+params)
+        #logging.debug('REQUEST: ' + self.DATA_URL+params)
+        request = Request(self.DATA_URL+params)
         try:
             response = urllib2.urlopen(request)
         except HTTPError, e:
@@ -157,10 +157,10 @@ class Simplenote(object):
             if 'modifydate' not in note:
                 note["modifydate"] = time.time()
 
-            url = '%s/%s?auth=%s&email=%s' % (DATA_URL, note["key"],
+            url = '%s/%s?auth=%s&email=%s' % (self.DATA_URL, note["key"],
                                               self.get_token(), self.username)
         else:
-            url = '%s?auth=%s&email=%s' % (DATA_URL, self.get_token(), self.username)
+            url = '%s?auth=%s&email=%s' % (self.DATA_URL, self.get_token(), self.username)
         #logging.debug('REQUEST: ' + url + ' - ' + str(note))
         request = Request(url, urllib.quote(json.dumps(note)))
         response = ""
@@ -239,8 +239,8 @@ class Simplenote(object):
 
         # perform initial HTTP request
         try:
-            #logging.debug('REQUEST: ' + INDX_URL+params)
-            request = Request(INDX_URL+params)
+            #logging.debug('REQUEST: ' + self.INDX_URL+params)
+            request = Request(self.INDX_URL+params)
             response = json.loads(urllib2.urlopen(request).read())
             #logging.debug('RESPONSE OK: ' + str(response))
             notes["data"].extend(response["data"])
@@ -256,8 +256,8 @@ class Simplenote(object):
 
             # perform the actual HTTP request
             try:
-                #logging.debug('REQUEST: ' + INDX_URL+params)
-                request = Request(INDX_URL+params)
+                #logging.debug('REQUEST: ' + self.INDX_URL+params)
+                request = Request(self.INDX_URL+params)
                 response = json.loads(urllib2.urlopen(request).read())
                 #logging.debug('RESPONSE OK: ' + str(response))
                 notes["data"].extend(response["data"])
@@ -316,8 +316,8 @@ class Simplenote(object):
 
         params = '/%s?auth=%s&email=%s' % (str(note_id), self.get_token(),
                                            self.username)
-        #logging.debug('REQUEST DELETE: ' + DATA_URL+params)
-        request = Request(url=DATA_URL+params, method='DELETE')
+        #logging.debug('REQUEST DELETE: ' + self.DATA_URL+params)
+        request = Request(url=self.DATA_URL+params, method='DELETE')
         try:
             urllib2.urlopen(request)
         except IOError, e:

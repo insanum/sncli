@@ -14,8 +14,8 @@ from logging.handlers import RotatingFileHandler
 
 class sncli:
 
-    def __init__(self, do_server_sync, verbose=False):
-        self.config         = Config()
+    def __init__(self, do_server_sync, verbose=False, config_file=None):
+        self.config         = Config(config_file)
         self.do_server_sync = do_server_sync
         self.verbose        = verbose
         self.do_gui         = False
@@ -1150,6 +1150,7 @@ Usage:
   -r, --regex                 - search string is a regular expression
   -k <key>, --key=<key>       - note key
   -t <title>, --title=<title> - title of note for create (cli mode)
+  -c <file>, --config=<file>  - config file to read from (defaults to ~/.snclirc)
 
  COMMANDS:
   <none>                      - console gui mode when no command specified
@@ -1171,11 +1172,12 @@ def main(argv):
     regex   = False
     key     = None
     title   = None
+    config  = None
 
     try:
         opts, args = getopt.getopt(argv,
-            'hvnrk:t:',
-            [ 'help', 'verbose', 'nosync', 'regex', 'key=', 'title=' ])
+            'hvnrk:t:c:',
+            [ 'help', 'verbose', 'nosync', 'regex', 'key=', 'title=', 'config=' ])
     except:
         usage()
 
@@ -1192,30 +1194,32 @@ def main(argv):
             key = arg
         elif opt in [ '-t', '--title']:
             title = arg
+        elif opt in [ '-c', '--config']:
+            config = arg
         else:
             print u'ERROR: Unhandled option'
             usage()
 
     if not args:
-        sncli(sync).gui(key)
+        sncli(sync, verbose, config).gui(key)
         return
 
-    def sncli_start(sync, verbose):
-        sn = sncli(sync, verbose)
+    def sncli_start(sync=sync, verbose=verbose, config=config):
+        sn = sncli(sync, verbose, config)
         if sync: sn.sync_notes()
         return sn
 
     if args[0] == 'sync':
-        sn = sncli_start(True, verbose)
+        sn = sncli_start(True)
 
     elif args[0] == 'list':
 
-        sn = sncli_start(sync, verbose)
+        sn = sncli_start()
         sn.cli_list_notes(regex, ' '.join(args[1:]))
 
     elif args[0] == 'dump':
 
-        sn = sncli_start(sync, verbose)
+        sn = sncli_start()
         if key:
             sn.cli_note_dump(key)
         else:
@@ -1224,10 +1228,10 @@ def main(argv):
     elif args[0] == 'create':
 
         if len(args) == 1:
-            sn = sncli_start(sync, verbose)
+            sn = sncli_start()
             sn.cli_note_create(False, title)
         elif len(args) == 2 and args[1] == '-':
-            sn = sncli_start(sync, verbose)
+            sn = sncli_start()
             sn.cli_note_create(True, title)
         else:
             usage()
@@ -1237,7 +1241,7 @@ def main(argv):
         if not key:
             usage()
 
-        sn = sncli_start(sync, verbose)
+        sn = sncli_start()
         sn.cli_note_edit(key)
 
     elif args[0] == 'trash' or args[0] == 'untrash':
@@ -1245,7 +1249,7 @@ def main(argv):
         if not key:
             usage()
 
-        sn = sncli_start(sync, verbose)
+        sn = sncli_start()
         sn.cli_note_trash(key, 1 if args[0] == 'trash' else 0)
 
     elif args[0] == 'pin' or args[0] == 'unpin':
@@ -1253,7 +1257,7 @@ def main(argv):
         if not key:
             usage()
 
-        sn = sncli_start(sync, verbose)
+        sn = sncli_start()
         sn.cli_note_pin(key, 1 if args[0] == 'pin' else 0)
 
     elif args[0] == 'markdown' or args[0] == 'unmarkdown':
@@ -1261,7 +1265,7 @@ def main(argv):
         if not key:
             usage()
 
-        sn = sncli_start(sync, verbose)
+        sn = sncli_start()
         sn.cli_note_markdown(key, 1 if args[0] == 'markdown' else 0)
 
     else:
