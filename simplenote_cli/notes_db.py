@@ -7,7 +7,7 @@
 # new BSD license
 
 import os, time, re, glob, json, copy, threading
-from simplenote_cli import utils
+from . import utils
 from . import simplenote
 simplenote.NOTE_FETCH_LENGTH=100
 from .simplenote import Simplenote

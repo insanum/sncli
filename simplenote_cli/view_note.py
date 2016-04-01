@@ -3,9 +3,9 @@
 # Licensed under the MIT License
 
 import time, urwid
-from simplenote_cli import utils
+from . import utils
 import re
-from simplenote_cli.clipboard import Clipboard
+from .clipboard import Clipboard
 
 class ViewNote(urwid.ListBox):
 

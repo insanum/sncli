@@ -18,8 +18,9 @@ Check your OS distribution for installation packages.
 
 ### Requirements
 
-* [Python 2](http://python.org)
-* [Urwid](http://urwid.org) Python 2 module
+* [Python 3](http://python.org)
+* [Urwid](http://urwid.org) Python 3 module
+* [Requests](https://requests.readthedocs.org/en/master/) Python 3 module
 * A love for the command line!
 
 ### Features

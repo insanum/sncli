@@ -13,13 +13,13 @@
     :license: MIT, see LICENSE for more details.
 """
 
-import urllib.request, urllib.parse, urllib.error
-import urllib.request, urllib.error, urllib.parse
+import urllib.parse
 from urllib.error import HTTPError
 import base64
 import time
 import datetime
 import logging
+import requests
 
 try:
     import json
@@ -60,14 +60,17 @@ class Simplenote(object):
         """
         auth_params = "email=%s&password=%s" % (user, password)
         values = base64.encodestring(auth_params.encode())
-        request = Request(self.AUTH_URL, values)
         try:
-            res = urllib.request.urlopen(request).read()
-            token = urllib.parse.quote(res)
-        except HTTPError:
+            res = requests.post(self.AUTH_URL, data=values)
+            token = res.text
+            if res.status_code != 200:
+                raise SimplenoteLoginFailed(
+                        'Login to Simplenote API failed! statuscode: {}'.format(res.status_code))
+        except HTTPError as e:
             raise SimplenoteLoginFailed('Login to Simplenote API failed!')
         except IOError: # no connection exception
             token = None
+
         return token
 
     def get_token(self):
@@ -104,18 +107,20 @@ class Simplenote(object):
         if version is not None:
             params_version = '/' + str(version)
          
-        params = '/%s%s?auth=%s&email=%s' % (str(noteid), params_version, self.get_token(), self.username)
+        params = {'auth': self.get_token(),
+                  'email': self.username }
+        url = '{}/{}{}'.format(self.DATA_URL, str(noteid), params_version)
         #logging.debug('REQUEST: ' + self.DATA_URL+params)
-        request = Request(self.DATA_URL+params)
         try:
-            response = urllib.request.urlopen(request)
+            res = requests.get(url, params=params)
         except HTTPError as e:
             #logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
         except IOError as e:
             #logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
-        note = json.loads(response.read())
+        note = res.json()
+
         # use UTF-8 encoding
         note["content"] = note["content"].encode('utf-8')
         # For early versions of notes, tags not always available
@@ -152,24 +157,23 @@ class Simplenote(object):
             note["tags"] = [str(t, 'utf-8') if isinstance(t, str) else t for t in note["tags"]]
 
         # determine whether to create a new note or updated an existing one
+        params = {'auth': self.get_token(),
+                  'email': self.username}
         if "key" in note:
             # set modification timestamp if not set by client
             if 'modifydate' not in note:
                 note["modifydate"] = time.time()
 
-            url = '%s/%s?auth=%s&email=%s' % (self.DATA_URL, note["key"],
-                                              self.get_token(), self.username)
+            url = '%s/%s' % (self.DATA_URL, note["key"])
         else:
-            url = '%s?auth=%s&email=%s' % (self.DATA_URL, self.get_token(), self.username)
+            url = self.DATA_URL
         #logging.debug('REQUEST: ' + url + ' - ' + str(note))
-        request = Request(url, urllib.parse.quote(json.dumps(note)))
-        response = ""
         try:
-            response = urllib.request.urlopen(request)
+            res = requests.post(url, data=json.dumps(note), params=params)
         except IOError as e:
             #logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
-        note = json.loads(response.read())
+        note = res.json()
         if "content" in note:
             # use UTF-8 encoding
             note["content"] = note["content"].encode('utf-8')
@@ -232,35 +236,38 @@ class Simplenote(object):
         notes = { "data" : [] }
 
         # get the note index
-        params = 'auth=%s&email=%s&length=%s' % (self.get_token(), self.username,
-                                                 NOTE_FETCH_LENGTH)
+        params = {'auth': self.get_token(),
+                  'email': self.username,
+                  'length': NOTE_FETCH_LENGTH
+                  }
         if since is not None:
-            params += '&since=%s' % since
+            params['since'] = since
 
         # perform initial HTTP request
         try:
             #logging.debug('REQUEST: ' + self.INDX_URL+params)
-            request = Request(self.INDX_URL+params)
-            response = json.loads(urllib.request.urlopen(request).read())
-            #logging.debug('RESPONSE OK: ' + str(response))
-            notes["data"].extend(response["data"])
+            res = requests.get(self.INDX_URL, params=params)
+            #logging.debug('RESPONSE OK: ' + str(res))
+            notes["data"].extend(res.json()["data"])
         except IOError:
             status = -1
 
         # get additional notes if bookmark was set in response
         while "mark" in response:
-            vals = (self.get_token(), self.username, response["mark"], NOTE_FETCH_LENGTH)
-            params = 'auth=%s&email=%s&mark=%s&length=%s' % vals
+            params = {'auth': self.get_token(),
+                      'email': self.username,
+                      'mark': response['mark'],
+                      'length': NOTE_FETCH_LENGTH
+                      }
             if since is not None:
-                params += '&since=%s' % since
+                params['since'] = since
 
             # perform the actual HTTP request
             try:
                 #logging.debug('REQUEST: ' + self.INDX_URL+params)
-                request = Request(self.INDX_URL+params)
-                response = json.loads(urllib.request.urlopen(request).read())
+                res = requests.get(self.INDX_URL, params=params)
                 #logging.debug('RESPONSE OK: ' + str(response))
-                notes["data"].extend(response["data"])
+                notes["data"].extend(res.json()["data"])
             except IOError:
                 status = -1
 
@@ -314,30 +321,17 @@ class Simplenote(object):
         if (status == -1):
             return note, status
 
-        params = '/%s?auth=%s&email=%s' % (str(note_id), self.get_token(),
-                                           self.username)
+        params = {'auth': self.get_token(),
+                  'email': self.username }
+        url = '{}/{}'.format(self.DATA_URL, str(note_id))
+
         #logging.debug('REQUEST DELETE: ' + self.DATA_URL+params)
         request = Request(url=self.DATA_URL+params, method='DELETE')
         try:
-            urllib.request.urlopen(request)
+            res = requests.delete(url, params=params)
+            # TODO: check error handling stuff - probably use res.status_code to check if was able to delete, etc.
+            #       (same must be done for other note actions)
         except IOError as e:
             return e, -1
         return {}, 0
-
-
-class Request(urllib.request.Request):
-    """ monkey patched version of urllib2's Request to support HTTP DELETE
-        Taken from http://python-requests.org, thanks @kennethreitz
-    """
-
-    def __init__(self, url, data=None, headers={}, origin_req_host=None,
-                unverifiable=False, method=None):
-        urllib.request.Request.__init__(self, url, data, headers, origin_req_host, unverifiable)
-        self.method = method
-
-    def get_method(self):
-        if self.method:
-            return self.method
-
-        return urllib.request.Request.get_method(self)
 

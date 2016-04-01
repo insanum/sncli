@@ -3,7 +3,7 @@
 # Licensed under the MIT License
 
 import re, time, datetime, urwid, subprocess
-from simplenote_cli import utils, view_note
+from . import utils, view_note
 
 class ViewTitles(urwid.ListBox):
 
