@@ -371,7 +371,7 @@ class NotesDB():
     def helper_save_note(self, k, note):
         # Save a single note to disc.
         fn = self.helper_key_to_fname(k)
-        json.dump(note, open(fn, 'wb'), indent=2)
+        json.dump(note, open(fn, 'w'), indent=2)
 
         # record that we saved this to disc.
         note['savedate'] = time.time()

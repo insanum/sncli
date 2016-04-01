@@ -215,7 +215,9 @@ class sncli:
             self.gui_footer_log_clear()
             self.logs = []
         else:
-            self.logs.pop(0)
+            # for some reason having problems with this being empty?
+            if len(self.logs) > 0:
+                self.logs.pop(0)
 
             log_pile = []
 

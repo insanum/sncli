@@ -121,11 +121,11 @@ class Simplenote(object):
             return e, -1
         note = res.json()
 
-        # use UTF-8 encoding
-        note["content"] = note["content"].encode('utf-8')
-        # For early versions of notes, tags not always available
-        if "tags" in note:
-            note["tags"] = [t.encode('utf-8') for t in note["tags"]]
+        # # use UTF-8 encoding
+        # note["content"] = note["content"].encode('utf-8')
+        # # For early versions of notes, tags not always available
+        # if "tags" in note:
+        #     note["tags"] = [t.encode('utf-8') for t in note["tags"]]
         #logging.debug('RESPONSE OK: ' + str(note))
         return note, 0
 
@@ -143,18 +143,18 @@ class Simplenote(object):
             - status (int): 0 on sucesss and -1 otherwise
 
         """
-        # use UTF-8 encoding
-        # cpbotha: in both cases check if it's not unicode already
-        # otherwise you get "TypeError: decoding Unicode is not supported"
-        if "content" in note:
-            if isinstance(note["content"], str):
-                note["content"] = str(note["content"], 'utf-8')
-
-        if "tags" in note:
-            # if a tag is a string, unicode it, otherwise pass it through
-            # unchanged (it's unicode already)
-            # using the ternary operator, because I like it: a if test else b
-            note["tags"] = [str(t, 'utf-8') if isinstance(t, str) else t for t in note["tags"]]
+        # # use UTF-8 encoding
+        # # cpbotha: in both cases check if it's not unicode already
+        # # otherwise you get "TypeError: decoding Unicode is not supported"
+        # if "content" in note:
+        #     if isinstance(note["content"], str):
+        #         note["content"] = str(note["content"], 'utf-8')
+        #
+        # if "tags" in note:
+        #     # if a tag is a string, unicode it, otherwise pass it through
+        #     # unchanged (it's unicode already)
+        #     # using the ternary operator, because I like it: a if test else b
+        #     note["tags"] = [str(t, 'utf-8') if isinstance(t, str) else t for t in note["tags"]]
 
         # determine whether to create a new note or updated an existing one
         params = {'auth': self.get_token(),
@@ -174,11 +174,11 @@ class Simplenote(object):
             #logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
         note = res.json()
-        if "content" in note:
-            # use UTF-8 encoding
-            note["content"] = note["content"].encode('utf-8')
-        if "tags" in note:
-            note["tags"] = [t.encode('utf-8') for t in note["tags"]]
+        # if "content" in note:
+        #     # use UTF-8 encoding
+        #     note["content"] = note["content"].encode('utf-8')
+        # if "tags" in note:
+        #     note["tags"] = [t.encode('utf-8') for t in note["tags"]]
         #logging.debug('RESPONSE OK: ' + str(note))
         return note, 0
 
