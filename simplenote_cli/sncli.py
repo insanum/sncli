@@ -2,14 +2,14 @@
 # Copyright (c) 2014 Eric Davis
 # Licensed under the MIT License
 
-import os, sys, getopt, re, signal, time, datetime, shlex, md5
-import subprocess, thread, threading, logging
+import os, sys, getopt, re, signal, time, datetime, shlex, hashlib
+import subprocess, threading, logging
 import copy, json, urwid, datetime
-import view_titles, view_note, view_help, view_log, user_input
-import utils, temp
-from config import Config
-from simplenote import Simplenote
-from notes_db import NotesDB, ReadError, WriteError
+from simplenote_cli import view_titles, view_note, view_help, view_log, user_input
+from simplenote_cli import utils, temp
+from simplenote_cli.config import Config
+from .simplenote import Simplenote
+from .notes_db import NotesDB, ReadError, WriteError
 from logging.handlers import RotatingFileHandler
 
 class sncli:
@@ -41,7 +41,7 @@ class sncli:
 
         try:
             self.ndb = NotesDB(self.config, self.log, self.gui_update_view)
-        except Exception, e:
+        except Exception as e:
             self.log(str(e))
             sys.exit(1)
 
@@ -51,7 +51,7 @@ class sncli:
             # with hundreds of notes will cause a recursion panic under
             # urwid. This simple workaround gets the job done. :-)
             self.verbose = True
-            self.log(u'sncli database doesn\'t exist, forcing full sync...')
+            self.log('sncli database doesn\'t exist, forcing full sync...')
             self.sync_notes()
             self.verbose = verbose
 
@@ -60,26 +60,26 @@ class sncli:
 
     def get_editor(self):
         editor = self.config.get_config('editor')
-        if os.environ.has_key('EDITOR'):
+        if 'EDITOR' in os.environ:
             editor = os.environ['EDITOR']
         if not editor:
-            self.log(u'No editor configured!')
+            self.log('No editor configured!')
             return None
         return editor
 
     def get_pager(self):
         pager = self.config.get_config('pager')
-        if os.environ.has_key('PAGER'):
+        if 'PAGER' in os.environ:
             pager = os.environ['PAGER']
         if not pager:
-            self.log(u'No pager configured!')
+            self.log('No pager configured!')
             return None
         return pager
 
     def get_diff(self):
         diff = self.config.get_config('diff')
         if not diff:
-            self.log(u'No diff command configured!')
+            self.log('No diff command configured!')
             return None
         return diff
 
@@ -93,16 +93,16 @@ class sncli:
         tf = temp.tempfile_create(note if note else None, raw=raw)
 
         try:
-            subprocess.check_call(cmd + u' ' + temp.tempfile_name(tf), shell=True)
-        except Exception, e:
-            self.log(u'Command error: ' + str(e))
+            subprocess.check_call(cmd + ' ' + temp.tempfile_name(tf), shell=True)
+        except Exception as e:
+            self.log('Command error: ' + str(e))
             temp.tempfile_delete(tf)
             return None
 
         content = None
         if not raw:
             content = ''.join(temp.tempfile_content(tf))
-            if not content or content == u'\n':
+            if not content or content == '\n':
                 content = None
 
         temp.tempfile_delete(tf)
@@ -123,16 +123,16 @@ class sncli:
         out = temp.tempfile_create(None)
 
         try:
-            subprocess.call(diff + u' ' + 
-                            temp.tempfile_name(ltf) + u' ' +
-                            temp.tempfile_name(otf) + u' > ' +
+            subprocess.call(diff + ' ' + 
+                            temp.tempfile_name(ltf) + ' ' +
+                            temp.tempfile_name(otf) + ' > ' +
                             temp.tempfile_name(out),
                             shell=True)
-            subprocess.check_call(pager + u' ' +
+            subprocess.check_call(pager + ' ' +
                                   temp.tempfile_name(out),
                                   shell=True)
-        except Exception, e:
-            self.log(u'Command error: ' + str(e))
+        except Exception as e:
+            self.log('Command error: ' + str(e))
             temp.tempfile_delete(ltf)
             temp.tempfile_delete(otf)
             temp.tempfile_delete(out)
@@ -232,7 +232,7 @@ class sncli:
 
         if not self.do_gui:
             if self.verbose:
-                print msg
+                print(msg)
             return
 
         self.log_lock.acquire()
@@ -263,7 +263,7 @@ class sncli:
 
         try:
             cur_key = self.view_titles.note_list[self.view_titles.focus_position].note['key']
-        except IndexError, e:
+        except IndexError as e:
             cur_key = None
             pass
         self.view_titles.update_note_list(self.view_titles.search_string)
@@ -312,7 +312,7 @@ class sncli:
             return
 
         # restore the contents of the old_note
-        self.log(u'Restoring version v{0} (key={1})'.
+        self.log('Restoring version v{0} (key={1})'.
                  format(self.view_note.old_note['version'], key))
         self.ndb.set_note_content(key, self.view_note.old_note['content'])
 
@@ -348,8 +348,8 @@ class sncli:
             try:
                 # verify input is a number
                 int(version)
-            except ValueError, e:
-                self.log(u'ERROR: Invalid version value')
+            except ValueError as e:
+                self.log('ERROR: Invalid version value')
                 return
             self.view_note.update_note_view(version=version)
             self.gui_update_status_bar()
@@ -391,8 +391,8 @@ class sncli:
                 pipe.communicate(note['content'])
                 pipe.stdin.close()
                 pipe.wait()
-            except OSError, e:
-                self.log(u'Pipe error: ' + str(e))
+            except OSError as e:
+                self.log('Pipe error: ' + str(e))
             finally:
                 self.gui_reset()
 
@@ -540,7 +540,7 @@ class sncli:
                 return key
 
             if not self.view_note.old_note:
-                self.log(u'Already at latest version (key={0})'.
+                self.log('Already at latest version (key={0})'.
                          format(self.view_note.key))
                 return None
 
@@ -554,7 +554,7 @@ class sncli:
                 return key
 
             if not self.view_note.old_note:
-                self.log(u'Already at latest version (key={0})'.
+                self.log('Already at latest version (key={0})'.
                          format(self.view_note.key))
                 return None
 
@@ -607,7 +607,7 @@ class sncli:
             self.gui_reset()
 
             if content:
-                self.log(u'New note created')
+                self.log('New note created')
                 self.ndb.create_note(content)
                 self.gui_update_view()
                 self.ndb.sync_worker_go()
@@ -642,11 +642,11 @@ class sncli:
             if not content:
                 return None
 
-            md5_old = md5.new(self.encode_utf_8(note['content'])).digest()
-            md5_new = md5.new(self.encode_utf_8(content)).digest()
+            md5_old = hashlib.md5(self.encode_utf_8(note['content'])).digest()
+            md5_new = hashlib.md5(self.encode_utf_8(content)).digest()
 
             if md5_old != md5_new:
-                self.log(u'Note updated')
+                self.log('Note updated')
                 self.ndb.set_note_content(note['key'], content)
                 if self.gui_body_get().__class__ == view_titles.ViewTitles:
                     lb.update_note_title()
@@ -654,7 +654,7 @@ class sncli:
                     lb.update_note_view()
                 self.ndb.sync_worker_go()
             else:
-                self.log(u'Note unchanged')
+                self.log('Note unchanged')
 
         elif key == self.config.get_keybind('view_note'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
@@ -863,7 +863,7 @@ class sncli:
 
     def encode_utf_8(self, string):
         # This code also exists in temp.py. Move into an encoding or utility class if other areas need encoding.
-        return string.encode("utf-8") if isinstance(string, unicode) else string
+        return string.encode("utf-8") if isinstance(string, str) else string
 
     def gui_init_view(self, loop, view_note):
         self.master_frame.keypress = self.gui_frame_keypress
@@ -876,7 +876,7 @@ class sncli:
         self.thread_sync.start()
 
     def gui_clear(self):
-        self.sncli_loop.widget = urwid.Filler(urwid.Text(u''))
+        self.sncli_loop.widget = urwid.Filler(urwid.Text(''))
         self.sncli_loop.draw_screen()
 
     def gui_reset(self):
@@ -1000,7 +1000,7 @@ class sncli:
                 self.config.get_color('help_descr_bg') )
           ]
 
-        self.master_frame = urwid.Frame(body=urwid.Filler(urwid.Text(u'')),
+        self.master_frame = urwid.Frame(body=urwid.Filler(urwid.Text('')),
                                         header=None,
                                         footer=urwid.Pile([ urwid.Pile([]),
                                                             urwid.Pile([]) ]),
@@ -1023,38 +1023,38 @@ class sncli:
                     search_mode='regex' if regex else 'gstyle')
         for n in note_list:
             flags = utils.get_note_flags(n.note)
-            print n.key + \
-                  u' [' + flags + u'] ' + \
-                  utils.get_note_title(n.note)
+            print((n.key + \
+                  ' [' + flags + '] ' + \
+                  utils.get_note_title(n.note)))
 
     def cli_note_dump(self, key):
 
         note = self.ndb.get_note(key)
         if not note:
-            self.log(u'ERROR: Key does not exist')
+            self.log('ERROR: Key does not exist')
             return
 
         w = 60
-        sep = u'+' + u'-'*(w+2) + u'+'
+        sep = '+' + '-'*(w+2) + '+'
         t = time.localtime(float(note['modifydate']))
         mod_time = time.strftime('%a, %d %b %Y %H:%M:%S', t)
         title = utils.get_note_title(note)
         flags = utils.get_note_flags(note)
         tags  = utils.get_note_tags(note)
 
-        print sep
-        print (u'| {:<' + str(w) + u'} |').format((u'    Title: ' + title)[:w])
-        print (u'| {:<' + str(w) + u'} |').format((u'      Key: ' + note['key'])[:w])
-        print (u'| {:<' + str(w) + u'} |').format((u'     Date: ' + mod_time)[:w])
-        print (u'| {:<' + str(w) + u'} |').format((u'     Tags: ' + tags)[:w])
-        print (u'| {:<' + str(w) + u'} |').format((u'  Version: v' + str(note['version']))[:w])
-        print (u'| {:<' + str(w) + u'} |').format((u'    Flags: [' + flags + u']')[:w])
+        print(sep)
+        print(('| {:<' + str(w) + '} |').format(('    Title: ' + title)[:w]))
+        print(('| {:<' + str(w) + '} |').format(('      Key: ' + note['key'])[:w]))
+        print(('| {:<' + str(w) + '} |').format(('     Date: ' + mod_time)[:w]))
+        print(('| {:<' + str(w) + '} |').format(('     Tags: ' + tags)[:w]))
+        print(('| {:<' + str(w) + '} |').format(('  Version: v' + str(note['version']))[:w]))
+        print(('| {:<' + str(w) + '} |').format(('    Flags: [' + flags + ']')[:w]))
         if utils.note_published(note) and 'publishkey' in note:
-            print (u'| {:<' + str(w) + u'} |').format((u'Published: http://simp.ly/publish/' + note['publishkey'])[:w])
+            print(('| {:<' + str(w) + '} |').format(('Published: http://simp.ly/publish/' + note['publishkey'])[:w]))
         else:
-            print (u'| {:<' + str(w) + u'} |').format((u'Published: n/a')[:w])
-        print sep
-        print note['content']
+            print(('| {:<' + str(w) + '} |').format(('Published: n/a')[:w]))
+        print(sep)
+        print((note['content']))
 
     def cli_dump_notes(self, regex, search_string):
 
@@ -1073,10 +1073,10 @@ class sncli:
             content = self.exec_cmd_on_note(None)
 
         if title:
-            content = title + '\n\n' + content if content else u''
+            content = title + '\n\n' + content if content else ''
 
         if content:
-            self.log(u'New note created')
+            self.log('New note created')
             self.ndb.create_note(content)
             self.sync_notes()
 
@@ -1084,28 +1084,28 @@ class sncli:
 
         note = self.ndb.get_note(key)
         if not note:
-            self.log(u'ERROR: Key does not exist')
+            self.log('ERROR: Key does not exist')
             return
 
         content = self.exec_cmd_on_note(note)
         if not content:
             return
 
-        md5_old = md5.new(self.encode_utf_8(note['content'])).digest()
-        md5_new = md5.new(self.encode_utf_8(content)).digest()
+        md5_old = hashlib.md5(self.encode_utf_8(note['content'])).digest()
+        md5_new = hashlib.md5(self.encode_utf_8(content)).digest()
 
         if md5_old != md5_new:
-            self.log(u'Note updated')
+            self.log('Note updated')
             self.ndb.set_note_content(note['key'], content)
             self.sync_notes()
         else:
-            self.log(u'Note unchanged')
+            self.log('Note unchanged')
 
     def cli_note_trash(self, key, trash):
 
         note = self.ndb.get_note(key)
         if not note:
-            self.log(u'ERROR: Key does not exist')
+            self.log('ERROR: Key does not exist')
             return
 
         self.ndb.set_note_deleted(key, trash)
@@ -1115,7 +1115,7 @@ class sncli:
 
         note = self.ndb.get_note(key)
         if not note:
-            self.log(u'ERROR: Key does not exist')
+            self.log('ERROR: Key does not exist')
             return
 
         self.ndb.set_note_pinned(key, pin)
@@ -1125,7 +1125,7 @@ class sncli:
 
         note = self.ndb.get_note(key)
         if not note:
-            self.log(u'ERROR: Key does not exist')
+            self.log('ERROR: Key does not exist')
             return
 
         self.ndb.set_note_markdown(key, markdown)
@@ -1133,13 +1133,13 @@ class sncli:
 
 
 def SIGINT_handler(signum, frame):
-    print u'\nSignal caught, bye!'
+    print('\nSignal caught, bye!')
     sys.exit(1)
 
 signal.signal(signal.SIGINT, SIGINT_handler)
 
 def usage():
-    print u'''
+    print ('''
 Usage:
  sncli [OPTIONS] [COMMAND] [COMMAND_ARGS]
 
@@ -1163,7 +1163,7 @@ Usage:
   < trash | untrash >         - trash/untrash a note (specified by <key>)
   < pin | unpin >             - pin/unpin a note (specified by <key>)
   < markdown | unmarkdown >   - markdown/unmarkdown a note (specified by <key>)
-'''
+''')
     sys.exit(0)
 
 def main(argv):
@@ -1197,7 +1197,7 @@ def main(argv):
         elif opt in [ '-c', '--config']:
             config = arg
         else:
-            print u'ERROR: Unhandled option'
+            print('ERROR: Unhandled option')
             usage()
 
     if not args:

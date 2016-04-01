@@ -22,10 +22,10 @@ def get_note_tags(note):
     if 'tags' in note:
         tags = '%s' % ','.join(note['tags'])
         if 'deleted' in note and note['deleted']:
-            if tags: tags += u',trash'
-            else:    tags = u'trash'
+            if tags: tags += ',trash'
+            else:    tags = 'trash'
     else:
-        tags = u''
+        tags = ''
     return tags
 
 # Returns a fixed length string:
@@ -36,12 +36,12 @@ def get_note_tags(note):
 #   'm' - markdown
 def get_note_flags(note):
     flags = ''
-    flags += u'X' if float(note['modifydate']) > float(note['syncdate']) else u' '
-    flags += u'T' if 'deleted' in note and note['deleted'] else u' '
+    flags += 'X' if float(note['modifydate']) > float(note['syncdate']) else ' '
+    flags += 'T' if 'deleted' in note and note['deleted'] else ' '
     if 'systemtags' in note:
-        flags += u'*' if 'pinned'    in note['systemtags'] else u' '
-        flags += u'S' if 'published' in note['systemtags'] else u' '
-        flags += u'm' if 'markdown'  in note['systemtags'] else u' '
+        flags += '*' if 'pinned'    in note['systemtags'] else ' '
+        flags += 'S' if 'published' in note['systemtags'] else ' '
+        flags += 'm' if 'markdown'  in note['systemtags'] else ' '
     else:
         flags += '   '
     return flags
@@ -63,9 +63,9 @@ def get_note_title_file(note):
             return ''
 
         if isinstance(fn, str):
-            fn = unicode(fn, 'utf-8')
+            fn = str(fn, 'utf-8')
         else:
-            fn = unicode(fn)
+            fn = str(fn)
 
         if note_markdown(note):
             fn += '.mkdn'

@@ -13,12 +13,12 @@ class ViewHelp(urwid.ListBox):
         self.config_width = 29
 
         lines = []
-        lines.extend(self.create_kb_help_lines(u'Keybinds Common', 'common'))
-        lines.extend(self.create_kb_help_lines(u'Keybinds Note List', 'titles'))
-        lines.extend(self.create_kb_help_lines(u'Keybinds Note Content', 'notes'))
+        lines.extend(self.create_kb_help_lines('Keybinds Common', 'common'))
+        lines.extend(self.create_kb_help_lines('Keybinds Note List', 'titles'))
+        lines.extend(self.create_kb_help_lines('Keybinds Note Content', 'notes'))
         lines.extend(self.create_config_help_lines())
         lines.extend(self.create_color_help_lines())
-        lines.append(urwid.Text(('help_header', u'')))
+        lines.append(urwid.Text(('help_header', '')))
 
         super(ViewHelp, self).__init__(urwid.SimpleFocusListWalker(lines))
 
@@ -30,13 +30,13 @@ class ViewHelp(urwid.ListBox):
             total = len(self.body.positions())
 
         status_title = \
-            urwid.AttrMap(urwid.Text(u'Help',
+            urwid.AttrMap(urwid.Text('Help',
                                      wrap='clip'),
                           'status_bar')
         status_index = \
-            ('pack', urwid.AttrMap(urwid.Text(u' ' +
+            ('pack', urwid.AttrMap(urwid.Text(' ' +
                                               str(cur + 1) +
-                                              u'/' +
+                                              '/' +
                                               str(total)),
                                    'status_bar'))
         return \
@@ -44,10 +44,10 @@ class ViewHelp(urwid.ListBox):
                           'status_bar')
 
     def create_kb_help_lines(self, header, use):
-        lines = [ urwid.AttrMap(urwid.Text(u''),
+        lines = [ urwid.AttrMap(urwid.Text(''),
                                 'help_header',
                                 'help_focus') ]
-        lines.append(urwid.AttrMap(urwid.Text(u' ' + header),
+        lines.append(urwid.AttrMap(urwid.Text(' ' + header),
                                    'help_header',
                                    'help_focus'))
         for c in self.config.keybinds:
@@ -58,8 +58,8 @@ class ViewHelp(urwid.ListBox):
                     urwid.Text(
                     [
                      ('help_descr',  ('{:>' + str(self.descr_width) + '} ').format(self.config.get_keybind_descr(c))),
-                     ('help_config', ('{:>' + str(self.config_width) + '} ').format(u'kb_' + c)),
-                     ('help_value',  u"'" + self.config.get_keybind(c) + u"'")
+                     ('help_config', ('{:>' + str(self.config_width) + '} ').format('kb_' + c)),
+                     ('help_value',  "'" + self.config.get_keybind(c) + "'")
                     ]
                     ),
                     attr_map = None,
@@ -72,10 +72,10 @@ class ViewHelp(urwid.ListBox):
         return lines
 
     def create_config_help_lines(self):
-        lines = [ urwid.AttrMap(urwid.Text(u''),
+        lines = [ urwid.AttrMap(urwid.Text(''),
                                 'help_header',
                                 'help_focus') ]
-        lines.append(urwid.AttrMap(urwid.Text(u' Configuration'),
+        lines.append(urwid.AttrMap(urwid.Text(' Configuration'),
                                    'help_header',
                                    'help_focus'))
         for c in self.config.configs:
@@ -85,8 +85,8 @@ class ViewHelp(urwid.ListBox):
                     urwid.Text(
                     [
                      ('help_descr',  ('{:>' + str(self.descr_width) + '} ').format(self.config.get_config_descr(c))),
-                     ('help_config', ('{:>' + str(self.config_width) + '} ').format(u'cfg_' + c)),
-                     ('help_value',  u"'" + self.config.get_config(c) + u"'")
+                     ('help_config', ('{:>' + str(self.config_width) + '} ').format('cfg_' + c)),
+                     ('help_value',  "'" + self.config.get_config(c) + "'")
                     ]
                     ),
                     attr_map = None,
@@ -99,10 +99,10 @@ class ViewHelp(urwid.ListBox):
         return lines
 
     def create_color_help_lines(self):
-        lines = [ urwid.AttrMap(urwid.Text(u''),
+        lines = [ urwid.AttrMap(urwid.Text(''),
                                 'help_header',
                                 'help_focus') ]
-        lines.append(urwid.AttrMap(urwid.Text(u' Colors'),
+        lines.append(urwid.AttrMap(urwid.Text(' Colors'),
                                    'help_header',
                                    'help_focus'))
         fmap = {}
@@ -114,8 +114,8 @@ class ViewHelp(urwid.ListBox):
                     urwid.Text(
                     [
                      ('help_descr',  ('{:>' + str(self.descr_width) + '} ').format(self.config.get_color_descr(c))),
-                     ('help_config', ('{:>' + str(self.config_width) + '} ').format(u'clr_' + c)),
-                     (re.search('^(.*)(_fg|_bg)$', c).group(1), u"'" + self.config.get_color(c) + u"'")
+                     ('help_config', ('{:>' + str(self.config_width) + '} ').format('clr_' + c)),
+                     (re.search('^(.*)(_fg|_bg)$', c).group(1), "'" + self.config.get_color(c) + "'")
                     ]
                     ),
                     attr_map = None,

@@ -13,9 +13,9 @@
     :license: MIT, see LICENSE for more details.
 """
 
-import urllib
-import urllib2
-from urllib2 import HTTPError
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
+from urllib.error import HTTPError
 import base64
 import time
 import datetime
@@ -40,8 +40,8 @@ class Simplenote(object):
 
     def __init__(self, username, password, host):
         """ object constructor """
-        self.username = urllib2.quote(username)
-        self.password = urllib2.quote(password)
+        self.username = urllib.parse.quote(username)
+        self.password = urllib.parse.quote(password)
         self.AUTH_URL = 'https://{0}/api/login'.format(host)
         self.DATA_URL = 'https://{0}/api2/data'.format(host)
         self.INDX_URL = 'https://{0}/api2/index?'.format(host)
@@ -62,8 +62,8 @@ class Simplenote(object):
         values = base64.encodestring(auth_params)
         request = Request(self.AUTH_URL, values)
         try:
-            res = urllib2.urlopen(request).read()
-            token = urllib2.quote(res)
+            res = urllib.request.urlopen(request).read()
+            token = urllib.parse.quote(res)
         except HTTPError:
             raise SimplenoteLoginFailed('Login to Simplenote API failed!')
         except IOError: # no connection exception
@@ -108,18 +108,18 @@ class Simplenote(object):
         #logging.debug('REQUEST: ' + self.DATA_URL+params)
         request = Request(self.DATA_URL+params)
         try:
-            response = urllib2.urlopen(request)
-        except HTTPError, e:
+            response = urllib.request.urlopen(request)
+        except HTTPError as e:
             #logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
-        except IOError, e:
+        except IOError as e:
             #logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
         note = json.loads(response.read())
         # use UTF-8 encoding
         note["content"] = note["content"].encode('utf-8')
         # For early versions of notes, tags not always available
-        if note.has_key("tags"):
+        if "tags" in note:
             note["tags"] = [t.encode('utf-8') for t in note["tags"]]
         #logging.debug('RESPONSE OK: ' + str(note))
         return note, 0
@@ -141,15 +141,15 @@ class Simplenote(object):
         # use UTF-8 encoding
         # cpbotha: in both cases check if it's not unicode already
         # otherwise you get "TypeError: decoding Unicode is not supported"
-        if note.has_key("content"):
+        if "content" in note:
             if isinstance(note["content"], str):
-                note["content"] = unicode(note["content"], 'utf-8')
+                note["content"] = str(note["content"], 'utf-8')
 
-        if note.has_key("tags"):
+        if "tags" in note:
             # if a tag is a string, unicode it, otherwise pass it through
             # unchanged (it's unicode already)
             # using the ternary operator, because I like it: a if test else b
-            note["tags"] = [unicode(t, 'utf-8') if isinstance(t, str) else t for t in note["tags"]]
+            note["tags"] = [str(t, 'utf-8') if isinstance(t, str) else t for t in note["tags"]]
 
         # determine whether to create a new note or updated an existing one
         if "key" in note:
@@ -162,18 +162,18 @@ class Simplenote(object):
         else:
             url = '%s?auth=%s&email=%s' % (self.DATA_URL, self.get_token(), self.username)
         #logging.debug('REQUEST: ' + url + ' - ' + str(note))
-        request = Request(url, urllib.quote(json.dumps(note)))
+        request = Request(url, urllib.parse.quote(json.dumps(note)))
         response = ""
         try:
-            response = urllib2.urlopen(request)
-        except IOError, e:
+            response = urllib.request.urlopen(request)
+        except IOError as e:
             #logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
         note = json.loads(response.read())
-        if note.has_key("content"):
+        if "content" in note:
             # use UTF-8 encoding
             note["content"] = note["content"].encode('utf-8')
-        if note.has_key("tags"):
+        if "tags" in note:
             note["tags"] = [t.encode('utf-8') for t in note["tags"]]
         #logging.debug('RESPONSE OK: ' + str(note))
         return note, 0
@@ -241,7 +241,7 @@ class Simplenote(object):
         try:
             #logging.debug('REQUEST: ' + self.INDX_URL+params)
             request = Request(self.INDX_URL+params)
-            response = json.loads(urllib2.urlopen(request).read())
+            response = json.loads(urllib.request.urlopen(request).read())
             #logging.debug('RESPONSE OK: ' + str(response))
             notes["data"].extend(response["data"])
         except IOError:
@@ -258,7 +258,7 @@ class Simplenote(object):
             try:
                 #logging.debug('REQUEST: ' + self.INDX_URL+params)
                 request = Request(self.INDX_URL+params)
-                response = json.loads(urllib2.urlopen(request).read())
+                response = json.loads(urllib.request.urlopen(request).read())
                 #logging.debug('RESPONSE OK: ' + str(response))
                 notes["data"].extend(response["data"])
             except IOError:
@@ -319,25 +319,25 @@ class Simplenote(object):
         #logging.debug('REQUEST DELETE: ' + self.DATA_URL+params)
         request = Request(url=self.DATA_URL+params, method='DELETE')
         try:
-            urllib2.urlopen(request)
-        except IOError, e:
+            urllib.request.urlopen(request)
+        except IOError as e:
             return e, -1
         return {}, 0
 
 
-class Request(urllib2.Request):
+class Request(urllib.request.Request):
     """ monkey patched version of urllib2's Request to support HTTP DELETE
         Taken from http://python-requests.org, thanks @kennethreitz
     """
 
     def __init__(self, url, data=None, headers={}, origin_req_host=None,
                 unverifiable=False, method=None):
-        urllib2.Request.__init__(self, url, data, headers, origin_req_host, unverifiable)
+        urllib.request.Request.__init__(self, url, data, headers, origin_req_host, unverifiable)
         self.method = method
 
     def get_method(self):
         if self.method:
             return self.method
 
-        return urllib2.Request.get_method(self)
+        return urllib.request.Request.get_method(self)
 

@@ -32,13 +32,13 @@ class ViewLog(urwid.ListBox):
             total = len(self.body.positions())
 
         status_title = \
-            urwid.AttrMap(urwid.Text(u'Sync Log',
+            urwid.AttrMap(urwid.Text('Sync Log',
                                      wrap='clip'),
                           'status_bar')
         status_index = \
-            ('pack', urwid.AttrMap(urwid.Text(u' ' +
+            ('pack', urwid.AttrMap(urwid.Text(' ' +
                                               str(cur + 1) +
-                                              u'/' +
+                                              '/' +
                                               str(total)),
                                    'status_bar'))
         return \

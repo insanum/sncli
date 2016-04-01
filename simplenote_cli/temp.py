@@ -25,7 +25,7 @@ def tempfile_create(note, raw=False):
 
 def encode_utf_8(string):
     # This code also exists in sncli.py. Move into an encoding or utility class if other areas need encoding.
-    return string.encode("utf-8") if isinstance(string, unicode) else string
+    return string.encode("utf-8") if isinstance(string, str) else string
 
 def tempfile_delete(tf):
     if tf:

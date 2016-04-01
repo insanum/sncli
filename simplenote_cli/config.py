@@ -2,7 +2,7 @@
 # Copyright (c) 2014 Eric Davis
 # Licensed under the MIT License
 
-import os, urwid, collections, ConfigParser
+import os, urwid, collections, configparser
 
 class Config:
 
@@ -119,7 +119,7 @@ class Config:
          'clr_help_descr_bg'             : 'default'
         }
 
-        cp = ConfigParser.SafeConfigParser(defaults)
+        cp = configparser.SafeConfigParser(defaults)
         if custom_file is not None:
             self.configs_read = cp.read([custom_file])
         else:
