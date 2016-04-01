@@ -59,7 +59,7 @@ class Simplenote(object):
 
         """
         auth_params = "email=%s&password=%s" % (user, password)
-        values = base64.encodestring(auth_params)
+        values = base64.encodestring(auth_params.encode())
         request = Request(self.AUTH_URL, values)
         try:
             res = urllib.request.urlopen(request).read()

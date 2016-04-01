@@ -240,7 +240,7 @@ class sncli:
         self.log_alarms += 1
         self.logs.append(msg)
 
-        if len(self.logs) > self.config.get_config('max_logs'):
+        if len(self.logs) > int(self.config.get_config('max_logs')):
             self.log_alarms -= 1
             self.logs.pop(0)
 

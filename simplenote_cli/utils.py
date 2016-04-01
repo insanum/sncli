@@ -145,21 +145,14 @@ def sanitise_tags(tags):
     else:
         return illegals_removed.split(',')
 
-def sort_by_title_pinned(a, b):
-    if note_pinned(a.note) and not note_pinned(b.note):
-        return -1
-    elif not note_pinned(a.note) and note_pinned(b.note):
-        return 1
-    else:
-        return cmp(get_note_title(a.note), get_note_title(b.note))
+def sort_by_title_pinned(a):
+    return (not note_pinned(a.note), get_note_title(a.note))
 
-def sort_by_modify_date_pinned(a, b):
-    if note_pinned(a.note) and not note_pinned(b.note):
-        return 1
-    elif not note_pinned(a.note) and note_pinned(b.note):
-        return -1
+def sort_by_modify_date_pinned(a):
+    if note_pinned(a.note):
+        return 100.0 * float(a.note.get('modifydate', 0))
     else:
-        return cmp(float(a.note.get('modifydate', 0)), float(b.note.get('modifydate', 0)))
+        return float(a.note.get('modifydate', 0))
 
 class KeyValueObject:
     """Store key=value pairs in this object and retrieve with o.key.
