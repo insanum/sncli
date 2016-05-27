@@ -231,9 +231,8 @@ class Simplenote(object):
         """
         # initialize data
         status = 0
-        ret = []
-        response = {}
         notes = { "data" : [] }
+        json_data = {}
 
         # get the note index
         params = {'auth': self.get_token(),
@@ -248,15 +247,19 @@ class Simplenote(object):
             #logging.debug('REQUEST: ' + self.INDX_URL+params)
             res = requests.get(self.INDX_URL, params=params)
             #logging.debug('RESPONSE OK: ' + str(res))
-            notes["data"].extend(res.json()["data"])
+            # TODO: check response code (here and below in loop)
+            json_data = res.json()
+            notes["data"].extend(json_data["data"])
         except IOError:
+            # TODO: catch requests exceptions - http://docs.python-requests.org/en/master/user/quickstart/#errors-and-exceptions
             status = -1
 
+
         # get additional notes if bookmark was set in response
-        while "mark" in response:
+        while "mark" in json_data:
             params = {'auth': self.get_token(),
                       'email': self.username,
-                      'mark': response['mark'],
+                      'mark': json_data['mark'],
                       'length': NOTE_FETCH_LENGTH
                       }
             if since is not None:
@@ -266,8 +269,9 @@ class Simplenote(object):
             try:
                 #logging.debug('REQUEST: ' + self.INDX_URL+params)
                 res = requests.get(self.INDX_URL, params=params)
+                json_data = res.json()
                 #logging.debug('RESPONSE OK: ' + str(response))
-                notes["data"].extend(res.json()["data"])
+                notes["data"].extend(json_data["data"])
             except IOError:
                 status = -1
 
