@@ -2,11 +2,11 @@
 # Copyright (c) 2014 Eric Davis
 # Licensed under the MIT License
 
-import os, urwid, collections, ConfigParser
+import os, urwid, collections, configparser
 
 class Config:
 
-    def __init__(self):
+    def __init__(self, custom_file=None):
         self.home = os.path.abspath(os.path.expanduser('~'))
         defaults = \
         {
@@ -26,6 +26,7 @@ class Config:
          'cfg_max_logs'          : '5',
          'cfg_log_timeout'       : '5',
          'cfg_log_reversed'      : 'yes',
+         'cfg_sn_host'           : 'simple-note.appspot.com',
 
          'kb_help'            : 'h',
          'kb_quit'            : 'q',
@@ -118,8 +119,11 @@ class Config:
          'clr_help_descr_bg'             : 'default'
         }
 
-        cp = ConfigParser.SafeConfigParser(defaults)
-        self.configs_read = cp.read([os.path.join(self.home, '.snclirc')])
+        cp = configparser.SafeConfigParser(defaults)
+        if custom_file is not None:
+            self.configs_read = cp.read([custom_file])
+        else:
+            self.configs_read = cp.read([os.path.join(self.home, '.snclirc')])
 
         cfg_sec = 'sncli'
 
@@ -131,6 +135,7 @@ class Config:
         self.configs = collections.OrderedDict()
         self.configs['sn_username'] = [ cp.get(cfg_sec, 'cfg_sn_username', raw=True), 'Simplenote Username' ]
         self.configs['sn_password'] = [ cp.get(cfg_sec, 'cfg_sn_password', raw=True), 'Simplenote Password' ]
+        self.configs['sn_host'] = [ cp.get(cfg_sec, 'cfg_sn_host', raw=True), 'Simplenote server hostname' ]
         self.configs['db_path'] = [ cp.get(cfg_sec, 'cfg_db_path'), 'Note storage path' ]
         self.configs['search_tags'] = [ cp.get(cfg_sec, 'cfg_search_tags'), 'Search tags as well' ]
         self.configs['sort_mode'] = [ cp.get(cfg_sec, 'cfg_sort_mode'), 'Sort mode' ]

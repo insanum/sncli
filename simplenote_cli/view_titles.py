@@ -3,7 +3,7 @@
 # Licensed under the MIT License
 
 import re, time, datetime, urwid, subprocess
-import utils, view_note
+from . import utils, view_note
 
 class ViewTitles(urwid.ListBox):
 
@@ -24,7 +24,7 @@ class ViewTitles(urwid.ListBox):
         self.body[:] = \
             urwid.SimpleFocusListWalker(self.get_note_titles())
         if len(self.note_list) == 0:
-            self.log(u'No notes found!')
+            self.log('No notes found!')
         else:
             self.focus_position = 0
 
@@ -150,7 +150,7 @@ class ViewTitles(urwid.ListBox):
             cur   = self.focus_position
             total = len(self.body.positions())
 
-        hdr = u'Simplenote'
+        hdr = 'Simplenote'
         if self.search_string != None:
             hdr += ' - Search: ' + self.search_string
 
@@ -159,9 +159,9 @@ class ViewTitles(urwid.ListBox):
                                      wrap='clip'),
                           'status_bar')
         status_index = \
-            ('pack', urwid.AttrMap(urwid.Text(u' ' +
+            ('pack', urwid.AttrMap(urwid.Text(' ' +
                                               str(cur + 1) +
-                                              u'/' +
+                                              '/' +
                                               str(total)),
                                    'status_bar'))
         return \
@@ -173,12 +173,12 @@ class ViewTitles(urwid.ListBox):
             self.body[self.focus_position] = \
                 self.get_note_title(self.note_list[self.focus_position].note)
         else:
-            for i in xrange(len(self.note_list)):
+            for i in range(len(self.note_list)):
                 if self.note_list[i].note['key'] == key:
                     self.body[i] = self.get_note_title(self.note_list[i].note)
 
     def focus_note(self, key):
-        for i in xrange(len(self.note_list)):
+        for i in range(len(self.note_list)):
             if 'key' in self.note_list[i].note and \
                self.note_list[i].note['key'] == key:
                 self.focus_position = i

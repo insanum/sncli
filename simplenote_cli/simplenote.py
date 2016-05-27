@@ -13,13 +13,13 @@
     :license: MIT, see LICENSE for more details.
 """
 
-import urllib
-import urllib2
-from urllib2 import HTTPError
+import urllib.parse
+from urllib.error import HTTPError
 import base64
 import time
 import datetime
 import logging
+import requests
 
 try:
     import json
@@ -30,9 +30,6 @@ except ImportError:
         # For Google AppEngine
         from django.utils import simplejson as json
 
-AUTH_URL = 'https://simple-note.appspot.com/api/login'
-DATA_URL = 'https://simple-note.appspot.com/api2/data'
-INDX_URL = 'https://simple-note.appspot.com/api2/index?'
 NOTE_FETCH_LENGTH = 100
 
 class SimplenoteLoginFailed(Exception):
@@ -41,10 +38,13 @@ class SimplenoteLoginFailed(Exception):
 class Simplenote(object):
     """ Class for interacting with the simplenote web service """
 
-    def __init__(self, username, password):
+    def __init__(self, username, password, host):
         """ object constructor """
-        self.username = urllib2.quote(username)
-        self.password = urllib2.quote(password)
+        self.username = urllib.parse.quote(username)
+        self.password = urllib.parse.quote(password)
+        self.AUTH_URL = 'https://{0}/api/login'.format(host)
+        self.DATA_URL = 'https://{0}/api2/data'.format(host)
+        self.INDX_URL = 'https://{0}/api2/index?'.format(host)
         self.token = None
 
     def authenticate(self, user, password):
@@ -59,15 +59,18 @@ class Simplenote(object):
 
         """
         auth_params = "email=%s&password=%s" % (user, password)
-        values = base64.encodestring(auth_params)
-        request = Request(AUTH_URL, values)
+        values = base64.encodestring(auth_params.encode())
         try:
-            res = urllib2.urlopen(request).read()
-            token = urllib2.quote(res)
-        except HTTPError:
+            res = requests.post(self.AUTH_URL, data=values)
+            token = res.text
+            if res.status_code != 200:
+                raise SimplenoteLoginFailed(
+                        'Login to Simplenote API failed! statuscode: {}'.format(res.status_code))
+        except HTTPError as e:
             raise SimplenoteLoginFailed('Login to Simplenote API failed!')
         except IOError: # no connection exception
             token = None
+
         return token
 
     def get_token(self):
@@ -104,23 +107,25 @@ class Simplenote(object):
         if version is not None:
             params_version = '/' + str(version)
          
-        params = '/%s%s?auth=%s&email=%s' % (str(noteid), params_version, self.get_token(), self.username)
-        #logging.debug('REQUEST: ' + DATA_URL+params)
-        request = Request(DATA_URL+params)
+        params = {'auth': self.get_token(),
+                  'email': self.username }
+        url = '{}/{}{}'.format(self.DATA_URL, str(noteid), params_version)
+        #logging.debug('REQUEST: ' + self.DATA_URL+params)
         try:
-            response = urllib2.urlopen(request)
-        except HTTPError, e:
+            res = requests.get(url, params=params)
+        except HTTPError as e:
             #logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
-        except IOError, e:
+        except IOError as e:
             #logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
-        note = json.loads(response.read())
-        # use UTF-8 encoding
-        note["content"] = note["content"].encode('utf-8')
-        # For early versions of notes, tags not always available
-        if note.has_key("tags"):
-            note["tags"] = [t.encode('utf-8') for t in note["tags"]]
+        note = res.json()
+
+        # # use UTF-8 encoding
+        # note["content"] = note["content"].encode('utf-8')
+        # # For early versions of notes, tags not always available
+        # if "tags" in note:
+        #     note["tags"] = [t.encode('utf-8') for t in note["tags"]]
         #logging.debug('RESPONSE OK: ' + str(note))
         return note, 0
 
@@ -138,43 +143,42 @@ class Simplenote(object):
             - status (int): 0 on sucesss and -1 otherwise
 
         """
-        # use UTF-8 encoding
-        # cpbotha: in both cases check if it's not unicode already
-        # otherwise you get "TypeError: decoding Unicode is not supported"
-        if note.has_key("content"):
-            if isinstance(note["content"], str):
-                note["content"] = unicode(note["content"], 'utf-8')
-
-        if note.has_key("tags"):
-            # if a tag is a string, unicode it, otherwise pass it through
-            # unchanged (it's unicode already)
-            # using the ternary operator, because I like it: a if test else b
-            note["tags"] = [unicode(t, 'utf-8') if isinstance(t, str) else t for t in note["tags"]]
+        # # use UTF-8 encoding
+        # # cpbotha: in both cases check if it's not unicode already
+        # # otherwise you get "TypeError: decoding Unicode is not supported"
+        # if "content" in note:
+        #     if isinstance(note["content"], str):
+        #         note["content"] = str(note["content"], 'utf-8')
+        #
+        # if "tags" in note:
+        #     # if a tag is a string, unicode it, otherwise pass it through
+        #     # unchanged (it's unicode already)
+        #     # using the ternary operator, because I like it: a if test else b
+        #     note["tags"] = [str(t, 'utf-8') if isinstance(t, str) else t for t in note["tags"]]
 
         # determine whether to create a new note or updated an existing one
+        params = {'auth': self.get_token(),
+                  'email': self.username}
         if "key" in note:
             # set modification timestamp if not set by client
             if 'modifydate' not in note:
                 note["modifydate"] = time.time()
 
-            url = '%s/%s?auth=%s&email=%s' % (DATA_URL, note["key"],
-                                              self.get_token(), self.username)
+            url = '%s/%s' % (self.DATA_URL, note["key"])
         else:
-            url = '%s?auth=%s&email=%s' % (DATA_URL, self.get_token(), self.username)
+            url = self.DATA_URL
         #logging.debug('REQUEST: ' + url + ' - ' + str(note))
-        request = Request(url, urllib.quote(json.dumps(note)))
-        response = ""
         try:
-            response = urllib2.urlopen(request)
-        except IOError, e:
+            res = requests.post(url, data=json.dumps(note), params=params)
+        except IOError as e:
             #logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
-        note = json.loads(response.read())
-        if note.has_key("content"):
-            # use UTF-8 encoding
-            note["content"] = note["content"].encode('utf-8')
-        if note.has_key("tags"):
-            note["tags"] = [t.encode('utf-8') for t in note["tags"]]
+        note = res.json()
+        # if "content" in note:
+        #     # use UTF-8 encoding
+        #     note["content"] = note["content"].encode('utf-8')
+        # if "tags" in note:
+        #     note["tags"] = [t.encode('utf-8') for t in note["tags"]]
         #logging.debug('RESPONSE OK: ' + str(note))
         return note, 0
 
@@ -232,35 +236,38 @@ class Simplenote(object):
         notes = { "data" : [] }
 
         # get the note index
-        params = 'auth=%s&email=%s&length=%s' % (self.get_token(), self.username,
-                                                 NOTE_FETCH_LENGTH)
+        params = {'auth': self.get_token(),
+                  'email': self.username,
+                  'length': NOTE_FETCH_LENGTH
+                  }
         if since is not None:
-            params += '&since=%s' % since
+            params['since'] = since
 
         # perform initial HTTP request
         try:
-            #logging.debug('REQUEST: ' + INDX_URL+params)
-            request = Request(INDX_URL+params)
-            response = json.loads(urllib2.urlopen(request).read())
-            #logging.debug('RESPONSE OK: ' + str(response))
-            notes["data"].extend(response["data"])
+            #logging.debug('REQUEST: ' + self.INDX_URL+params)
+            res = requests.get(self.INDX_URL, params=params)
+            #logging.debug('RESPONSE OK: ' + str(res))
+            notes["data"].extend(res.json()["data"])
         except IOError:
             status = -1
 
         # get additional notes if bookmark was set in response
         while "mark" in response:
-            vals = (self.get_token(), self.username, response["mark"], NOTE_FETCH_LENGTH)
-            params = 'auth=%s&email=%s&mark=%s&length=%s' % vals
+            params = {'auth': self.get_token(),
+                      'email': self.username,
+                      'mark': response['mark'],
+                      'length': NOTE_FETCH_LENGTH
+                      }
             if since is not None:
-                params += '&since=%s' % since
+                params['since'] = since
 
             # perform the actual HTTP request
             try:
-                #logging.debug('REQUEST: ' + INDX_URL+params)
-                request = Request(INDX_URL+params)
-                response = json.loads(urllib2.urlopen(request).read())
+                #logging.debug('REQUEST: ' + self.INDX_URL+params)
+                res = requests.get(self.INDX_URL, params=params)
                 #logging.debug('RESPONSE OK: ' + str(response))
-                notes["data"].extend(response["data"])
+                notes["data"].extend(res.json()["data"])
             except IOError:
                 status = -1
 
@@ -314,30 +321,17 @@ class Simplenote(object):
         if (status == -1):
             return note, status
 
-        params = '/%s?auth=%s&email=%s' % (str(note_id), self.get_token(),
-                                           self.username)
-        #logging.debug('REQUEST DELETE: ' + DATA_URL+params)
-        request = Request(url=DATA_URL+params, method='DELETE')
+        params = {'auth': self.get_token(),
+                  'email': self.username }
+        url = '{}/{}'.format(self.DATA_URL, str(note_id))
+
+        #logging.debug('REQUEST DELETE: ' + self.DATA_URL+params)
+        request = Request(url=self.DATA_URL+params, method='DELETE')
         try:
-            urllib2.urlopen(request)
-        except IOError, e:
+            res = requests.delete(url, params=params)
+            # TODO: check error handling stuff - probably use res.status_code to check if was able to delete, etc.
+            #       (same must be done for other note actions)
+        except IOError as e:
             return e, -1
         return {}, 0
-
-
-class Request(urllib2.Request):
-    """ monkey patched version of urllib2's Request to support HTTP DELETE
-        Taken from http://python-requests.org, thanks @kennethreitz
-    """
-
-    def __init__(self, url, data=None, headers={}, origin_req_host=None,
-                unverifiable=False, method=None):
-        urllib2.Request.__init__(self, url, data, headers, origin_req_host, unverifiable)
-        self.method = method
-
-    def get_method(self):
-        if self.method:
-            return self.method
-
-        return urllib2.Request.get_method(self)
 

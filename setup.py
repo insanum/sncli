@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # Copyright (c) 2014 Eric Davis
 # Licensed under the MIT License
@@ -13,7 +13,7 @@ setup(
       author=simplenote_cli.__author__,
       author_email=simplenote_cli.__author_email__,
       url=simplenote_cli.__url__,
-      requires=[ 'urwid' ],
+      requires=[ 'urwid', 'requests' ],
       packages=[ 'simplenote_cli' ],
       scripts=[ 'sncli' ]
      )

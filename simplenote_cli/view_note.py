@@ -3,9 +3,9 @@
 # Licensed under the MIT License
 
 import time, urwid
-import utils
+from . import utils
 import re
-from clipboard import Clipboard
+from .clipboard import Clipboard
 
 class ViewNote(urwid.ListBox):
 
@@ -40,7 +40,7 @@ class ViewNote(urwid.ListBox):
                     urwid.AttrMap(urwid.Text(l.replace('\t', ' ' * self.tabstop)),
                                   'note_content',
                                   'note_content_focus'))
-        lines.append(urwid.AttrMap(urwid.Divider(u'-'), 'default'))
+        lines.append(urwid.AttrMap(urwid.Divider('-'), 'default'))
         return lines
 
     def update_note_view(self, key=None, version=None):
@@ -52,22 +52,22 @@ class ViewNote(urwid.ListBox):
         if self.key and version:
             # verify version is within range
             if int(version) <= 0 or int(version) >= self.note['version'] + 1:
-                self.log(u'Version v{0} is unavailable (key={1})'.
+                self.log('Version v{0} is unavailable (key={1})'.
                          format(version, self.key))
                 return
 
         if (not version and self.old_note) or \
            (self.key and version and version == self.note['version']):
-            self.log(u'Displaying latest version v{0} of note (key={1})'.
+            self.log('Displaying latest version v{0} of note (key={1})'.
                      format(self.note['version'], self.key))
             self.old_note = None
         elif self.key and version:
             # get a previous version of the note
-            self.log(u'Fetching version v{0} of note (key={1})'.
+            self.log('Fetching version v{0} of note (key={1})'.
                      format(version, self.key))
             version_note = self.ndb.get_note_version(self.key, version)
             if not version_note:
-                self.log(u'Failed to get version v{0} of note (key={1})'.
+                self.log('Failed to get version v{0} of note (key={1})'.
                          format(version, self.key))
                 # don't do anything, keep current note/version
             else:
@@ -79,11 +79,11 @@ class ViewNote(urwid.ListBox):
             self.focus_position = 0
 
     def lines_after_current_position(self):
-        lines_after_current_position = range(self.focus_position + 1, len(self.body.positions()) - 1)
+        lines_after_current_position = list(range(self.focus_position + 1, len(self.body.positions()) - 1))
         return lines_after_current_position
 
     def lines_before_current_position(self):
-        lines_before_current_position = range(0, self.focus_position)
+        lines_before_current_position = list(range(0, self.focus_position))
         lines_before_current_position.reverse()
         return lines_before_current_position
 
@@ -121,7 +121,7 @@ class ViewNote(urwid.ListBox):
     def get_status_bar(self):
         if not self.key:
             return \
-                urwid.AttrMap(urwid.Text(u'No note...'),
+                urwid.AttrMap(urwid.Text('No note...'),
                               'status_bar')
 
         cur   = -1
@@ -141,20 +141,20 @@ class ViewNote(urwid.ListBox):
             tags     = utils.get_note_tags(self.note)
             version  = self.note['version']
 
-        mod_time = time.strftime(u'Date: %a, %d %b %Y %H:%M:%S', t)
+        mod_time = time.strftime('Date: %a, %d %b %Y %H:%M:%S', t)
 
         status_title = \
-            urwid.AttrMap(urwid.Text(u'Title: ' +
+            urwid.AttrMap(urwid.Text('Title: ' +
                                      title,
                                      wrap='clip'),
                           'status_bar')
 
         status_key_index = \
-            ('pack', urwid.AttrMap(urwid.Text(u' [' + 
+            ('pack', urwid.AttrMap(urwid.Text(' [' + 
                                               self.key + 
-                                              u'] ' +
+                                              '] ' +
                                               str(cur + 1) +
-                                              u'/' +
+                                              '/' +
                                               str(total)),
                                    'status_bar'))
 
@@ -165,19 +165,19 @@ class ViewNote(urwid.ListBox):
 
         if self.old_note:
             status_tags_flags = \
-                ('pack', urwid.AttrMap(urwid.Text(u'[OLD:v' + 
+                ('pack', urwid.AttrMap(urwid.Text('[OLD:v' + 
                                                   str(version) + 
-                                                  u']'),
+                                                  ']'),
                                        'status_bar'))
         else:
             status_tags_flags = \
-                ('pack', urwid.AttrMap(urwid.Text(u'[' + 
+                ('pack', urwid.AttrMap(urwid.Text('[' + 
                                                   tags + 
-                                                  u'] [v' + 
+                                                  '] [v' + 
                                                   str(version) + 
-                                                  u'] [' + 
+                                                  '] [' + 
                                                   flags + 
-                                                  u']'),
+                                                  ']'),
                                        'status_bar'))
 
         pile_top = urwid.Columns([ status_title, status_key_index ])
@@ -189,7 +189,7 @@ class ViewNote(urwid.ListBox):
                                  'status_bar')
 
         pile_publish = \
-            urwid.AttrMap(urwid.Text(u'Published: http://simp.ly/publish/' +
+            urwid.AttrMap(urwid.Text('Published: http://simp.ly/publish/' +
                                      self.note['publishkey']),
                           'status_bar')
         return \

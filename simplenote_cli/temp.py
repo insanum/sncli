@@ -25,7 +25,7 @@ def tempfile_create(note, raw=False):
 
 def encode_utf_8(string):
     # This code also exists in sncli.py. Move into an encoding or utility class if other areas need encoding.
-    return string.encode("utf-8") if isinstance(string, unicode) else string
+    return string.encode("utf-8") if isinstance(string, str) else string
 
 def tempfile_delete(tf):
     if tf:
@@ -40,5 +40,5 @@ def tempfile_content(tf):
     # This seems like a hack. When editing with Gedit, tf file contents weren't getting 
     # updated in memory, even though it successfully saved on disk.
     updated_tf_contents = open(tf.name, 'r').read()
-    tf.write(updated_tf_contents)
+    tf.write(updated_tf_contents.encode("utf-8"))
     return updated_tf_contents

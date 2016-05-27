@@ -7,10 +7,10 @@
 # new BSD license
 
 import os, time, re, glob, json, copy, threading
-import utils
-import simplenote
+from . import utils
+from . import simplenote
 simplenote.NOTE_FETCH_LENGTH=100
-from simplenote import Simplenote
+from .simplenote import Simplenote
 
 class ReadError(RuntimeError):
     pass
@@ -42,10 +42,10 @@ class NotesDB():
 
         for fn in fnlist:
             try:
-                n = json.load(open(fn, 'rb'))
-            except IOError, e:
+                n = json.load(open(fn, 'r'))
+            except IOError as e:
                 raise ReadError ('Error opening {0}: {1}'.format(fn, str(e)))
-            except ValueError, e:
+            except ValueError as e:
                 raise ReadError ('Error reading {0}: {1}'.format(fn, str(e)))
             else:
                 # we always have a localkey, also when we don't have a note['key'] yet (no sync)
@@ -59,7 +59,8 @@ class NotesDB():
         # initialise the simplenote instance we're going to use
         # this does not yet need network access
         self.simplenote = Simplenote(self.config.get_config('sn_username'),
-                                     self.config.get_config('sn_password'))
+                                     self.config.get_config('sn_password'),
+                                     self.config.get_config('sn_host'))
 
         # we'll use this to store which notes are currently being synced by
         # the background thread, so we don't add them anew if they're still
@@ -69,12 +70,12 @@ class NotesDB():
     def filtered_notes_sort(self, filtered_notes, sort_mode='date'):
         if sort_mode == 'date':
             if self.config.get_config('pinned_ontop') == 'yes':
-                filtered_notes.sort(utils.sort_by_modify_date_pinned, reverse=True)
+                filtered_notes.sort(key=utils.sort_by_modify_date_pinned, reverse=True)
             else:
                 filtered_notes.sort(key=lambda o: -float(o.note.get('modifydate', 0)))
         else:
             if self.config.get_config('pinned_ontop') == 'yes':
-                filtered_notes.sort(utils.sort_by_title_pinned)
+                filtered_notes.sort(key=utils.sort_by_title_pinned)
             else:
                 filtered_notes.sort(key=lambda o: utils.get_note_title(o.note))
 
@@ -370,7 +371,7 @@ class NotesDB():
     def helper_save_note(self, k, note):
         # Save a single note to disc.
         fn = self.helper_key_to_fname(k)
-        json.dump(note, open(fn, 'wb'), indent=2)
+        json.dump(note, open(fn, 'w'), indent=2)
 
         # record that we saved this to disc.
         note['savedate'] = time.time()
@@ -540,21 +541,21 @@ class NotesDB():
         #        PERMANENT DELETE, remove note from local store
         # Only do this when a full sync (i.e. entire index) is performed!
         if server_sync and full_sync and not skip_remote_syncing:
-            for local_key in self.notes.keys():
+            for local_key in list(self.notes.keys()):
                 if local_key not in server_keys:
                     del self.notes[local_key]
                     local_deletes[local_key] = True
 
         # sync done, now write changes to db_path
 
-        for k in local_updates.keys():
+        for k in list(local_updates.keys()):
             try:
                 self.helper_save_note(k, self.notes[k])
-            except WriteError, e:
+            except WriteError as e:
                 raise WriteError (str(e))
             self.log("Saved note to disk (key={0})".format(k))
 
-        for k in local_deletes.keys():
+        for k in list(local_deletes.keys()):
             fn = self.helper_key_to_fname(k)
             if os.path.exists(fn):
                 os.unlink(fn)
@@ -596,7 +597,7 @@ class NotesDB():
     def verify_all_saved(self):
         all_saved = True
         self.sync_lock.acquire()
-        for k in self.notes.keys():
+        for k in list(self.notes.keys()):
             o = self.get_note_status(k)
             if not o.saved:
                 all_saved = False
