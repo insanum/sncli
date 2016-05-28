@@ -644,8 +644,8 @@ class sncli:
             if not content:
                 return None
 
-            md5_old = hashlib.md5(self.encode_utf_8(note['content'])).digest()
-            md5_new = hashlib.md5(self.encode_utf_8(content)).digest()
+            md5_old = hashlib.md5(note['content'].encode('utf-8')).digest()
+            md5_new = hashlib.md5(content.encode('utf-8')).digest()
 
             if md5_old != md5_new:
                 self.log('Note updated')
@@ -862,10 +862,6 @@ class sncli:
 
         self.gui_update_status_bar()
         return None
-
-    def encode_utf_8(self, string):
-        # This code also exists in temp.py. Move into an encoding or utility class if other areas need encoding.
-        return string.encode("utf-8") if isinstance(string, str) else string
 
     def gui_init_view(self, loop, view_note):
         self.master_frame.keypress = self.gui_frame_keypress
@@ -1093,8 +1089,8 @@ class sncli:
         if not content:
             return
 
-        md5_old = hashlib.md5(self.encode_utf_8(note['content'])).digest()
-        md5_new = hashlib.md5(self.encode_utf_8(content)).digest()
+        md5_old = hashlib.md5(note['content'].encode('utf-8')).digest()
+        md5_new = hashlib.md5(content.encode('utf-8')).digest()
 
         if md5_old != md5_new:
             self.log('Note updated')
