@@ -23,6 +23,12 @@ Check your OS distribution for installation packages.
 * [Requests](https://requests.readthedocs.org/en/master/) Python 3 module
 * A love for the command line!
 
+### Installation
+
+* Clone this repository to your hard disk: `git clone https://github.com/insanum/sncli.git`
+* Install the requirements `pip3 install -r requirements.txt`
+* Install _sncli_: `python3 setup.py install`
+
 ### Features
 
 * Console GUI
