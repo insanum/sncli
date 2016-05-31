@@ -7,7 +7,7 @@ import os, json, tempfile
 def tempfile_create(note, raw=False):
     if raw:
         # dump the raw json of the note
-        tf = tempfile.NamedTemporaryFile(suffix='.json', delete=False)
+        tf = tempfile.NamedTemporaryFile(mode = 'w+', suffix='.json', delete=False)
         json.dump(note, tf, indent=2)
         tf.flush()
     else:
