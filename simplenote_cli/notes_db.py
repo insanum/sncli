@@ -265,6 +265,31 @@ class NotesDB():
         match_regexp = search_string if sspat else ''
         return filtered_notes, match_regexp, active_notes
 
+    def import_note(self, note):
+        # need to get a key unique to this database. not really important
+        # what it is, as long as it's unique.
+        new_key = note['key'] if note.get('key') else utils.generate_random_key()
+        while new_key in self.notes:
+            new_key = utils.generate_random_key()
+
+        timestamp = time.time()
+
+        # note has no internal key yet.
+        new_note = {
+                    'content'    : note['content'] if note.get('content') else '',
+                    'deleted'    : note['deleted'] if note.get('deleted') else 0,
+                    'modifydate' : note['modifydate'] if note.get('modifydate') else timestamp,
+                    'createdate' : note['createdate'] if note.get('createdate') else timestamp,
+                    'savedate'   : 0, # never been written to disc
+                    'syncdate'   : 0, # never been synced with server
+                    'tags'       : note['tags'] if note.get('tags') else [],
+                    'systemtags' : note['systemtags'] if note.get('systemtags') else []
+                   }
+
+        self.notes[new_key] = new_note
+
+        return new_key
+
     def create_note(self, content):
         # need to get a key unique to this database. not really important
         # what it is, as long as it's unique.

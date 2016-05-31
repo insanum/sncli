@@ -1081,6 +1081,22 @@ class sncli:
             self.ndb.create_note(content)
             self.sync_notes()
 
+    def cli_note_import(self, from_stdin):
+
+        if from_stdin:
+            raw = ''.join(sys.stdin)
+        else:
+            raw = self.exec_cmd_on_note(None)
+
+        if raw:
+            try:
+                note = json.loads(raw)
+                self.log('New note created')
+                self.ndb.import_note(note)
+                self.sync_notes()
+            except ValueError:
+                self.log('Decoding JSON has failed')
+
     def cli_note_edit(self, key):
 
         note = self.ndb.get_note(key)
@@ -1159,6 +1175,7 @@ Usage:
   list [search_string]        - list notes (refined with search string)
   dump [search_string]        - dump notes (refined with search string)
   create [-]                  - create a note ('-' content from stdin)
+  import [-]                  - import a note in JSON format ('-' JSON from stdin)
   dump                        - dump a note (specified by <key>)
   edit                        - edit a note (specified by <key>)
   < trash | untrash >         - trash/untrash a note (specified by <key>)
@@ -1234,6 +1251,17 @@ def main(argv):
         elif len(args) == 2 and args[1] == '-':
             sn = sncli_start()
             sn.cli_note_create(True, title)
+        else:
+            usage()
+
+    elif args[0] == 'import':
+
+        if len(args) == 1:
+            sn = sncli_start()
+            sn.cli_note_import(False)
+        elif len(args) == 2 and args[1] == '-':
+            sn = sncli_start()
+            sn.cli_note_import(True)
         else:
             usage()
 
