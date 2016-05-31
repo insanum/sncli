@@ -118,6 +118,24 @@ View the help by pressing `h`. Here you'll see all the keybinds and
 configuration items. The middle column shows the config name that can be used
 in your `.snclirc` to override the default setting.
 
+See example configuration file below for more notes.
+
+```
+[sncli]
+cfg_sn_username = lebowski@thedude.com
+cfg_sn_password = nihilist
+
+# see http://urwid.org/manual/userinput.html for examples of more key combinations
+kb_edit_note = space
+kb_page_down = ctrl f
+
+# note that values must not be quoted
+clr_note_focus_bg = light blue
+
+# the EDITOR env variable overrides the value below
+cfg_editor = nvim
+```
+
 #### Note Title Format
 
 The format of each line in the note list is driven by the
