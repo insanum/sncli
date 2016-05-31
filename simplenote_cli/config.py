@@ -33,7 +33,7 @@ class Config:
          'kb_sync'            : 'S',
          'kb_down'            : 'j',
          'kb_up'              : 'k',
-         'kb_page_down'       : ' ',
+         'kb_page_down'       : 'space',
          'kb_page_up'         : 'b',
          'kb_half_page_down'  : 'ctrl d',
          'kb_half_page_up'    : 'ctrl u',

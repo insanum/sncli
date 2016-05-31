@@ -399,6 +399,9 @@ class sncli:
                 self.gui_reset()
 
     def gui_frame_keypress(self, size, key):
+        # convert space character into name
+        if key == ' ':
+            key = 'space'
 
         lb = self.gui_body_get()
 
