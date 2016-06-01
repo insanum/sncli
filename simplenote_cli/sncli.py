@@ -264,7 +264,7 @@ class sncli:
             return
 
         try:
-            cur_key = self.view_titles.note_list[self.view_titles.focus_position].note['key']
+            cur_key = self.view_titles.note_list[self.view_titles.focus_position].note['localkey']
         except IndexError as e:
             cur_key = None
             pass
@@ -366,7 +366,7 @@ class sncli:
             else: # self.gui_body_get().__class__ == view_note.ViewNote:
                 note = self.view_note.note
 
-            self.ndb.set_note_tags(note['key'], tags)
+            self.ndb.set_note_tags(note['localkey'], tags)
 
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 self.view_titles.update_note_title()
@@ -511,7 +511,7 @@ class sncli:
                 return None
             self.view_titles.focus_position += 1
             lb.update_note_view(
-                self.view_titles.note_list[self.view_titles.focus_position].note['key'])
+                self.view_titles.note_list[self.view_titles.focus_position].note['localkey'])
             self.gui_switch_frame_body(self.view_note)
 
         elif key == self.config.get_keybind('view_prev_note'):
@@ -524,7 +524,7 @@ class sncli:
                 return None
             self.view_titles.focus_position -= 1
             lb.update_note_view(
-                self.view_titles.note_list[self.view_titles.focus_position].note['key'])
+                self.view_titles.note_list[self.view_titles.focus_position].note['localkey'])
             self.gui_switch_frame_body(self.view_note)
 
         elif key == self.config.get_keybind('prev_version') or \
@@ -652,7 +652,8 @@ class sncli:
 
             if md5_old != md5_new:
                 self.log('Note updated')
-                self.ndb.set_note_content(note['key'], content)
+                self.log(note.__repr__())
+                self.ndb.set_note_content(note['localkey'], content)
                 if self.gui_body_get().__class__ == view_titles.ViewTitles:
                     lb.update_note_title()
                 else: # self.gui_body_get().__class__ == view_note.ViewNote:
@@ -667,8 +668,9 @@ class sncli:
 
             if len(lb.body.positions()) <= 0:
                 return None
+            self.log(lb.note_list[lb.focus_position].note.__repr__())
             self.view_note.update_note_view(
-                    lb.note_list[lb.focus_position].note['key'])
+                    lb.note_list[lb.focus_position].note['localkey'])
             self.gui_switch_frame_body(self.view_note)
 
         elif key == self.config.get_keybind('pipe_note'):
@@ -714,7 +716,7 @@ class sncli:
                         '{0} (y/n): '.format('Untrash' if note['deleted'] else 'Trash'),
                         '',
                         self.gui_yes_no_input,
-                        [ self.trash_note_callback, note['key'] ]),
+                        [ self.trash_note_callback, note['localkey'] ]),
                     'user_input_bar'))
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
@@ -736,7 +738,7 @@ class sncli:
                 if 'pinned' in note['systemtags']: pin = 0
                 else:                              pin = 1
 
-            self.ndb.set_note_pinned(note['key'], pin)
+            self.ndb.set_note_pinned(note['localkey'], pin)
 
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 lb.update_note_title()
@@ -760,7 +762,7 @@ class sncli:
                 if 'markdown' in note['systemtags']: md = 0
                 else:                                md = 1
 
-            self.ndb.set_note_markdown(note['key'], md)
+            self.ndb.set_note_markdown(note['localkey'], md)
 
             if self.gui_body_get().__class__ == view_titles.ViewTitles:
                 lb.update_note_title()
@@ -1097,7 +1099,7 @@ class sncli:
 
         if md5_old != md5_new:
             self.log('Note updated')
-            self.ndb.set_note_content(note['key'], content)
+            self.ndb.set_note_content(note['localkey'], content)
             self.sync_notes()
         else:
             self.log('Note unchanged')

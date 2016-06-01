@@ -55,6 +55,8 @@ class NotesDB():
                 # these notes have just been read, so at this moment
                 # they're in sync with the disc.
                 n['savedate'] = now
+                # set a localkey to each note in memory
+                n['localkey'] = localkey
 
         # initialise the simplenote instance we're going to use
         # this does not yet need network access
@@ -276,6 +278,7 @@ class NotesDB():
 
         # note has no internal key yet.
         new_note = {
+                    'localkey'   : new_key,
                     'content'    : content,
                     'deleted'    : 0,
                     'modifydate' : timestamp,
@@ -371,6 +374,10 @@ class NotesDB():
     def helper_save_note(self, k, note):
         # Save a single note to disc.
         fn = self.helper_key_to_fname(k)
+        # TODO: don't save localkey
+        # - can't do the following because it updates the note everywhere
+        # if 'localkey' in note:
+        #     note.pop('localkey')
         json.dump(note, open(fn, 'w'), indent=2)
 
         # record that we saved this to disc.
@@ -424,6 +431,8 @@ class NotesDB():
         #        save note to server, update note with response
         for note_index, local_key in enumerate(self.notes.keys()):
             n = self.notes[local_key]
+            # TODO: don't send localkey with this
+
             if not n.get('key') or \
                float(n.get('modifydate')) > float(n.get('syncdate')):
 

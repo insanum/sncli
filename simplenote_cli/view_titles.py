@@ -174,13 +174,13 @@ class ViewTitles(urwid.ListBox):
                 self.get_note_title(self.note_list[self.focus_position].note)
         else:
             for i in range(len(self.note_list)):
-                if self.note_list[i].note['key'] == key:
+                if self.note_list[i].note['localkey'] == key:
                     self.body[i] = self.get_note_title(self.note_list[i].note)
 
     def focus_note(self, key):
         for i in range(len(self.note_list)):
             if 'key' in self.note_list[i].note and \
-               self.note_list[i].note['key'] == key:
+               self.note_list[i].note['localkey'] == key:
                 self.focus_position = i
 
     def keypress(self, size, key):

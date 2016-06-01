@@ -8,6 +8,7 @@ def tempfile_create(note, raw=False):
     if raw:
         # dump the raw json of the note
         tf = tempfile.NamedTemporaryFile(suffix='.json', delete=False)
+
         contents = json.dumps(note, indent=2)
         tf.write(contents.encode('utf-8'))
         tf.flush()
