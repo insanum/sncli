@@ -101,7 +101,7 @@ class sncli:
 
         content = None
         if not raw:
-            content = ''.join(temp.tempfile_content(tf))
+            content = temp.tempfile_content(tf)
             if not content or content == '\n':
                 content = None
 

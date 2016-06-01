@@ -26,6 +26,7 @@ def tempfile_create(note, raw=False):
 
 def tempfile_delete(tf):
     if tf:
+        tf.close()
         os.unlink(tf.name)
 
 def tempfile_name(tf):
@@ -34,7 +35,13 @@ def tempfile_name(tf):
     return ''
 
 def tempfile_content(tf):
-    # This seems like a hack. When editing with Gedit, tf file contents weren't getting 
-    updated_tf_contents = open(tf.name, 'r').read()
-    tf.write(updated_tf_contents.encode('utf-8'))
-    return updated_tf_contents
+    # This 'hack' is needed because some editors use an intermediate temporary
+    # file, and rename it to that of the correct file, overwriting it. This
+    # means that the tf file handle won't be updated with the new contents, and
+    # the tempfile must be re-opened and read
+    if not tf:
+        return None
+
+    with open(tf.name, 'rb') as f:
+        updated_tf_contents = f.read()
+        return updated_tf_contents.decode('utf-8')
