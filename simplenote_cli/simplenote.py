@@ -14,7 +14,7 @@
 """
 
 import urllib.parse
-from urllib.error import HTTPError
+from requests.exceptions import RequestException
 import base64
 import time
 import datetime
@@ -66,10 +66,10 @@ class Simplenote(object):
             if res.status_code != 200:
                 raise SimplenoteLoginFailed(
                         'Login to Simplenote API failed! statuscode: {}'.format(res.status_code))
-        except HTTPError as e:
-            raise SimplenoteLoginFailed('Login to Simplenote API failed!')
-        except IOError: # no connection exception
+        except requests.exceptions.ConnectionError: # no connection exception
             token = None
+        except RequestException as e:
+            raise SimplenoteLoginFailed('Login to Simplenote API failed!')
 
         return token
 
@@ -113,13 +113,13 @@ class Simplenote(object):
         #logging.debug('REQUEST: ' + self.DATA_URL+params)
         try:
             res = requests.get(url, params=params)
-        except HTTPError as e:
-            #logging.debug('RESPONSE ERROR: ' + str(e))
+            res.raise_for_status()
+            note = res.json()
+        except RequestException as e:
+            # logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
-        except IOError as e:
-            #logging.debug('RESPONSE ERROR: ' + str(e))
+        except ValueError as e:
             return e, -1
-        note = res.json()
 
         # # use UTF-8 encoding
         # note["content"] = note["content"].encode('utf-8')
@@ -161,10 +161,13 @@ class Simplenote(object):
         #logging.debug('REQUEST: ' + url + ' - ' + str(note))
         try:
             res = requests.post(url, data=json.dumps(note), params=params)
-        except IOError as e:
-            #logging.debug('RESPONSE ERROR: ' + str(e))
+            res.raise_for_status()
+            note = res.json()
+        except RequestException as e:
+            # logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
-        note = res.json()
+        except ValueError as e:
+            return e, -1
         #logging.debug('RESPONSE OK: ' + str(note))
         return note, 0
 
@@ -232,14 +235,16 @@ class Simplenote(object):
         try:
             #logging.debug('REQUEST: ' + self.INDX_URL+params)
             res = requests.get(self.INDX_URL, params=params)
+            res.raise_for_status()
             #logging.debug('RESPONSE OK: ' + str(res))
-            # TODO: check response code (here and below in loop)
             json_data = res.json()
             notes["data"].extend(json_data["data"])
-        except IOError:
-            # TODO: catch requests exceptions - http://docs.python-requests.org/en/master/user/quickstart/#errors-and-exceptions
+        except RequestException as e:
+            # if problem with network request/response
             status = -1
-
+        except ValueError as e:
+            # if invalid json data
+            status = -1
 
         # get additional notes if bookmark was set in response
         while "mark" in json_data:
@@ -255,10 +260,15 @@ class Simplenote(object):
             try:
                 #logging.debug('REQUEST: ' + self.INDX_URL+params)
                 res = requests.get(self.INDX_URL, params=params)
+                res.raise_for_status()
                 json_data = res.json()
-                #logging.debug('RESPONSE OK: ' + str(response))
+                #logging.debug('RESPONSE OK: ' + str(res))
                 notes["data"].extend(json_data["data"])
-            except IOError:
+            except RequestException as e:
+                # if problem with network request/response
+                status = -1
+            except ValueError as e:
+                # if invalid json data
                 status = -1
 
         # parse data fields in response
@@ -315,13 +325,11 @@ class Simplenote(object):
                   'email': self.username }
         url = '{}/{}'.format(self.DATA_URL, str(note_id))
 
-        #logging.debug('REQUEST DELETE: ' + self.DATA_URL+params)
-        request = Request(url=self.DATA_URL+params, method='DELETE')
         try:
+            #logging.debug('REQUEST DELETE: ' + self.DATA_URL+params)
             res = requests.delete(url, params=params)
-            # TODO: check error handling stuff - probably use res.status_code to check if was able to delete, etc.
-            #       (same must be done for other note actions)
-        except IOError as e:
+            res.raise_for_status()
+        except RequestException as e:
             return e, -1
         return {}, 0
 
