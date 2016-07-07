@@ -1,3 +1,12 @@
+# byte-compiled python files
 *.pyc
-.ropeproject
+
+# venv dir
 env
+
+# python packaging files/dirs
+build
+dist
+MANIFEST
+
+.ropeproject

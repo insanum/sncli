@@ -25,9 +25,12 @@ Check your OS distribution for installation packages.
 
 ### Installation
 
-* Clone this repository to your hard disk: `git clone https://github.com/insanum/sncli.git`
-* Install the requirements `pip3 install -r requirements.txt`
-* Install _sncli_: `python3 setup.py install`
+* Via pip (latest release):
+  - `pip3 install sncli`
+* Manually:
+  - Clone this repository to your hard disk: `git clone https://github.com/insanum/sncli.git`
+  - Install the requirements `pip3 install -r requirements.txt`
+  - Install _sncli_: `python3 setup.py install`
 
 ### Features
 
