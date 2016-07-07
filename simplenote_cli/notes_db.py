@@ -49,14 +49,15 @@ class NotesDB():
                 raise ReadError ('Error reading {0}: {1}'.format(fn, str(e)))
             else:
                 # we always have a localkey, also when we don't have a note['key'] yet (no sync)
-                localkey = os.path.splitext(os.path.basename(fn))[0]
-                self.notes[localkey] = n
+                localkey = n.get('localkey', os.path.splitext(os.path.basename(fn))[0])
                 # we maintain in memory a timestamp of the last save
                 # these notes have just been read, so at this moment
                 # they're in sync with the disc.
                 n['savedate'] = now
                 # set a localkey to each note in memory
                 n['localkey'] = localkey
+
+                self.notes[localkey] = n
 
         # initialise the simplenote instance we're going to use
         # this does not yet need network access
@@ -374,10 +375,6 @@ class NotesDB():
     def helper_save_note(self, k, note):
         # Save a single note to disc.
         fn = self.helper_key_to_fname(k)
-        # TODO: don't save localkey
-        # - can't do the following because it updates the note everywhere
-        # if 'localkey' in note:
-        #     note.pop('localkey')
         json.dump(note, open(fn, 'w'), indent=2)
 
         # record that we saved this to disc.
@@ -431,7 +428,6 @@ class NotesDB():
         #        save note to server, update note with response
         for note_index, local_key in enumerate(self.notes.keys()):
             n = self.notes[local_key]
-            # TODO: don't send localkey with this
 
             if not n.get('key') or \
                float(n.get('modifydate')) > float(n.get('syncdate')):
@@ -453,6 +449,9 @@ class NotesDB():
                 if 'what_changed' in n:
                     del n['what_changed']
 
+                if 'localkey' in cn:
+                    del cn['localkey']
+
                 if 'minversion' in cn:
                     del cn['minversion']
                 del cn['createdate']
@@ -462,7 +461,7 @@ class NotesDB():
                 if 'what_changed' in cn:
                     if 'deleted' not in cn['what_changed']:
                         del cn['deleted']
-                    if 'systemtags' not in cn['what_changed']:
+                    if 'systemtags' not in cn['what_changed'] and 'systemtags' in cn:
                         del cn['systemtags']
                     if 'tags' not in cn['what_changed']:
                         del cn['tags']

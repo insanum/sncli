@@ -158,7 +158,6 @@ class Simplenote(object):
         else:
             url = self.DATA_URL
 
-        # TODO: remove localkey temporarily before posting
         #logging.debug('REQUEST: ' + url + ' - ' + str(note))
         try:
             res = requests.post(url, data=json.dumps(note), params=params)

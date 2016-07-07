@@ -652,7 +652,6 @@ class sncli:
 
             if md5_old != md5_new:
                 self.log('Note updated')
-                self.log(note.__repr__())
                 self.ndb.set_note_content(note['localkey'], content)
                 if self.gui_body_get().__class__ == view_titles.ViewTitles:
                     lb.update_note_title()
@@ -668,7 +667,6 @@ class sncli:
 
             if len(lb.body.positions()) <= 0:
                 return None
-            self.log(lb.note_list[lb.focus_position].note.__repr__())
             self.view_note.update_note_view(
                     lb.note_list[lb.focus_position].note['localkey'])
             self.gui_switch_frame_body(self.view_note)

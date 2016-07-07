@@ -179,7 +179,7 @@ class ViewTitles(urwid.ListBox):
 
     def focus_note(self, key):
         for i in range(len(self.note_list)):
-            if 'key' in self.note_list[i].note and \
+            if 'localkey' in self.note_list[i].note and \
                self.note_list[i].note['localkey'] == key:
                 self.focus_position = i
 
