@@ -1045,10 +1045,10 @@ class sncli:
 
         print(sep)
         print(('| {:<' + str(w) + '} |').format(('    Title: ' + title)[:w]))
-        print(('| {:<' + str(w) + '} |').format(('      Key: ' + note['key'])[:w]))
+        print(('| {:<' + str(w) + '} |').format(('      Key: ' + note.get('key', 'Localkey: {}'.format(note.get('localkey'))))[:w]))
         print(('| {:<' + str(w) + '} |').format(('     Date: ' + mod_time)[:w]))
         print(('| {:<' + str(w) + '} |').format(('     Tags: ' + tags)[:w]))
-        print(('| {:<' + str(w) + '} |').format(('  Version: v' + str(note['version']))[:w]))
+        print(('| {:<' + str(w) + '} |').format(('  Version: v' + str(note.get('version', 0)))[:w]))
         print(('| {:<' + str(w) + '} |').format(('    Flags: [' + flags + ']')[:w]))
         if utils.note_published(note) and 'publishkey' in note:
             print(('| {:<' + str(w) + '} |').format(('Published: http://simp.ly/publish/' + note['publishkey'])[:w]))
