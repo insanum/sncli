@@ -26,9 +26,8 @@
 # Dude... just buy me a beer. :-)
 #
 
-import sys
 from simplenote_cli import sncli
 
 if __name__ == '__main__':
-    sncli.main(sys.argv[1:])
+    sncli.main()
 

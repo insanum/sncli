@@ -1167,7 +1167,8 @@ Usage:
 ''')
     sys.exit(0)
 
-def main(argv):
+
+def main(argv=sys.argv[1:]):
     verbose = False
     sync    = True
     regex   = False

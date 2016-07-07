@@ -6,6 +6,8 @@
 from distutils.core import setup
 import simplenote_cli
 
+deps = ['urwid', 'requests']
+
 setup(
       name=simplenote_cli.__productname__,
       description=simplenote_cli.__description__,
@@ -13,8 +15,12 @@ setup(
       author=simplenote_cli.__author__,
       author_email=simplenote_cli.__author_email__,
       url=simplenote_cli.__url__,
-      requires=[ 'urwid', 'requests' ],
-      packages=[ 'simplenote_cli' ],
-      scripts=[ 'sncli' ]
+      requires=deps,
+      install_requires=deps,
+      packages=['simplenote_cli'],
+      entry_points={
+          'console_scripts': [
+              'sncli = simplenote_cli.sncli:main'
+          ]
+      }
      )
-
