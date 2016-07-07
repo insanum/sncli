@@ -55,8 +55,11 @@ class NotesDB():
                 # they're in sync with the disc.
                 n['savedate'] = now
                 # set a localkey to each note in memory
+                # Note: 'key' is used only for syncing with server - 'localkey'
+                #       is used for everything else in sncli
                 n['localkey'] = localkey
 
+                # add the note to our database
                 self.notes[localkey] = n
 
         # initialise the simplenote instance we're going to use
@@ -479,6 +482,7 @@ class NotesDB():
                     k = uret[0].get('key')
                     n.update(uret[0])
                     n['syncdate'] = now
+                    n['localkey'] = k
                     self.notes[k] = n
 
                     local_updates[k] = True
@@ -527,6 +531,7 @@ class NotesDB():
                             self.notes[k].update(gret[0])
                             local_updates[k] = True
                             self.notes[k]['syncdate'] = now
+                            self.notes[k]['localkey'] = k
 
                             self.log('Synced newer note from server (key={0})'.format(k))
                         else:
@@ -539,6 +544,7 @@ class NotesDB():
                         self.notes[k] = gret[0]
                         local_updates[k] = True
                         self.notes[k]['syncdate'] = now
+                        self.notes[k]['localkey'] = k
 
                         self.log('Synced new note from server (key={0})'.format(k))
                     else:

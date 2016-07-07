@@ -139,7 +139,7 @@ class ViewNote(urwid.ListBox):
             title    = utils.get_note_title(self.note)
             flags    = utils.get_note_flags(self.note)
             tags     = utils.get_note_tags(self.note)
-            version  = self.note['version']
+            version  = self.note.get('version', 0)
 
         mod_time = time.strftime('Date: %a, %d %b %Y %H:%M:%S', t)
 
