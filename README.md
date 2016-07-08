@@ -19,6 +19,7 @@ Check your OS distribution for installation packages.
 ### Requirements
 
 * [Python 3](http://python.org)
+* [pip](https://pip.pypa.io/en/stable/)
 * [Urwid](http://urwid.org) Python 3 module
 * [Requests](https://requests.readthedocs.org/en/master/) Python 3 module
 * A love for the command line!

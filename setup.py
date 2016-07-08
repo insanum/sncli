@@ -3,7 +3,7 @@
 # Copyright (c) 2014 Eric Davis
 # Licensed under the MIT License
 
-from distutils.core import setup
+from setuptools import setup
 import simplenote_cli
 
 deps = ['urwid', 'requests']
