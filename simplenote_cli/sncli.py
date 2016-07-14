@@ -465,7 +465,7 @@ class sncli:
             if len(lb.body.positions()) <= 0:
                 return None
             last = len(lb.body.positions())
-            next_focus = lb.focus_position + (size[1] / 2)
+            next_focus = lb.focus_position + (size[1] // 2)
             if next_focus >= last:
                 next_focus = last - 1
             lb.change_focus(size, next_focus,
@@ -477,9 +477,9 @@ class sncli:
                 return None
             if 'bottom' in lb.ends_visible(size):
                 last = len(lb.body.positions())
-                next_focus = last - size[1] - (size[1] / 2)
+                next_focus = last - size[1] - (size[1] // 2)
             else:
-                next_focus = lb.focus_position - (size[1] / 2)
+                next_focus = lb.focus_position - (size[1] // 2)
             if next_focus < 0:
                 next_focus = 0
             lb.change_focus(size, next_focus,
