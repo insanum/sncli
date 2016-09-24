@@ -194,6 +194,18 @@ example:
 /tag:tag1 tag:tag2 word1 "word2 word3" tag:tag3
 ```
 
+
+### Importing
+
+sncli can import notes from raw json data (via stdin or editor). For example:
+
+```
+echo '{"tags":["testing","new"],"content":"New note!"}' | sncli import -
+```
+
+Allowed fields are `content`, `tags`, `systemtags`, `modifydate`, `createdate`, and `deleted`.
+
+
 ### Tricks
 
 I personally store a lot of my notes in
