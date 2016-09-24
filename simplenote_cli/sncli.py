@@ -1094,8 +1094,12 @@ class sncli:
                 self.log('New note created')
                 self.ndb.import_note(note)
                 self.sync_notes()
-            except ValueError:
-                self.log('Decoding JSON has failed')
+            except json.decoder.JSONDecodeError as e:
+                self.log('(IMPORT) Decoding JSON has failed: {}'.format(e))
+                sys.exit(1)
+            except ValueError as e:
+                self.log('(IMPORT) ValueError: {}'.format(e))
+                sys.exit(1)
 
     def cli_note_edit(self, key):
 

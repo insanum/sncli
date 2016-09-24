@@ -280,12 +280,18 @@ class NotesDB():
 
         timestamp = time.time()
 
+        try:
+            modifydate = float(note.get('modifydate', timestamp))
+            createdate = float(note.get('createdate', timestamp))
+        except ValueError:
+            raise ValueError('date fields must be numbers or string representations of numbers')
+
         # note has no internal key yet.
         new_note = {
                     'content'    : note.get('content', ''),
                     'deleted'    : note.get('deleted', 0),
-                    'modifydate' : note.get('modifydate', timestamp),
-                    'createdate' : note.get('createdate', timestamp),
+                    'modifydate' : modifydate,
+                    'createdate' : createdate,
                     'savedate'   : 0, # never been written to disc
                     'syncdate'   : 0, # never been synced with server
                     'tags'       : note.get('tags', []),
@@ -293,20 +299,26 @@ class NotesDB():
                    }
 
         # sanity check all note values
-        assert isinstance(new_note['content'], str)
-        assert new_note['deleted'] in (0, 1)
+        if not isinstance(new_note['content'], str):
+            raise ValueError('"content" must be a string')
+        if not new_note['deleted'] in (0, 1):
+            raise ValueError('"deleted" must be 0 or 1')
 
         for n in (new_note['modifydate'], new_note['createdate']):
-            assert isinstance(n, float) or isinstance(n, int)
-            assert 0 <= n <= timestamp
+            if not 0 <= n <= timestamp:
+                raise ValueError('date fields must be real')
 
-        assert isinstance(new_note['tags'], list)
+        if not isinstance(new_note['tags'], list):
+            raise ValueError('"tags" must be an array')
         for tag in new_note['tags']:
-            assert isinstance(tag, str)
+            if not isinstance(tag, str):
+                raise ValueError('items in the "tags" array must be strings')
 
-        assert isinstance(new_note['systemtags'], list)
+        if not isinstance(new_note['systemtags'], list):
+            raise ValueError('"systemtags" must be an array')
         for tag in new_note['systemtags']:
-            assert isinstance(tag, str)
+            if not isinstance(tag, str):
+                raise ValueError('items in the "systemtags" array must be strings')
 
         self.notes[new_key] = new_note
 

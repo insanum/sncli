@@ -58,6 +58,7 @@ Check your OS distribution for installation packages.
   - search for notes using a Google style search pattern or Regular Expression
   - dump note contents
   - create a new note (via stdin or editor)
+  - import a note with raw json data (stdin or editor)
   - edit a note (via editor)
   - trash/untrash a note
   - pin/unpin a note
