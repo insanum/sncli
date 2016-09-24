@@ -282,15 +282,31 @@ class NotesDB():
 
         # note has no internal key yet.
         new_note = {
-                    'content'    : note['content'] if note.get('content') else '',
-                    'deleted'    : note['deleted'] if note.get('deleted') else 0,
-                    'modifydate' : note['modifydate'] if note.get('modifydate') else timestamp,
-                    'createdate' : note['createdate'] if note.get('createdate') else timestamp,
+                    'content'    : note.get('content', ''),
+                    'deleted'    : note.get('deleted', 0),
+                    'modifydate' : note.get('modifydate', timestamp),
+                    'createdate' : note.get('createdate', timestamp),
                     'savedate'   : 0, # never been written to disc
                     'syncdate'   : 0, # never been synced with server
-                    'tags'       : note['tags'] if note.get('tags') else [],
-                    'systemtags' : note['systemtags'] if note.get('systemtags') else []
+                    'tags'       : note.get('tags', []),
+                    'systemtags' : note.get('systemtags', [])
                    }
+
+        # sanity check all note values
+        assert isinstance(new_note['content'], str)
+        assert new_note['deleted'] in (0, 1)
+
+        for n in (new_note['modifydate'], new_note['createdate']):
+            assert isinstance(n, float) or isinstance(n, int)
+            assert 0 <= n <= timestamp
+
+        assert isinstance(new_note['tags'], list)
+        for tag in new_note['tags']:
+            assert isinstance(tag, str)
+
+        assert isinstance(new_note['systemtags'], list)
+        for tag in new_note['systemtags']:
+            assert isinstance(tag, str)
 
         self.notes[new_key] = new_note
 
