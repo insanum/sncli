@@ -194,6 +194,13 @@ example:
 /tag:tag1 tag:tag2 word1 "word2 word3" tag:tag3
 ```
 
+Regular expression searching also supports the use of flags (currently only case-insensitive) by adding a final forward
+slash followed by the flags. The following example will do a case-insensitive search for `something`:
+
+```
+(regex) /something/i
+```
+
 
 ### Importing
 
