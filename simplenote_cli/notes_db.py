@@ -133,7 +133,7 @@ class NotesDB():
         for tp in tag_pats:
             tp = tp.lower()
             for t in note_tags:
-                if t.lower().startswith(tp):
+                if tp in t.lower():
                     tag_pats_matched += 1
                     break
 
