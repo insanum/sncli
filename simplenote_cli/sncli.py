@@ -806,19 +806,25 @@ class sncli:
                 else:
                     self.view_note.search_direction = 'forward'
 
+            options = [
+                    'gstyle' if key == self.config.get_keybind('search_gstyle')
+                    or key == self.config.get_keybind('search_prev_gstyle')
+                    else 'regex',
+                    'backward' if key == self.config.get_keybind('search_prev_gstyle')
+                    or key == self.config.get_keybind('search_prev_regex')
+                    else 'forward'
+            ]
+
+            caption = '{}{}'.format('(regex) ' if options[0] == 'regex' else '', '/' if options[1] == 'forward' else '?')
+
             self.gui_footer_input_set(
                 urwid.AttrMap(
                     user_input.UserInput(
                         self.config,
-                        key,
+                        caption,
                         '',
                         self.gui_search_input,
-                        [ 'gstyle' if key == self.config.get_keybind('search_gstyle')
-                                   or key == self.config.get_keybind('search_prev_gstyle')
-                                   else 'regex',
-                          'backward' if key == self.config.get_keybind('search_prev_gstyle')
-                                    or key == self.config.get_keybind('search_prev_regex')
-                                    else 'forward' ]),
+                        options),
                     'user_input_bar'))
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
