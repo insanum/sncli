@@ -893,17 +893,15 @@ class sncli:
     def gui_stop(self):
         # don't exit if there are any notes not yet saved to the disk
 
-        # TODO - verify_all_saved() was deadlocking for me. urllib2.urlopen() isn't timing out appropriately if connection is down.
-        # if self.ndb.verify_all_saved():
-        #     # clear the screen and exit the urwid run loop
-        #     self.gui_clear()
-        #     raise urwid.ExitMainLoop()
-        # else:
-        #     self.log(u'WARNING: Not all notes saved to disk (wait for sync worker)') 
-
-        # clear the screen and exit the urwid run loop
-        self.gui_clear()
-        raise urwid.ExitMainLoop()
+        # NOTE: this was originally causing hangs on exit with urllib2
+        # should not be a problem now since using the requests library
+        # ref https://github.com/insanum/sncli/issues/18#issuecomment-105517773
+        if self.ndb.verify_all_saved():
+            # clear the screen and exit the urwid run loop
+            self.gui_clear()
+            raise urwid.ExitMainLoop()
+        else:
+            self.log(u'WARNING: Not all notes saved to disk (wait for sync worker)')
 
     def gui(self, key):
 
