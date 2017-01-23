@@ -66,6 +66,7 @@ class Simplenote(object):
             token = res.text
             if res.status_code != 200:
                 self.status = 'login failed with status {}, check credentials'.format(res.status_code)
+                token = None
             else:
                 self.status = 'online'
         except ConnectionError as e:
