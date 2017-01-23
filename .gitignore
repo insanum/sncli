@@ -1,8 +1,9 @@
 # byte-compiled python files
 *.pyc
 
-# venv dir
-env
+# venv dirs
+env/
+venv/
 
 # python packaging files/dirs
 build
