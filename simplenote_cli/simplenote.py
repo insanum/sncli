@@ -14,7 +14,7 @@
 """
 
 import urllib.parse
-from requests.exceptions import RequestException
+from requests.exceptions import RequestException, ConnectionError
 import base64
 import time
 import datetime
@@ -46,6 +46,7 @@ class Simplenote(object):
         self.DATA_URL = 'https://{0}/api2/data'.format(host)
         self.INDX_URL = 'https://{0}/api2/index?'.format(host)
         self.token = None
+        self.status = 'connecting'
 
     def authenticate(self, user, password):
         """ Method to get simplenote auth token
@@ -64,13 +65,17 @@ class Simplenote(object):
             res = requests.post(self.AUTH_URL, data=values)
             token = res.text
             if res.status_code != 200:
-                raise SimplenoteLoginFailed(
-                        'Login to Simplenote API failed! statuscode: {}'.format(res.status_code))
-        except requests.exceptions.ConnectionError: # no connection exception
+                self.status = 'login failed with status {}, check credentials'.format(res.status_code)
+            else:
+                self.status = 'online'
+        except ConnectionError as e:
             token = None
+            self.status = 'offline, connection error'
         except RequestException as e:
-            raise SimplenoteLoginFailed('Login to Simplenote API failed!')
+            token = None
+            self.status = 'login failed, check log'
 
+        logging.debug('AUTHENTICATE: ' + self.status)
         return token
 
     def get_token(self):
@@ -83,7 +88,7 @@ class Simplenote(object):
             Simplenote API token as string
 
         """
-        if self.token == None:
+        if self.token is None:
             self.token = self.authenticate(self.username, self.password)
         return self.token
 
@@ -115,6 +120,9 @@ class Simplenote(object):
             res = requests.get(url, params=params)
             res.raise_for_status()
             note = res.json()
+        except ConnectionError as e:
+            self.status = 'offline, connection error'
+            return e, -1
         except RequestException as e:
             # logging.debug('RESPONSE ERROR: ' + str(e))
             return e, -1
@@ -163,8 +171,12 @@ class Simplenote(object):
             res = requests.post(url, data=json.dumps(note), params=params)
             res.raise_for_status()
             note = res.json()
+        except ConnectionError as e:
+            self.status = 'offline, connection error'
+            return e, -1
         except RequestException as e:
-            # logging.debug('RESPONSE ERROR: ' + str(e))
+            logging.debug('RESPONSE ERROR: ' + str(e))
+            self.status = 'error updating note, check log'
             return e, -1
         except ValueError as e:
             return e, -1
@@ -239,6 +251,9 @@ class Simplenote(object):
             #logging.debug('RESPONSE OK: ' + str(res))
             json_data = res.json()
             notes["data"].extend(json_data["data"])
+        except ConnectionError as e:
+            self.status = 'offline, connection error'
+            status = -1
         except RequestException as e:
             # if problem with network request/response
             status = -1
@@ -264,6 +279,9 @@ class Simplenote(object):
                 json_data = res.json()
                 #logging.debug('RESPONSE OK: ' + str(res))
                 notes["data"].extend(json_data["data"])
+            except ConnectionError as e:
+                self.status = 'offline, connection error'
+                status = -1
             except RequestException as e:
                 # if problem with network request/response
                 status = -1
@@ -329,6 +347,9 @@ class Simplenote(object):
             #logging.debug('REQUEST DELETE: ' + self.DATA_URL+params)
             res = requests.delete(url, params=params)
             res.raise_for_status()
+        except ConnectionError as e:
+            self.status = 'offline, connection error'
+            return e, -1
         except RequestException as e:
             return e, -1
         return {}, 0

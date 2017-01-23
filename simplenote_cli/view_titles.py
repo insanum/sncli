@@ -151,6 +151,10 @@ class ViewTitles(urwid.ListBox):
             total = len(self.body.positions())
 
         hdr = 'Simplenote'
+
+        # include simplenote connection status in header
+        hdr += ' (' + self.ndb.simplenote.status + ')'
+
         if self.search_string != None:
             hdr += ' - Search: ' + self.search_string
 
