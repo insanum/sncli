@@ -46,7 +46,7 @@ class Simplenote(object):
         self.DATA_URL = 'https://{0}/api2/data'.format(host)
         self.INDX_URL = 'https://{0}/api2/index?'.format(host)
         self.token = None
-        self.status = 'connecting'
+        self.status = 'offline'
 
     def authenticate(self, user, password):
         """ Method to get simplenote auth token
