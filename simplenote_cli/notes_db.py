@@ -239,23 +239,7 @@ class NotesDB():
         Return a list of notes filtered using the regex search_string.
         Each element in the list is a tuple (local_key, note).
         """
-        sspat = None
-        valid_flags = {
-                'i': re.IGNORECASE
-        }
-        if search_string:
-            try:
-                search_string, flag_letters = re.match(r'^(.+?)(?:/([a-z]+))?$', search_string).groups()
-                flags = 0
-                # if flags are given, OR together all the valid flags
-                # see https://docs.python.org/3/library/re.html#re.compile
-                if flag_letters:
-                    for letter in flag_letters:
-                        if letter in valid_flags:
-                            flags = flags | valid_flags[letter]
-                sspat = re.compile(search_string, flags)
-            except re.error:
-                sspat = None
+        sspat = utils.build_regex_search(search_string)
 
         filtered_notes = []
         active_notes = 0 # total number of notes, including deleted ones

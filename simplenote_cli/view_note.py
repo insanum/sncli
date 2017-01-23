@@ -6,6 +6,7 @@ import time, urwid
 from . import utils
 import re
 from .clipboard import Clipboard
+import logging
 
 class ViewNote(urwid.ListBox):
 
@@ -115,8 +116,8 @@ class ViewNote(urwid.ListBox):
         if self.search_mode == 'gstyle':
             return term in full_text
         else:
-            results = re.search(term, full_text)
-            return ( results is not None )
+            sspat = utils.build_regex_search(term)
+            return sspat and sspat.search(full_text)
 
     def get_status_bar(self):
         if not self.key:

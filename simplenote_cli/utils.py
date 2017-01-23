@@ -163,3 +163,31 @@ class KeyValueObject:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
+
+def build_regex_search(search_string):
+    """
+    Build up a compiled regular expression from the search string.
+
+    Supports the use of flags - ie. search for `nothing/i` will perform a
+    case-insensitive regex for `nothing`
+    """
+
+    sspat = None
+    valid_flags = {
+            'i': re.IGNORECASE
+    }
+    if search_string:
+        try:
+            search_string, flag_letters = re.match(r'^(.+?)(?:/([a-z]+))?$', search_string).groups()
+            flags = 0
+            # if flags are given, OR together all the valid flags
+            # see https://docs.python.org/3/library/re.html#re.compile
+            if flag_letters:
+                for letter in flag_letters:
+                    if letter in valid_flags:
+                        flags = flags | valid_flags[letter]
+            sspat = re.compile(search_string, flags)
+        except re.error:
+            sspat = None
+
+    return sspat
