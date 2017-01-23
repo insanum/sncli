@@ -127,10 +127,12 @@ class NotesDB():
             return 0
 
         # for each tag_pat, we have to find a matching tag
+        # .lower() used for case-insensitive search
         tag_pats_matched = 0
         for tp in tag_pats:
+            tp = tp.lower()
             for t in note_tags:
-                if t.startswith(tp):
+                if t.lower().startswith(tp):
                     tag_pats_matched += 1
                     break
 
