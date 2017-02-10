@@ -10,10 +10,10 @@ import datetime, random, re
 
 # first line with non-whitespace should be the title
 note_title_re = re.compile('\s*(.*)\n?')
-        
+
 def generate_random_key():
     """Generate random 30 digit (15 byte) hex string.
-    
+
     stackoverflow question 2782229
     """
     return '%030x' % (random.randrange(256**15),)
@@ -148,6 +148,11 @@ def sanitise_tags(tags):
 def sort_by_title_pinned(a):
     return (not note_pinned(a.note), get_note_title(a.note))
 
+def sort_notes_by_tags(notes, pinned_ontop=False):
+    notes.sort(key=lambda i: (pinned_ontop and not note_pinned(i.note),
+                              len(i.note.get('tags')) == 0,
+                              i.note.get('tags')))
+
 def sort_by_modify_date_pinned(a):
     if note_pinned(a.note):
         return 100.0 * float(a.note.get('modifydate', 0))
@@ -156,7 +161,7 @@ def sort_by_modify_date_pinned(a):
 
 class KeyValueObject:
     """Store key=value pairs in this object and retrieve with o.key.
-    
+
     You should also be able to do MiscObject(**your_dict) for the same effect.
     """
 

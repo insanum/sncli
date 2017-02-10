@@ -860,6 +860,12 @@ class sncli:
 
             self.view_titles.sort_note_list('alpha')
 
+        elif key == self.config.get_keybind('sort_tags'):
+            if self.gui_body_get().__class__ != view_titles.ViewTitles:
+                return key
+
+            self.view_titles.sort_note_list('tags')
+
         elif key == self.config.get_keybind('copy_note_text'):
             if self.gui_body_get().__class__ != view_note.ViewNote:
                 return key

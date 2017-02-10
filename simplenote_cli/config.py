@@ -67,6 +67,7 @@ class Config:
          'kb_clear_search'    : 'A',
          'kb_sort_date'       : 'd',
          'kb_sort_alpha'      : 'a',
+         'kb_sort_tags'       : 'ctrl t',
          'kb_note_trash'      : 'T',
          'kb_note_pin'        : 'p',
          'kb_note_markdown'   : 'm',
@@ -191,6 +192,7 @@ class Config:
         self.keybinds['clear_search'] = [ cp.get(cfg_sec, 'kb_clear_search'), [ 'titles' ], 'Show all notes' ]
         self.keybinds['sort_date'] = [ cp.get(cfg_sec, 'kb_sort_date'), [ 'titles' ], 'Sort notes by date' ]
         self.keybinds['sort_alpha'] = [ cp.get(cfg_sec, 'kb_sort_alpha'), [ 'titles' ], 'Sort notes by alpha' ]
+        self.keybinds['sort_tags'] = [ cp.get(cfg_sec, 'kb_sort_tags'), [ 'titles' ], 'Sort notes by tags' ]
         self.keybinds['note_trash'] = [ cp.get(cfg_sec, 'kb_note_trash'), [ 'titles', 'notes' ], 'Trash a note' ]
         self.keybinds['note_pin'] = [ cp.get(cfg_sec, 'kb_note_pin'), [ 'titles', 'notes' ], 'Pin note' ]
         self.keybinds['note_markdown'] = [ cp.get(cfg_sec, 'kb_note_markdown'), [ 'titles', 'notes' ], 'Flag note as markdown' ]

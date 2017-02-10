@@ -80,11 +80,14 @@ class NotesDB():
                 filtered_notes.sort(key=utils.sort_by_modify_date_pinned, reverse=True)
             else:
                 filtered_notes.sort(key=lambda o: -float(o.note.get('modifydate', 0)))
-        else:
+        elif sort_mode == 'alpha':
             if self.config.get_config('pinned_ontop') == 'yes':
                 filtered_notes.sort(key=utils.sort_by_title_pinned)
             else:
                 filtered_notes.sort(key=lambda o: utils.get_note_title(o.note))
+        elif sort_mode == 'tags':
+            pinned = self.config.get_config('pinned_ontop')
+            utils.sort_notes_by_tags(filtered_notes, pinned_ontop=pinned)
 
     def filter_notes(self, search_string=None, search_mode='gstyle'):
         """Return list of notes filtered with search string.
