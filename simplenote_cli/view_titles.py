@@ -17,10 +17,10 @@ class ViewTitles(urwid.ListBox):
         super(ViewTitles, self).__init__(
                   urwid.SimpleFocusListWalker(self.get_note_titles()))
 
-    def update_note_list(self, search_string, search_mode='gstyle'):
+    def update_note_list(self, search_string, search_mode='gstyle', sort_mode='date'):
         self.search_string = search_string
         self.note_list, self.match_regex, self.all_notes_cnt = \
-            self.ndb.filter_notes(self.search_string, search_mode)
+            self.ndb.filter_notes(self.search_string, search_mode, sort_mode=sort_mode)
         self.body[:] = \
             urwid.SimpleFocusListWalker(self.get_note_titles())
         if len(self.note_list) == 0:

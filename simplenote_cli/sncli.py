@@ -20,6 +20,7 @@ class sncli:
         self.verbose        = verbose
         self.do_gui         = False
         force_full_sync     = False
+        self.current_sort_mode = self.config.get_config('sort_mode')
 
         if not os.path.exists(self.config.get_config('db_path')):
             os.mkdir(self.config.get_config('db_path'))
@@ -268,7 +269,8 @@ class sncli:
         except IndexError as e:
             cur_key = None
             pass
-        self.view_titles.update_note_list(self.view_titles.search_string)
+
+        self.view_titles.update_note_list(self.view_titles.search_string, sort_mode=self.current_sort_mode)
         self.view_titles.focus_note(cur_key)
 
         if self.gui_body_get().__class__ == view_note.ViewNote:
@@ -339,7 +341,7 @@ class sncli:
                 self.search_direction = args[1]
                 self.view_note.search_note_view_next(search_string=search_string, search_mode=args[0])
             else:
-                self.view_titles.update_note_list(search_string, args[0])
+                self.view_titles.update_note_list(search_string, args[0], sort_mode=self.current_sort_mode)
                 self.gui_body_set(self.view_titles)
 
     def gui_version_input(self, args, version):
@@ -845,25 +847,28 @@ class sncli:
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
                 return key
 
-            self.view_titles.update_note_list(None)
+            self.view_titles.update_note_list(None, sort_mode=self.current_sort_mode)
             self.gui_body_set(self.view_titles)
 
         elif key == self.config.get_keybind('sort_date'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
                 return key
 
+            self.current_sort_mode = 'date'
             self.view_titles.sort_note_list('date')
 
         elif key == self.config.get_keybind('sort_alpha'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
                 return key
 
+            self.current_sort_mode = 'alpha'
             self.view_titles.sort_note_list('alpha')
 
         elif key == self.config.get_keybind('sort_tags'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles:
                 return key
 
+            self.current_sort_mode = 'tags'
             self.view_titles.sort_note_list('tags')
 
         elif key == self.config.get_keybind('copy_note_text'):

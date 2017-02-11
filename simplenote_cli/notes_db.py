@@ -89,7 +89,7 @@ class NotesDB():
             pinned = self.config.get_config('pinned_ontop')
             utils.sort_notes_by_tags(filtered_notes, pinned_ontop=pinned)
 
-    def filter_notes(self, search_string=None, search_mode='gstyle'):
+    def filter_notes(self, search_string=None, search_mode='gstyle', sort_mode='date'):
         """Return list of notes filtered with search string.
 
         Based on the search mode that has been selected in self.config,
@@ -109,8 +109,7 @@ class NotesDB():
             filtered_notes, match_regexp, active_notes = \
                 self.filter_notes_regex(search_string)
 
-        self.filtered_notes_sort(filtered_notes,
-                                 self.config.get_config('sort_mode'))
+        self.filtered_notes_sort(filtered_notes, sort_mode)
 
         return filtered_notes, match_regexp, active_notes
 
