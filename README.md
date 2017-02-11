@@ -39,7 +39,7 @@ Check your OS distribution for installation packages.
   - full two-way sync with Simplenote performed dynamically in the background
   - all actions logged and easily reviewed
   - list note titles (configurable format w/ title, date, flags, tags, keys, etc)
-  - sort notes by date, alpha by title, pinned on top
+  - sort notes by date, alpha by title, tags, pinned on top
   - search for notes using a Google style search pattern or Regular Expression
   - view note contents and meta data
   - view and restore previous versions of notes
@@ -76,7 +76,7 @@ Check your OS distribution for installation packages.
 ```
 Usage:
  sncli [OPTIONS] [COMMAND] [COMMAND_ARGS]
- 
+
  OPTIONS:
   -h, --help                  - usage help
   -v, --verbose               - verbose output (cli mode)
@@ -84,7 +84,7 @@ Usage:
   -r, --regex                 - search string is a regular expression
   -k <key>, --key=<key>       - note key
   -t <title>, --title=<title> - title of note for create (cli mode)
-              
+
  COMMANDS:
   <none>                      - console gui mode when no command specified
   sync                        - perform a full sync with the server
@@ -157,7 +157,7 @@ by printf:
        * - pinned
        S - published/shared
        m - markdown
-  %T - tags  
+  %T - tags
   %D - date
   %N - title
 ```
