@@ -151,7 +151,8 @@ def sort_by_title_pinned(a):
 def sort_notes_by_tags(notes, pinned_ontop=False):
     notes.sort(key=lambda i: (pinned_ontop and not note_pinned(i.note),
                               len(i.note.get('tags')) == 0,
-                              i.note.get('tags')))
+                              i.note.get('tags', []),
+                              -float(i.note.get('modifydate', 0))))
 
 def sort_by_modify_date_pinned(a):
     if note_pinned(a.note):

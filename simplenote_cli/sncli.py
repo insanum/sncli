@@ -1036,7 +1036,8 @@ class sncli:
         note_list, match_regex, all_notes_cnt = \
             self.ndb.filter_notes(
                     search_string,
-                    search_mode='regex' if regex else 'gstyle')
+                    search_mode='regex' if regex else 'gstyle',
+                    sort_mode=self.config.get_config('sort_mode'))
         for n in note_list:
             flags = utils.get_note_flags(n.note)
             print((n.key + \
@@ -1077,7 +1078,8 @@ class sncli:
         note_list, match_regex, all_notes_cnt = \
             self.ndb.filter_notes(
                     search_string,
-                    search_mode='regex' if regex else 'gstyle')
+                    search_mode='regex' if regex else 'gstyle',
+                    sort_mode=self.config.get_config('sort_mode'))
         for n in note_list:
             self.cli_note_dump(n.key)
 

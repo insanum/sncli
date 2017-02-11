@@ -13,7 +13,7 @@ class ViewTitles(urwid.ListBox):
         self.search_string = args['search_string']
         self.log = args['log']
         self.note_list, self.match_regex, self.all_notes_cnt = \
-            self.ndb.filter_notes(self.search_string)
+            self.ndb.filter_notes(self.search_string, sort_mode=self.config.get_config('sort_mode'))
         super(ViewTitles, self).__init__(
                   urwid.SimpleFocusListWalker(self.get_note_titles()))
 
