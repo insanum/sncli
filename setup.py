@@ -15,6 +15,7 @@ setup(
       author=simplenote_cli.__author__,
       author_email=simplenote_cli.__author_email__,
       url=simplenote_cli.__url__,
+      license=simplenote_cli.__license__,
       requires=deps,
       install_requires=deps,
       packages=['simplenote_cli'],
@@ -22,5 +23,12 @@ setup(
           'console_scripts': [
               'sncli = simplenote_cli.sncli:main'
           ]
-      }
-     )
+      },
+      classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Console :: Curses',
+        'Intended Audience :: End Users/Desktop',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3 :: Only',
+      ],
+)
