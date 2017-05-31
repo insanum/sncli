@@ -1118,6 +1118,29 @@ class sncli:
                 self.log('(IMPORT) ValueError: {}'.format(e))
                 sys.exit(1)
 
+    def cli_note_export(self, key):
+
+        note = self.ndb.get_note(key)
+        if not note:
+            self.log('ERROR: Key does not exist')
+            return
+
+        print(json.dumps(note))
+
+    def cli_export_notes(self, regex, search_string):
+
+        note_list, match_regex, all_notes_cnt = \
+            self.ndb.filter_notes(
+                    search_string,
+                    search_mode='regex' if regex else 'gstyle',
+                    sort_mode=self.config.get_config('sort_mode'))
+        print("[")
+        for i, n in enumerate(note_list):
+            if i > 0:
+                print(",")
+            self.cli_note_export(n.key)
+        print("]")
+        
     def cli_note_edit(self, key):
 
         note = self.ndb.get_note(key)
@@ -1197,6 +1220,7 @@ Usage:
   dump [search_string]        - dump notes (refined with search string)
   create [-]                  - create a note ('-' content from stdin)
   import [-]                  - import a note in JSON format ('-' JSON from stdin)
+  export                      - export a note in JSON format (specified by <key>)
   dump                        - dump a note (specified by <key>)
   edit                        - edit a note (specified by <key>)
   < trash | untrash >         - trash/untrash a note (specified by <key>)
@@ -1286,6 +1310,14 @@ def main(argv=sys.argv[1:]):
             sn.cli_note_import(True)
         else:
             usage()
+
+    elif args[0] == 'export':
+
+        sn = sncli_start()
+        if key:
+            sn.cli_note_export(key)
+        else:
+            sn.cli_export_notes(regex, ' '.join(args[1:]))
 
     elif args[0] == 'edit':
 
