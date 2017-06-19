@@ -1125,7 +1125,7 @@ class sncli:
             self.log('ERROR: Key does not exist')
             return
 
-        print(json.dumps(note))
+        print(json.dumps(note, indent=2))
 
     def cli_export_notes(self, regex, search_string):
 
@@ -1134,13 +1134,10 @@ class sncli:
                     search_string,
                     search_mode='regex' if regex else 'gstyle',
                     sort_mode=self.config.get_config('sort_mode'))
-        print("[")
-        for i, n in enumerate(note_list):
-            if i > 0:
-                print(",")
-            self.cli_note_export(n.key)
-        print("]")
-        
+
+        notes_data = [n.note for n in note_list]
+        print(json.dumps(notes_data, indent=2))
+
     def cli_note_edit(self, key):
 
         note = self.ndb.get_note(key)

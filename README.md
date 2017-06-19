@@ -212,6 +212,25 @@ echo '{"tags":["testing","new"],"content":"New note!"}' | sncli import -
 
 Allowed fields are `content`, `tags`, `systemtags`, `modifydate`, `createdate`, and `deleted`.
 
+### Exporting
+
+sncli can export notes as json data to stdout. Example:
+
+```
+# export a single note by id
+sncli -k somekeyid export
+
+# export all notes
+sncli export
+
+# export notes matching search string
+sncli [-r] export some search keywords or regex
+```
+
+Note that sncli still stores all the notes data in the directory specified by
+`cfg_db_path`, so for easy backups, it may be easier/quicker to simply backup
+this entire directory.
+
 
 ### Tricks
 
