@@ -1214,6 +1214,7 @@ Usage:
   <none>                      - console gui mode when no command specified
   sync                        - perform a full sync with the server
   list [search_string]        - list notes (refined with search string)
+  export [search_string]      - export notes in JSON (refined with search string)
   dump [search_string]        - dump notes (refined with search string)
   create [-]                  - create a note ('-' content from stdin)
   import [-]                  - import a note in JSON format ('-' JSON from stdin)

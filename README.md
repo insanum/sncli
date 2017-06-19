@@ -79,19 +79,22 @@ Usage:
 
  OPTIONS:
   -h, --help                  - usage help
-  -v, --verbose               - verbose output (cli mode)
+  -v, --verbose               - verbose output
   -n, --nosync                - don't perform a server sync
   -r, --regex                 - search string is a regular expression
   -k <key>, --key=<key>       - note key
   -t <title>, --title=<title> - title of note for create (cli mode)
+  -c <file>, --config=<file>  - config file to read from (defaults to ~/.snclirc)
 
  COMMANDS:
   <none>                      - console gui mode when no command specified
   sync                        - perform a full sync with the server
   list [search_string]        - list notes (refined with search string)
+  export [search_string]      - export notes in JSON (refined with search string)
   dump [search_string]        - dump notes (refined with search string)
   create [-]                  - create a note ('-' content from stdin)
   import [-]                  - import a note in JSON format ('-' JSON from stdin)
+  export                      - export a note in JSON format (specified by <key>)
   dump                        - dump a note (specified by <key>)
   edit                        - edit a note (specified by <key>)
   < trash | untrash >         - trash/untrash a note (specified by <key>)
