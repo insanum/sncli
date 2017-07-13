@@ -249,6 +249,7 @@ modelines):
 Now when I edit this note Vim will automatically load the votl plugin. Lots of
 possibilities here...
 
+_Note: more tips and tricks on the [GitHub wiki](https://github.com/insanum/sncli/wiki/Tips-and-Tricks)!_
 
 ### Thanks
 
