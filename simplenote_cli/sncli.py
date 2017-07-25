@@ -392,7 +392,7 @@ class sncli:
             try:
                 self.gui_clear()
                 pipe = subprocess.Popen(cmd, stdin=subprocess.PIPE, shell=True)
-                pipe.communicate(note['content'])
+                pipe.communicate(note['content'].encode('utf-8'))
                 pipe.stdin.close()
                 pipe.wait()
             except OSError as e:
