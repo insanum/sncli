@@ -4,10 +4,10 @@
 
 import os, json, tempfile
 
-def tempfile_create(note, raw=False):
+def tempfile_create(note, raw=False, tempdir=None):
     if raw:
         # dump the raw json of the note
-        tf = tempfile.NamedTemporaryFile(suffix='.json', delete=False)
+        tf = tempfile.NamedTemporaryFile(suffix='.json', delete=False, dir=tempdir)
 
         contents = json.dumps(note, indent=2)
         tf.write(contents.encode('utf-8'))
@@ -18,7 +18,7 @@ def tempfile_create(note, raw=False):
            'systemtags' in note and \
            'markdown' in note['systemtags']:
             ext = '.mkd'
-        tf = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
+        tf = tempfile.NamedTemporaryFile(suffix=ext, delete=False, dir=tempdir)
         if note:
             contents = note['content']
             tf.write(contents.encode('utf-8'))

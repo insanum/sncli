@@ -27,6 +27,7 @@ class Config:
          'cfg_log_timeout'       : '5',
          'cfg_log_reversed'      : 'yes',
          'cfg_sn_host'           : 'simple-note.appspot.com',
+         'cfg_tempdir'           : '',
 
          'kb_help'            : 'h',
          'kb_quit'            : 'q',
@@ -151,6 +152,7 @@ class Config:
         self.configs['max_logs'] = [ cp.get(cfg_sec, 'cfg_max_logs'), 'Max logs in footer' ]
         self.configs['log_timeout'] = [ cp.get(cfg_sec, 'cfg_log_timeout'), 'Log timeout' ]
         self.configs['log_reversed'] = [ cp.get(cfg_sec, 'cfg_log_reversed'), 'Log file reversed' ]
+        self.configs['tempdir'] = [ cp.get(cfg_sec, 'cfg_tempdir'), 'Temporary directory for note storage' ]
 
         self.keybinds = collections.OrderedDict()
         self.keybinds['help'] = [ cp.get(cfg_sec, 'kb_help'), [ 'common' ], 'Help' ]

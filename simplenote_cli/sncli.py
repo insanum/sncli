@@ -22,6 +22,10 @@ class sncli:
         force_full_sync     = False
         self.current_sort_mode = self.config.get_config('sort_mode')
 
+        self.tempdir = self.config.get_config('tempdir')
+        if self.tempdir == '':
+            self.tempdir = None
+
         if not os.path.exists(self.config.get_config('db_path')):
             os.mkdir(self.config.get_config('db_path'))
             force_full_sync = True
@@ -91,7 +95,7 @@ class sncli:
         if not cmd:
             return None
 
-        tf = temp.tempfile_create(note if note else None, raw=raw)
+        tf = temp.tempfile_create(note if note else None, raw=raw, tempdir=self.tempdir)
 
         try:
             subprocess.check_call(cmd + ' ' + temp.tempfile_name(tf), shell=True)
@@ -119,9 +123,9 @@ class sncli:
         if not pager:
             return None
 
-        ltf = temp.tempfile_create(note)
-        otf = temp.tempfile_create(old_note)
-        out = temp.tempfile_create(None)
+        ltf = temp.tempfile_create(note, tempdir=self.tempdir)
+        otf = temp.tempfile_create(old_note, tempdir=self.tempdir)
+        out = temp.tempfile_create(None, tempdir=self.tempdir)
 
         try:
             subprocess.call(diff + ' ' + 
