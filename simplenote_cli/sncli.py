@@ -1193,6 +1193,17 @@ class sncli:
         self.ndb.set_note_markdown(key, markdown)
         self.sync_notes()
 
+    def cli_note_tags_get(self, key):
+
+        note = self.ndb.get_note(key)
+        if not note:
+            self.log('ERROR: Key does not exist')
+            return
+
+        tags = utils.get_note_tags(note)
+        if tags:
+            print(tags)
+
 
 def SIGINT_handler(signum, frame):
     print('\nSignal caught, bye!')
@@ -1352,6 +1363,18 @@ def main(argv=sys.argv[1:]):
 
         sn = sncli_start()
         sn.cli_note_markdown(key, 1 if args[0] == 'markdown' else 0)
+
+    # Tag API
+    elif args[0] == 'tag':
+
+        if args[1] == 'get':
+
+            if not key:
+                usage()
+
+            sn = sncli_start()
+            sn.cli_note_tags_get(key)
+
 
     else:
         usage()
