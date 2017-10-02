@@ -1235,6 +1235,24 @@ class sncli:
 
         self.cli_note_tags_set(key, tags)
 
+    def cli_note_tags_rm(self, key, rm_tags):
+
+        note = self.ndb.get_note(key)
+        if not note:
+            self.log('Error: Key does not exist')
+            return
+
+        old_tags = self.cli_note_tags_get(key)
+        if old_tags:
+            old_tag_list = old_tags.split(',')
+            rm_tag_list = rm_tags.split(',')
+            tag_list = old_tag_list
+            for tag in rm_tag_list:
+                if tag in tag_list:
+                    tag_list.remove(tag)
+            tags = ','.join(tag_list)
+            self.cli_note_tags_set(key, tags)
+
 def SIGINT_handler(signum, frame):
     print('\nSignal caught, bye!')
     sys.exit(1)
@@ -1272,6 +1290,7 @@ Usage:
   tag get                     - retrieve the tags from a note (specified by <key>)
   tag set <tags>              - set the tags for a note (specified by <key>)
   tag add <tags>              - add tags to a note (specified by <key>)
+  tag rm <tags>               - remove tags from a note (specified by <key>)
 ''')
     sys.exit(0)
 
@@ -1420,6 +1439,12 @@ def main(argv=sys.argv[1:]):
             new_tags = args[2]
             sn = sncli_start()
             sn.cli_note_tags_add(key, new_tags)
+
+        elif args[1] == 'rm':
+
+            rm_tags = args[2]
+            sn = sncli_start()
+            sn.cli_note_tags_rm(key, rm_tags)
 
     else:
         usage()
