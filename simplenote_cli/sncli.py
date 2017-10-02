@@ -1201,9 +1201,17 @@ class sncli:
             return
 
         tags = utils.get_note_tags(note)
-        if tags:
-            print(tags)
+        return tags
 
+    def cli_note_tags_set(self, key, tags):
+
+        note = self.ndb.get_note(key)
+        if not note:
+            self.log('Error: Key does not exist')
+            return
+
+        self.ndb.set_note_tags(key, tags)
+        self.sync_notes()
 
 def SIGINT_handler(signum, frame):
     print('\nSignal caught, bye!')
@@ -1239,6 +1247,8 @@ Usage:
   < trash | untrash >         - trash/untrash a note (specified by <key>)
   < pin | unpin >             - pin/unpin a note (specified by <key>)
   < markdown | unmarkdown >   - markdown/unmarkdown a note (specified by <key>)
+  tag get                     - retrieve the tags from a note (specified by <key>)
+  tag set <tags>              - set the tags for a note (specified by <key>)
 ''')
     sys.exit(0)
 
@@ -1367,14 +1377,20 @@ def main(argv=sys.argv[1:]):
     # Tag API
     elif args[0] == 'tag':
 
+        if not key:
+            usage()
+
         if args[1] == 'get':
 
-            if not key:
-                usage()
-
             sn = sncli_start()
-            sn.cli_note_tags_get(key)
+            tags = sn.cli_note_tags_get(key)
+            print(tags)
 
+        elif args[1] == 'set':
+
+            tags = args[2]
+            sn = sncli_start()
+            sn.cli_note_tags_set(key, tags)
 
     else:
         usage()
