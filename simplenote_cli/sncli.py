@@ -1213,6 +1213,28 @@ class sncli:
         self.ndb.set_note_tags(key, tags)
         self.sync_notes()
 
+    def cli_note_tags_add(self, key, new_tags):
+
+        note = self.ndb.get_note(key)
+        if not note:
+            self.log('Error: Key does not exist')
+            return
+
+        # Add tag only if it isn't already there
+        old_tags = self.cli_note_tags_get(key)
+        if old_tags:
+            old_tag_list = old_tags.split(',')
+            new_tag_list = new_tags.split(',')
+            tag_list = old_tag_list
+            for tag in new_tag_list:
+                if tag not in tag_list:
+                    tag_list.append(tag)
+            tags = ','.join(tag_list)
+        else:
+            tags = new_tags
+
+        self.cli_note_tags_set(key, tags)
+
 def SIGINT_handler(signum, frame):
     print('\nSignal caught, bye!')
     sys.exit(1)
@@ -1249,6 +1271,7 @@ Usage:
   < markdown | unmarkdown >   - markdown/unmarkdown a note (specified by <key>)
   tag get                     - retrieve the tags from a note (specified by <key>)
   tag set <tags>              - set the tags for a note (specified by <key>)
+  tag add <tags>              - add tags to a note (specified by <key>)
 ''')
     sys.exit(0)
 
@@ -1391,6 +1414,12 @@ def main(argv=sys.argv[1:]):
             tags = args[2]
             sn = sncli_start()
             sn.cli_note_tags_set(key, tags)
+
+        elif args[1] == 'add':
+
+            new_tags = args[2]
+            sn = sncli_start()
+            sn.cli_note_tags_add(key, new_tags)
 
     else:
         usage()
