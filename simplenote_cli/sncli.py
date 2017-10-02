@@ -1426,7 +1426,8 @@ def main(argv=sys.argv[1:]):
 
             sn = sncli_start()
             tags = sn.cli_note_tags_get(key)
-            print(tags)
+            if tags:
+                print(tags)
 
         elif args[1] == 'set':
 
