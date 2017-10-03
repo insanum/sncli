@@ -234,6 +234,27 @@ Note that sncli still stores all the notes data in the directory specified by
 `cfg_db_path`, so for easy backups, it may be easier/quicker to simply backup
 this entire directory.
 
+### Tags
+
+Note tags can be modified directly from the command line. Example:
+
+```
+# Retrieve note tags, as one comma-separated string (e.g. "tag1,tag2")
+sncli -k somekeyid tag get                  # Returns "tag1,tag2"
+
+# Add a tag to a note, if it doesn't already have it
+sncli -k somekeyid tag add "tag4"           # Now tagged as "tag2,tag3,tag4"
+
+# Remove a tag from a note
+sncli -k somekeyid tag rm "tag3"            # Now tagged as "tag2,tag4"
+
+# Overwrite all of the tags for a note
+sncli -k somekeyid tag set "tag2,tag3"      # Now tagged as "tag2,tag3"
+```
+
+Note that in SimpleNote, tags are case-insensitive, so "TAG2", "tag2", and 
+"tAg2" are interpreted as the same and will all be converted to lowercase.
+
 
 ### Tricks
 
