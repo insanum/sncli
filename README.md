@@ -100,6 +100,10 @@ Usage:
   < trash | untrash >         - trash/untrash a note (specified by <key>)
   < pin | unpin >             - pin/unpin a note (specified by <key>)
   < markdown | unmarkdown >   - markdown/unmarkdown a note (specified by <key>)
+  tag get                     - retrieve the tags from a note (specified by <key>)
+  tag set <tags>              - set the tags for a note (specified by <key>)
+  tag add <tags>              - add tags to a note (specified by <key>)
+  tag rm <tags>               - remove tags from a note (specified by <key>)
 ```
 
 #### Configuration
