@@ -247,13 +247,13 @@ Note tags can be modified directly from the command line. Example:
 sncli -k somekeyid tag get                  # Returns "tag1,tag2"
 
 # Add a tag to a note, if it doesn't already have it
-sncli -k somekeyid tag add "tag4"           # Now tagged as "tag2,tag3,tag4"
+sncli -k somekeyid tag add "tag3"           # Now tagged as "tag1,tag2,tag3"
 
 # Remove a tag from a note
-sncli -k somekeyid tag rm "tag3"            # Now tagged as "tag2,tag4"
+sncli -k somekeyid tag rm "tag2"            # Now tagged as "tag1,tag3"
 
 # Overwrite all of the tags for a note
-sncli -k somekeyid tag set "tag2,tag3"      # Now tagged as "tag2,tag3"
+sncli -k somekeyid tag set "tag2,tag4"      # Now tagged as "tag2,tag4"
 ```
 
 Note that in SimpleNote, tags are case-insensitive, so "TAG2", "tag2", and 
