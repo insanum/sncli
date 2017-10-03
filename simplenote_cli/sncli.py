@@ -1422,6 +1422,12 @@ def main(argv=sys.argv[1:]):
         if not key:
             usage()
 
+        nargs = len(args)
+        correct_get = (args[1] == 'get' and nargs == 2)
+        correct_other = (args[1] in ['set', 'add', 'rm'] and nargs == 3)
+        if not (correct_get or correct_other):
+            usage()
+
         if args[1] == 'get':
 
             sn = sncli_start()
