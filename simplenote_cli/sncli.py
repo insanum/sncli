@@ -1210,7 +1210,7 @@ class sncli:
             self.log('Error: Key does not exist')
             return
 
-        self.ndb.set_note_tags(key, tags)
+        self.ndb.set_note_tags(key, tags.lower())
         self.sync_notes()
 
     def cli_note_tags_add(self, key, new_tags):
