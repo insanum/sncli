@@ -1223,8 +1223,8 @@ class sncli:
         # Add tag only if it isn't already there
         old_tags = self.cli_note_tags_get(key)
         if old_tags:
-            old_tag_list = old_tags.split(',')
-            new_tag_list = new_tags.split(',')
+            old_tag_list = old_tags.lower().split(',')
+            new_tag_list = new_tags.lower().split(',')
             tag_list = old_tag_list
             for tag in new_tag_list:
                 if tag not in tag_list:
@@ -1244,8 +1244,8 @@ class sncli:
 
         old_tags = self.cli_note_tags_get(key)
         if old_tags:
-            old_tag_list = old_tags.split(',')
-            rm_tag_list = rm_tags.split(',')
+            old_tag_list = old_tags.lower().split(',')
+            rm_tag_list = rm_tags.lower().split(',')
             tag_list = old_tag_list
             for tag in rm_tag_list:
                 if tag in tag_list:
