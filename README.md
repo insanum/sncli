@@ -63,6 +63,7 @@ Check your OS distribution for installation packages.
   - trash/untrash a note
   - pin/unpin a note
   - flag note as markdown or not
+  - view and edit note tags
 
 ### Screenshots
 
