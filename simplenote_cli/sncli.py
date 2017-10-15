@@ -1386,10 +1386,33 @@ def main(argv=sys.argv[1:]):
 
     elif args[0] == 'edit':
 
-        if not key:
-            usage()
+        sn = 0
 
-        sn = sncli_start()
+        if not key:
+            if not title:
+                usage()
+            else:
+                sn = sncli_start()
+                note_list, match_regex, all_notes_cnt = \
+                    sn.ndb.filter_notes(
+                        title,
+                        search_mode='gstyle',
+                        sort_mode=sn.config.get_config('sort_mode'))
+                if len(note_list) == 1:
+                    key = note_list[0].key
+                elif len(note_list) == 0:
+                    print('''
+No notes could be found containing that title string.
+''')
+                    sys.exit(0)
+                else:
+                    print('''
+There were too many notes containing that title string. Please be more specific.
+''')
+                    sys.exit(0)
+
+        if sn == 0:
+            sn = sncli_start()
         sn.cli_note_edit(key)
 
     elif args[0] == 'trash' or args[0] == 'untrash':
