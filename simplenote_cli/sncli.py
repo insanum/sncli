@@ -96,9 +96,12 @@ class sncli:
             return None
 
         tf = temp.tempfile_create(note if note else None, raw=raw, tempdir=self.tempdir)
+        lb = self.gui_body_get()
+        cmd_list = [c.format(line=lb.focus_position + 1, fname=temp.tempfile_name(tf)) for c in cmd.split(" ")]
+        self.log("EXECUTING {}".format(cmd_list))
 
         try:
-            subprocess.check_call(cmd + ' ' + temp.tempfile_name(tf), shell=True)
+            subprocess.check_call(cmd_list)
         except Exception as e:
             self.log('Command error: ' + str(e))
             temp.tempfile_delete(tf)
