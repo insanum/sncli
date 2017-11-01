@@ -155,6 +155,9 @@ cfg_editor = nvim
 # examples:
 cfg_editor = nvim {fname} +{line}
 cfg_editor = nano +{line}
+
+# this is also supported for the pager:
+cfg_pager = less -c +{line} -N {fname}
 ```
 
 #### Note Title Format

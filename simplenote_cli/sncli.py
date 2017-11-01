@@ -72,8 +72,6 @@ class sncli:
 
     def get_pager(self):
         pager = self.config.get_config('pager')
-        if 'PAGER' in os.environ:
-            pager = os.environ['PAGER']
         if not pager:
             self.log('No pager configured!')
             return None
