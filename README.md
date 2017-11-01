@@ -146,8 +146,15 @@ kb_page_down = ctrl f
 # note that values must not be quoted
 clr_note_focus_bg = light blue
 
-# the EDITOR env variable overrides the value below
+# if this editor config value is not provided, the $EDITOR will be used instead
 cfg_editor = nvim
+
+# alternatively, {fname} and/or {line} are substituted with the filename and
+# current line number in sncli's pager.
+# If {fname} isn't supplied, the filename is simply appended.
+# examples:
+cfg_editor = nvim {fname} +{line}
+cfg_editor = nano +{line}
 ```
 
 #### Note Title Format
