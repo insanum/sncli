@@ -20,7 +20,7 @@ class Config:
          'cfg_format_strftime'   : '%Y/%m/%d',
          'cfg_format_note_title' : '[%D] %F %-N %T',
          'cfg_status_bar'        : 'yes',
-         'cfg_editor'            : 'vim {fname} +{line}',
+         'cfg_editor'            : os.environ['EDITOR'] if 'EDITOR' in os.environ else 'vim {fname} +{line}',
          'cfg_pager'             : 'less -c',
          'cfg_diff'              : 'diff -b -U10',
          'cfg_max_logs'          : '5',

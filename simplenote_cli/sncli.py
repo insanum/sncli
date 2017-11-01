@@ -65,8 +65,6 @@ class sncli:
 
     def get_editor(self):
         editor = self.config.get_config('editor')
-        if 'EDITOR' in os.environ:
-            editor = os.environ['EDITOR']
         if not editor:
             self.log('No editor configured!')
             return None
@@ -96,9 +94,20 @@ class sncli:
             return None
 
         tf = temp.tempfile_create(note if note else None, raw=raw, tempdir=self.tempdir)
-        lb = self.gui_body_get()
-        cmd_list = [c.format(line=lb.focus_position + 1, fname=temp.tempfile_name(tf)) for c in cmd.split(" ")]
-        self.log("EXECUTING {}".format(cmd_list))
+        fname = temp.tempfile_name(tf)
+
+        subs = {
+            'fname': fname,
+            'line': self.gui_body_get().focus_position + 1,
+        }
+        cmd_list = [c.format(**subs) for c in shlex.split(cmd)]
+
+        # if the filename wasn't able to be subbed, append it
+        # this makes it fully backwards compatible with previous configs
+        if '{fname}' not in cmd:
+            cmd_list.append(fname)
+
+        self.log("EXECUTING: {}".format(cmd_list))
 
         try:
             subprocess.check_call(cmd_list)
