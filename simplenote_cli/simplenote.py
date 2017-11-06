@@ -169,7 +169,8 @@ class Simplenote(object):
 
         #logging.debug('REQUEST: ' + url + ' - ' + str(note))
         try:
-            res = requests.post(url, data=json.dumps(note), params=params)
+            data = urllib.parse.quote(json.dumps(note))
+            res = requests.post(url, data=data, params=params)
             res.raise_for_status()
             note = res.json()
         except ConnectionError as e:
