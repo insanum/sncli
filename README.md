@@ -139,6 +139,12 @@ See example configuration file below for more notes.
 cfg_sn_username = lebowski@thedude.com
 cfg_sn_password = nihilist
 
+# as an alternate to cfg_sn_password you could use the following config item
+# any shell command can be used; its stdout is used for the password
+# trailing newlines are stripped for ease of use
+# note: if both password config are given, cfg_sn_password will be used
+cfg_sn_password_eval = gpg --quiet --for-your-eyes-only --no-tty --decrypt ~/.sncli-pass.gpg
+
 # see http://urwid.org/manual/userinput.html for examples of more key combinations
 kb_edit_note = space
 kb_page_down = ctrl f

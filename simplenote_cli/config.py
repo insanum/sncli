@@ -2,7 +2,7 @@
 # Copyright (c) 2014 Eric Davis
 # Licensed under the MIT License
 
-import os, urwid, collections, configparser
+import os, sys, urwid, collections, configparser, subprocess
 
 class Config:
 
@@ -132,11 +132,26 @@ class Config:
         if not cp.has_section(cfg_sec):
             cp.add_section(cfg_sec)
 
+
+        # special handling for password so we can retrieve it by running a command
+        sn_password = cp.get(cfg_sec, 'cfg_sn_password', raw=True)
+        if not sn_password:
+            command = cp.get(cfg_sec, 'cfg_sn_password_eval', raw=True)
+            if command:
+                try:
+                    sn_password = subprocess.check_output(command, shell=True, universal_newlines=True)
+                    # remove trailing newlines to avoid requiring butchering shell commands (they can't usually be in passwords anyway)
+                    sn_password = sn_password.rstrip('\n')
+                except subprocess.CalledProcessError as e:
+                    print('Error evaluating command for password.')
+                    print(e)
+                    sys.exit(1)
+
         # ordered dicts used to ease help
 
         self.configs = collections.OrderedDict()
         self.configs['sn_username'] = [ cp.get(cfg_sec, 'cfg_sn_username', raw=True), 'Simplenote Username' ]
-        self.configs['sn_password'] = [ cp.get(cfg_sec, 'cfg_sn_password', raw=True), 'Simplenote Password' ]
+        self.configs['sn_password'] = [ sn_password, 'Simplenote Password' ]
         self.configs['sn_host'] = [ cp.get(cfg_sec, 'cfg_sn_host', raw=True), 'Simplenote server hostname' ]
         self.configs['db_path'] = [ cp.get(cfg_sec, 'cfg_db_path'), 'Note storage path' ]
         self.configs['search_tags'] = [ cp.get(cfg_sec, 'cfg_search_tags'), 'Search tags as well' ]
