@@ -94,9 +94,17 @@ class sncli:
         tf = temp.tempfile_create(note if note else None, raw=raw, tempdir=self.tempdir)
         fname = temp.tempfile_name(tf)
 
+        focus_position = 0
+        try:
+            focus_position = self.gui_body_get().focus_position
+        except IndexError:
+            # focus position will fail if no notes available (listbox empty)
+            # TODO: find a neater way to check than try/except
+            pass
+
         subs = {
             'fname': fname,
-            'line': self.gui_body_get().focus_position + 1,
+            'line': focus_position + 1,
         }
         cmd_list = [c.format(**subs) for c in shlex.split(cmd)]
 
