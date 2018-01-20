@@ -152,7 +152,8 @@ kb_page_down = ctrl f
 # note that values must not be quoted
 clr_note_focus_bg = light blue
 
-# if this editor config value is not provided, the $EDITOR will be used instead
+# if this editor config value is not provided, the $EDITOR env var will be used instead
+# warning: if neither $EDITOR or cfg_editor is set, it will be impossible to edit notes
 cfg_editor = nvim
 
 # alternatively, {fname} and/or {line} are substituted with the filename and
@@ -225,6 +226,15 @@ slash followed by the flags. The following example will do a case-insensitive se
 (regex) /something/i
 ```
 
+### Creating from command line
+
+```
+# create a new note and open in editor
+sncli create
+
+# create a new note with contents of stdin
+echo 'hi' | sncli create -
+```
 
 ### Importing
 
