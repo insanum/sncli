@@ -97,8 +97,9 @@ class sncli:
         focus_position = 0
         try:
             focus_position = self.gui_body_get().focus_position
-        except IndexError:
-            # focus position will fail if no notes available (listbox empty)
+        except (IndexError, AttributeError):
+            # Focus position will fail if no notes available (listbox empty), or
+            # if no gui running (eg. when called as `sncli create`).
             # TODO: find a neater way to check than try/except
             pass
 
