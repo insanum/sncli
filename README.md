@@ -20,8 +20,6 @@ Check your OS distribution for installation packages.
 
 * [Python 3](http://python.org)
 * [pip](https://pip.pypa.io/en/stable/)
-* [Urwid](http://urwid.org) Python 3 module
-* [Requests](https://requests.readthedocs.org/en/master/) Python 3 module
 * A love for the command line!
 
 ### Installation
@@ -30,8 +28,12 @@ Check your OS distribution for installation packages.
   - `pip3 install sncli`
 * Manually:
   - Clone this repository to your hard disk: `git clone https://github.com/insanum/sncli.git`
-  - Install the requirements `pip3 install -r requirements.txt`
-  - Install _sncli_: `python3 setup.py install`
+  - Pipenv:
+    - Install the requirements `pipenv install`
+    - Run with `pipenv run sncli`
+  - or more manual:
+    - `python setup.py install`
+
 
 ### Features
 

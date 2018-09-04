@@ -6,7 +6,7 @@
 from setuptools import setup
 import simplenote_cli
 
-deps = ['urwid', 'requests']
+deps = ['urwid', 'requests', 'simperium3']
 
 setup(
       name=simplenote_cli.__productname__,
@@ -18,6 +18,7 @@ setup(
       license=simplenote_cli.__license__,
       requires=deps,
       install_requires=deps,
+      dependency_links=['git+https://github.com/swalladge/simperium-python3.git#egg=Simperium3'],
       packages=['simplenote_cli'],
       entry_points={
           'console_scripts': [

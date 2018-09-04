@@ -26,7 +26,6 @@ class Config:
          'cfg_max_logs'          : '5',
          'cfg_log_timeout'       : '5',
          'cfg_log_reversed'      : 'yes',
-         'cfg_sn_host'           : 'simple-note.appspot.com',
          'cfg_tempdir'           : '',
 
          'kb_help'            : 'h',
@@ -152,7 +151,6 @@ class Config:
         self.configs = collections.OrderedDict()
         self.configs['sn_username'] = [ cp.get(cfg_sec, 'cfg_sn_username', raw=True), 'Simplenote Username' ]
         self.configs['sn_password'] = [ sn_password, 'Simplenote Password' ]
-        self.configs['sn_host'] = [ cp.get(cfg_sec, 'cfg_sn_host', raw=True), 'Simplenote server hostname' ]
         self.configs['db_path'] = [ cp.get(cfg_sec, 'cfg_db_path'), 'Note storage path' ]
         self.configs['search_tags'] = [ cp.get(cfg_sec, 'cfg_search_tags'), 'Search tags as well' ]
         self.configs['sort_mode'] = [ cp.get(cfg_sec, 'cfg_sort_mode'), 'Sort mode' ]
