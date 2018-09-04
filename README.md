@@ -244,7 +244,7 @@ sncli can import notes from raw json data (via stdin or editor). For example:
 echo '{"tags":["testing","new"],"content":"New note!"}' | sncli import -
 ```
 
-Allowed fields are `content`, `tags`, `systemtags`, `modifydate`, `createdate`, and `deleted`.
+Allowed fields are `content`, `tags`, `systemTags`, `modificationDate`, `creationDate`, and `deleted`.
 
 ### Exporting
 

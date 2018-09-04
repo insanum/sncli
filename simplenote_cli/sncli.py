@@ -757,8 +757,8 @@ class sncli:
                 note = lb.note
 
             pin = 1
-            if 'systemtags' in note:
-                if 'pinned' in note['systemtags']: pin = 0
+            if 'systemTags' in note:
+                if 'pinned' in note['systemTags']: pin = 0
                 else:                              pin = 1
 
             self.ndb.set_note_pinned(note['localkey'], pin)
@@ -781,8 +781,8 @@ class sncli:
                 note = lb.note
 
             md = 1
-            if 'systemtags' in note:
-                if 'markdown' in note['systemtags']: md = 0
+            if 'systemTags' in note:
+                if 'markdown' in note['systemTags']: md = 0
                 else:                                md = 1
 
             self.ndb.set_note_markdown(note['localkey'], md)
@@ -1076,7 +1076,7 @@ class sncli:
 
         w = 60
         sep = '+' + '-'*(w+2) + '+'
-        t = time.localtime(float(note['modifydate']))
+        t = time.localtime(float(note['modificationDate']))
         mod_time = time.strftime('%a, %d %b %Y %H:%M:%S', t)
         title = utils.get_note_title(note)
         flags = utils.get_note_flags(note)

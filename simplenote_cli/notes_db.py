@@ -8,8 +8,6 @@
 
 import os, time, re, glob, json, copy, threading
 from . import utils
-from . import simplenote
-simplenote.NOTE_FETCH_LENGTH=100
 from .simplenote import Simplenote
 import logging
 
@@ -66,8 +64,7 @@ class NotesDB():
         # initialise the simplenote instance we're going to use
         # this does not yet need network access
         self.simplenote = Simplenote(self.config.get_config('sn_username'),
-                                     self.config.get_config('sn_password'),
-                                     self.config.get_config('sn_host'))
+                                     self.config.get_config('sn_password'))
 
         # we'll use this to store which notes are currently being synced by
         # the background thread, so we don't add them anew if they're still
@@ -79,7 +76,8 @@ class NotesDB():
             if self.config.get_config('pinned_ontop') == 'yes':
                 filtered_notes.sort(key=utils.sort_by_modify_date_pinned, reverse=True)
             else:
-                filtered_notes.sort(key=lambda o: -float(o.note.get('modifydate', 0)))
+                filtered_notes.sort(key=lambda o:
+                        -float(o.note.get('modificationDate', 0)))
         elif sort_mode == 'alpha':
             if self.config.get_config('pinned_ontop') == 'yes':
                 filtered_notes.sort(key=utils.sort_by_title_pinned)
@@ -281,30 +279,30 @@ class NotesDB():
         timestamp = time.time()
 
         try:
-            modifydate = float(note.get('modifydate', timestamp))
-            createdate = float(note.get('createdate', timestamp))
+            modifydate = float(note.get('modificationDate', timestamp))
+            createdate = float(note.get('creationDate', timestamp))
         except ValueError:
             raise ValueError('date fields must be numbers or string representations of numbers')
 
         # note has no internal key yet.
         new_note = {
                     'content'    : note.get('content', ''),
-                    'deleted'    : note.get('deleted', 0),
-                    'modifydate' : modifydate,
-                    'createdate' : createdate,
+                    'deleted'    : note.get('deleted', False),
+                    'modificationDate' : modifydate,
+                    'creationDate' : createdate,
                     'savedate'   : 0, # never been written to disc
                     'syncdate'   : 0, # never been synced with server
                     'tags'       : note.get('tags', []),
-                    'systemtags' : note.get('systemtags', [])
+                    'systemTags' : note.get('systemTags', [])
                    }
 
         # sanity check all note values
         if not isinstance(new_note['content'], str):
             raise ValueError('"content" must be a string')
-        if not new_note['deleted'] in (0, 1):
-            raise ValueError('"deleted" must be 0 or 1')
+        if not new_note['deleted'] in (True, False):
+            raise ValueError('"deleted" must be True or False')
 
-        for n in (new_note['modifydate'], new_note['createdate']):
+        for n in (new_note['modificationDate'], new_note['creationDate']):
             if not 0 <= n <= timestamp:
                 raise ValueError('date fields must be real')
 
@@ -314,11 +312,11 @@ class NotesDB():
             if not isinstance(tag, str):
                 raise ValueError('items in the "tags" array must be strings')
 
-        if not isinstance(new_note['systemtags'], list):
-            raise ValueError('"systemtags" must be an array')
-        for tag in new_note['systemtags']:
+        if not isinstance(new_note['systemTags'], list):
+            raise ValueError('"systemTags" must be an array')
+        for tag in new_note['systemTags']:
             if not isinstance(tag, str):
-                raise ValueError('items in the "systemtags" array must be strings')
+                raise ValueError('items in the "systemTags" array must be strings')
 
         self.notes[new_key] = new_note
 
@@ -338,8 +336,8 @@ class NotesDB():
                     'localkey'   : new_key,
                     'content'    : content,
                     'deleted'    : 0,
-                    'modifydate' : timestamp,
-                    'createdate' : timestamp,
+                    'modificationDate' : timestamp,
+                    'creationDate' : timestamp,
                     'savedate'   : 0, # never been written to disc
                     'syncdate'   : 0, # never been synced with server
                     'tags'       : []
@@ -353,7 +351,7 @@ class NotesDB():
         return self.notes[key]
 
     def get_note_systemtags(self, key):
-        return self.notes[key].get('systemtags')
+        return self.notes[key].get('systemTags')
 
     def get_note_tags(self, key):
         return self.notes[key].get('tags')
@@ -372,7 +370,7 @@ class NotesDB():
         if (not n['deleted'] and deleted) or \
            (n['deleted'] and not deleted):
             n['deleted'] = deleted
-            n['modifydate'] = time.time()
+            n['modificationDate'] = time.time()
             self.flag_what_changed(n, 'deleted')
             self.log('Note {0} (key={1})'.format('trashed' if deleted else 'untrashed', key))
 
@@ -381,7 +379,7 @@ class NotesDB():
         old_content = n.get('content')
         if content != old_content:
             n['content'] = content
-            n['modifydate'] = time.time()
+            n['modificationDate'] = time.time()
             self.flag_what_changed(n, 'content')
             self.log('Note content updated (key={0})'.format(key))
 
@@ -391,7 +389,7 @@ class NotesDB():
         tags = utils.sanitise_tags(tags)
         if tags != old_tags:
             n['tags'] = tags
-            n['modifydate'] = time.time()
+            n['modificationDate'] = time.time()
             self.flag_what_changed(n, 'tags')
             self.log('Note tags updated (key={0})'.format(key))
 
@@ -399,30 +397,30 @@ class NotesDB():
         n = self.notes[key]
         old_pinned = utils.note_pinned(n)
         if pinned != old_pinned:
-            if 'systemtags' not in n:
-                n['systemtags'] = []
-            systemtags = n['systemtags']
+            if 'systemTags' not in n:
+                n['systemTags'] = []
+            systemtags = n['systemTags']
             if pinned:
                 systemtags.append('pinned')
             else:
                 systemtags.remove('pinned')
-            n['modifydate'] = time.time()
-            self.flag_what_changed(n, 'systemtags')
+            n['modificationDate'] = time.time()
+            self.flag_what_changed(n, 'systemTags')
             self.log('Note {0} (key={1})'.format('pinned' if pinned else 'unpinned', key))
 
     def set_note_markdown(self, key, markdown):
         n = self.notes[key]
         old_markdown = utils.note_markdown(n)
         if markdown != old_markdown:
-            if 'systemtags' not in n:
-                n['systemtags'] = []
-            systemtags = n['systemtags']
+            if 'systemTags' not in n:
+                n['systemTags'] = []
+            systemtags = n['systemTags']
             if markdown:
                 systemtags.append('markdown')
             else:
                 systemtags.remove('markdown')
-            n['modifydate'] = time.time()
-            self.flag_what_changed(n, 'systemtags')
+            n['modificationDate'] = time.time()
+            self.flag_what_changed(n, 'systemTags')
             self.log('Note markdown {0} (key={1})'.format('flagged' if markdown else 'unflagged', key))
 
     def helper_key_to_fname(self, k):
@@ -482,14 +480,14 @@ class NotesDB():
 
         # 1. for any note changed locally, including new notes:
         #        save note to server, update note with response
-        for note_index, local_key in enumerate(self.notes.keys()):
+        for note_index, local_key in enumerate(set(self.notes.keys())):
             n = self.notes[local_key]
 
             if not n.get('key') or \
-               float(n.get('modifydate')) > float(n.get('syncdate')):
+               float(n.get('modificationDate')) > float(n.get('syncdate')):
 
                 savedate = float(n.get('savedate'))
-                if float(n.get('modifydate')) > savedate or \
+                if float(n.get('modificationDate')) > savedate or \
                    float(n.get('syncdate')) > savedate:
                     # this will trigger a save to disk after sync algorithm
                     # we want this note saved even if offline or sync fails
@@ -510,15 +508,15 @@ class NotesDB():
 
                 if 'minversion' in cn:
                     del cn['minversion']
-                del cn['createdate']
+                del cn['creationDate']
                 del cn['syncdate']
                 del cn['savedate']
 
                 if 'what_changed' in cn:
                     if 'deleted' not in cn['what_changed']:
                         del cn['deleted']
-                    if 'systemtags' not in cn['what_changed'] and 'systemtags' in cn:
-                        del cn['systemtags']
+                    if 'systemTags' not in cn['what_changed'] and 'systemTags' in cn:
+                        del cn['systemTags']
                     if 'tags' not in cn['what_changed']:
                         del cn['tags']
                     if 'content' not in cn['what_changed']:
@@ -578,7 +576,7 @@ class NotesDB():
                 if k in self.notes:
                     # we already have this note
                     # if the server note has a newer syncnum we need to get it
-                    if int(n.get('syncnum')) > int(self.notes[k].get('syncnum', -1)):
+                    if n.get('modificationDate') > self.notes[k].get('modificationDate', -1):
                         gret = self.simplenote.get_note(k)
                         if gret[1] == 0:
                             self.notes[k].update(gret[0])
@@ -647,7 +645,7 @@ class NotesDB():
     def get_note_status(self, key):
         n = self.notes[key]
         o = utils.KeyValueObject(saved=False, synced=False, modified=False)
-        modifydate = float(n['modifydate'])
+        modifydate = float(n['modificationDate'])
         savedate   = float(n['savedate'])
         syncdate   = float(n['syncdate'])
 

@@ -136,7 +136,7 @@ class ViewNote(urwid.ListBox):
             title    = utils.get_note_title(self.old_note)
             version  = self.old_note['version']
         else:
-            t = time.localtime(float(self.note['modifydate']))
+            t = time.localtime(float(self.note['modificationDate']))
             title    = utils.get_note_title(self.note)
             flags    = utils.get_note_flags(self.note)
             tags     = utils.get_note_tags(self.note)

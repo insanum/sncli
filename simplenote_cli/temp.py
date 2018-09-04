@@ -15,8 +15,8 @@ def tempfile_create(note, raw=False, tempdir=None):
     else:
         ext = '.txt'
         if note and \
-           'systemtags' in note and \
-           'markdown' in note['systemtags']:
+           'systemTags' in note and \
+           'markdown' in note['systemTags']:
             ext = '.mkd'
         tf = tempfile.NamedTemporaryFile(suffix=ext, delete=False, dir=tempdir)
         if note:

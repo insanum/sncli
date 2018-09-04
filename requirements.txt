@@ -1,2 +1,3 @@
 urwid
 requests
+git+https://github.com/Simperium/simperium-python.git#egg=Simperium
