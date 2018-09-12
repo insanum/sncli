@@ -437,6 +437,15 @@ class NotesDB():
     def sync_notes(self, server_sync=True, full_sync=True):
         """Perform a full bi-directional sync with server.
 
+        Params:
+
+        `server_sync` (bool): sync to the server if true
+
+        `full_sync` (bool): perform a full sync. Set to false to only sync
+            changes since the last sync. Full sync should happen on sncli start,
+            and partial syncs can happen periodically or after modifying a note.
+
+
         This follows the recipe in the SimpleNote 2.0 API documentation.
         After this, it could be that local keys have been changed, so
         reset any views that you might have!
@@ -478,11 +487,17 @@ class NotesDB():
         if server_sync and full_sync:
             self.log("Starting full sync")
 
+        # TODO: fix creating new notes 400 error
+
+        # TODO: notes trashed on server don't seem to sync trash status from
+        # server to local
+
         # 1. for any note changed locally, including new notes:
         #        save note to server, update note with response
         for note_index, local_key in enumerate(set(self.notes.keys())):
             n = self.notes[local_key]
 
+            # new note or note with newer modification
             if not n.get('key') or \
                float(n.get('modificationDate')) > float(n.get('syncdate')):
 
@@ -530,7 +545,7 @@ class NotesDB():
                     # merge the note we got back (content could be empty)
                     # record syncdate and save the note at the assigned key
                     del self.notes[local_key]
-                    k = uret[0].get('key')
+                    k = uret[0]['key']
                     n.update(uret[0])
                     n['syncdate'] = now
                     n['localkey'] = k
@@ -569,42 +584,31 @@ class NotesDB():
         if not skip_remote_syncing:
             len_nl = len(nl)
             for note_index, n in enumerate(nl):
-                k = n.get('key')
+                k = n['key']
                 server_keys[k] = True
                 # this works because in the prior step we rewrite local keys to
                 # server keys when we get an updated note back from the server
                 if k in self.notes:
                     # we already have this note
                     # if the server note has a newer syncnum we need to get it
-                    if n.get('modificationDate') > self.notes[k].get('modificationDate', -1):
-                        gret = self.simplenote.get_note(k)
-                        if gret[1] == 0:
-                            self.notes[k].update(gret[0])
-                            local_updates[k] = True
-                            self.notes[k]['syncdate'] = now
-                            self.notes[k]['localkey'] = k
-
-                            self.log('Synced newer note from server (key={0})'.format(k))
-                        else:
-                            self.log('ERROR: Failed to sync newer note from server (key={0})'.format(k))
-                            sync_errors += 1
-                else:
-                    # this is a new note
-                    gret = self.simplenote.get_note(k)
-                    if gret[1] == 0:
-                        self.notes[k] = gret[0]
+                    if n['modificationDate'] > self.notes[k].get('modificationDate', -1):
+                        self.notes[k].update(n)
                         local_updates[k] = True
                         self.notes[k]['syncdate'] = now
                         self.notes[k]['localkey'] = k
-
-                        self.log('Synced new note from server (key={0})'.format(k))
-                    else:
-                        self.log('ERROR: Failed syncing new note from server (key={0})'.format(k))
-                        sync_errors += 1
+                        self.log('Synced newer note from server (key={0})'.format(k))
+                else:
+                    # this is a new note
+                    self.notes[k] = n
+                    local_updates[k] = True
+                    self.notes[k]['syncdate'] = now
+                    self.notes[k]['localkey'] = k
+                    self.log('Synced new note from server (key={0})'.format(k))
 
         # 4. for each local note not in the index
         #        PERMANENT DELETE, remove note from local store
         # Only do this when a full sync (i.e. entire index) is performed!
+        # TODO: make sure local new notes don't get deleted (they appear to atm)
         if server_sync and full_sync and not skip_remote_syncing:
             for local_key in list(self.notes.keys()):
                 if local_key not in server_keys:

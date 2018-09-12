@@ -147,6 +147,7 @@ class Simplenote(object):
         try:
             logging.debug(note)
             key, note = self.get_api().note.set(note['key'], note, include_response=True)
+            note['key'] = key
         except ConnectionError as e:
             self.status = 'offline, connection error'
             return e, -1
