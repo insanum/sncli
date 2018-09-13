@@ -482,11 +482,10 @@ class NotesDB():
         sync_start_time = time.time()
         sync_errors = 0
         skip_remote_syncing = False
+        failed_update_keys = set()
 
         if server_sync and full_sync:
             self.log("Starting full sync")
-
-        # TODO: fix creating new notes 400 error
 
         # 1. for any note changed locally, including new notes:
         #        save note to server, update note with response
@@ -557,6 +556,7 @@ class NotesDB():
                 else:
                     self.log('ERROR: Failed to sync note to server (key={0})'.format(local_key))
                     sync_errors += 1
+                    failed_update_keys.add(local_key)
 
         # 2. get the note index
         if not server_sync:
@@ -573,7 +573,7 @@ class NotesDB():
                 skip_remote_syncing = True
 
         # 3. for each remote note
-        #        if remote syncnum > local syncnum ||
+        #        if remote newer than local ||
         #           a new note and key is not in local store
         #            retrieve note, update note with response
         if not skip_remote_syncing:
@@ -609,10 +609,9 @@ class NotesDB():
         # 4. for each local note not in the index
         #        PERMANENT DELETE, remove note from local store
         # Only do this when a full sync (i.e. entire index) is performed!
-        # TODO: make sure local new notes don't get deleted (they appear to atm)
         if server_sync and full_sync and not skip_remote_syncing:
             for local_key in list(self.notes.keys()):
-                if local_key not in server_keys:
+                if local_key not in server_keys and local_key not in failed_update_keys:
                     del self.notes[local_key]
                     local_deletes[local_key] = True
 
