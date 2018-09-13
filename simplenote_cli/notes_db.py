@@ -489,9 +489,6 @@ class NotesDB():
 
         # TODO: fix creating new notes 400 error
 
-        # TODO: notes trashed on server don't seem to sync trash status from
-        # server to local
-
         # 1. for any note changed locally, including new notes:
         #        save note to server, update note with response
         for note_index, local_key in enumerate(set(self.notes.keys())):
@@ -567,7 +564,7 @@ class NotesDB():
         if not server_sync:
             nl = []
         else:
-            nl = self.simplenote.get_note_list(since=None if full_sync else self.last_sync)
+            nl = self.simplenote.get_note_list()
 
             if nl[1] == 0:  # success
                 nl = nl[0]
@@ -590,8 +587,14 @@ class NotesDB():
                 # server keys when we get an updated note back from the server
                 if k in self.notes:
                     # we already have this note
-                    # if the server note has a newer syncnum we need to get it
-                    if n['modificationDate'] > self.notes[k].get('modificationDate', -1):
+                    # if the server note has a newer modification date OR
+                    # (higher version and same content [metadata changed]), then
+                    # update from server.
+                    # This should prevent old content overwriting new content,
+                    # while allowing new metadata to update.
+                    if n['modificationDate'] > self.notes[k].get('modificationDate', -1) or \
+                            (n['version'] > self.notes[k]['version'] and \
+                            n['content'] == self.notes[k]['content']):
                         self.notes[k].update(n)
                         local_updates[k] = True
                         self.notes[k]['syncdate'] = now

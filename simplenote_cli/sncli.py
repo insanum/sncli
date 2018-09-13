@@ -672,6 +672,7 @@ class sncli:
             if not content:
                 return None
 
+            # TODO: why is comparing md5s better than comparing the strings directly?
             md5_old = hashlib.md5(note['content'].encode('utf-8')).digest()
             md5_new = hashlib.md5(content.encode('utf-8')).digest()
 
