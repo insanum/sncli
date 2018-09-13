@@ -14,18 +14,18 @@
     :license: MIT, see LICENSE for more details.
 """
 
-import urllib.parse
 import base64
-import time
 import datetime
-import logging
 import json
+import logging
+import time
+import urllib.parse
 import uuid
 
 import requests
-from requests.exceptions import RequestException, ConnectionError
+from requests.exceptions import ConnectionError, RequestException
 
-from simperium.core import Auth, Api
+from simperium.core import Api, Auth
 
 # Application token provided for sncli.
 # Please do not abuse.
@@ -135,18 +135,27 @@ class Simplenote(object):
         # Note: all strings in notes stored as type str
         # - use s.encode('utf-8') when bytes type needed
 
-        # determine whether to create a new note or updated an existing one
-        if 'key' not in note:
-            note['key'] = uuid.uuid4().hex
-
-        if 'creationDate' not in note:
-            note['creationDate'] = note['modificationDate']
-        if 'modificationDate' not in note:
-            note["modificationDate"] = time.time()
+        logging.debug(note)
 
         try:
-            logging.debug(note)
-            key, note = self.get_api().note.set(note['key'], note, include_response=True)
+            # determine whether to create a new note or updated an existing one
+            if 'key' not in note:
+                # new note; build full note object to send to avoid 400 errors
+                logging.debug(note)
+                note = {
+                    'tags': note['tags'],
+                    'deleted': note['deleted'],
+                    'content': note['content'],
+                    'modificationDate': note['modificationDate'],
+                    'creationDate': note['creationDate'],
+                    'systemTags': [],
+                    'shareURL': '',
+                    'publishURL': '',
+                }
+                key, note = self.get_api().note.new(note, include_response=True)
+                note['version'] = 1
+            else:
+                key, note = self.get_api().note.set(note['key'], note, include_response=True)
             note['key'] = key
         except ConnectionError as e:
             self.status = 'offline, connection error'
@@ -299,4 +308,3 @@ class Simplenote(object):
         except RequestException as e:
             return e, -1
         return {}, 0
-

@@ -335,7 +335,7 @@ class NotesDB():
         new_note = {
                     'localkey'   : new_key,
                     'content'    : content,
-                    'deleted'    : 0,
+                    'deleted'    : False,
                     'modificationDate' : timestamp,
                     'creationDate' : timestamp,
                     'savedate'   : 0, # never been written to disc
@@ -520,7 +520,6 @@ class NotesDB():
 
                 if 'minversion' in cn:
                     del cn['minversion']
-                del cn['creationDate']
                 del cn['syncdate']
                 del cn['savedate']
 
