@@ -23,7 +23,7 @@ import urllib.parse
 import uuid
 
 import requests
-from requests.exceptions import ConnectionError, RequestException
+from requests.exceptions import ConnectionError, RequestException, HTTPError
 
 from simperium.core import Api, Auth
 
@@ -53,6 +53,19 @@ class Simplenote(object):
         self.token = None
         self.status = 'offline'
 
+        # attempt initial auth
+        try:
+            self.get_api()
+        except ConnectionError as e:
+            logging.debug(e)
+            self.status = 'offline: no connection'
+        except HTTPError as e:
+            logging.debug(e)
+            self.status = 'offline: login failed; check username and password'
+        except Exception as e:
+            logging.debug(e)
+            self.status = 'offline: unknown auth error; check log for details'
+
     def authenticate(self, user: str, password: str) -> Api:
         """ Method to get simplenote auth token
 
@@ -65,23 +78,6 @@ class Simplenote(object):
 
         """
 
-        # try:
-        #     res = requests.post(self.AUTH_URL, data=values)
-        #     token = res.text
-        #     if res.status_code != 200:
-        #         self.status = 'login failed with status {}, check credentials'.format(res.status_code)
-        #         token = None
-        #     else:
-        #         self.status = 'online'
-        # except ConnectionError as e:
-        #     token = None
-        #     self.status = 'offline, connection error'
-        # except RequestException as e:
-        #     token = None
-        #     self.status = 'login failed, check log'
-
-
-        # TODO: handle errors
         token = self.auth.authorize(user, password)
         api = Api(SIMPLENOTE_APP_ID, token)
         self.status = "online"
@@ -240,12 +236,15 @@ class Simplenote(object):
             except ConnectionError as e:
                 self.status = 'offline, connection error'
                 status = -1
+                break
             except RequestException as e:
                 # if problem with network request/response
                 status = -1
+                break
             except ValueError as e:
                 # if invalid json data
                 status = -1
+                break
 
         # Can only filter for tags at end, once all notes have been retrieved.
         #Below based on simplenote.vim, except we return deleted notes as well
