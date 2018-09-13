@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 urwid = "*"
 requests = "*"
-"Simperium3" = {git = "https://github.com/swalladge/simperium-python3.git", branch = "master"}
+"Simperium3" = "*"
 
 [dev-packages]
 mypy = "*"

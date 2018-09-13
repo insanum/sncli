@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "cb871f10a6c93ff1669ff521b725b773001996e10acb8c81f43913912049fdb8"
+            "sha256": "d5296cdc9138caee97c091d8c6e3befae3380f2701b20cdad5cb50c6559a6ccc"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -44,8 +44,21 @@
             "version": "==2.19.1"
         },
         "simperium3": {
-            "git": "https://github.com/swalladge/simperium-python3.git",
-            "ref": "60d4f248c010b8610ae1910bf1702f4e6a6ea74f"
+            "hashes": [
+                "sha256:35956c8c61112dcd6fa5e3972884c613457a22f5733eb18585630048198175c7",
+                "sha256:86f25bc835e8063cf1cb2edb0deec9b52d0302e748a2959fab934ff83c0048d8"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '2.6' and python_version != '3.1.*' and python_version != '3.2.*' and python_version != '3.3.*' and python_version != '3.0.*' and python_version < '4'",
+            "version": "==0.1.0"
+        },
+        "typing": {
+            "hashes": [
+                "sha256:4027c5f6127a6267a435201981ba156de91ad0d1d98e9ddc2aa173453453492d",
+                "sha256:57dcf675a99b74d64dacf6fba08fb17cf7e3d5fdff53d4a30ea2a5e7e52543d4",
+                "sha256:a4c8473ce11a65999c8f59cb093e70686b6c84c98df58c1dae9b3b196089858a"
+            ],
+            "version": "==3.6.6"
         },
         "urllib3": {
             "hashes": [
@@ -105,6 +118,15 @@
             "index": "pypi",
             "version": "==2.19.1"
         },
+        "simperium3": {
+            "hashes": [
+                "sha256:35956c8c61112dcd6fa5e3972884c613457a22f5733eb18585630048198175c7",
+                "sha256:86f25bc835e8063cf1cb2edb0deec9b52d0302e748a2959fab934ff83c0048d8"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '2.6' and python_version != '3.1.*' and python_version != '3.2.*' and python_version != '3.3.*' and python_version != '3.0.*' and python_version < '4'",
+            "version": "==0.1.0"
+        },
         "typed-ast": {
             "hashes": [
                 "sha256:0948004fa228ae071054f5208840a1e88747a357ec1101c17217bfe99b299d58",
@@ -132,6 +154,14 @@
                 "sha256:f19f2a4f547505fe9072e15f6f4ae714af51b5a681a97f187971f50c283193b6"
             ],
             "version": "==1.1.0"
+        },
+        "typing": {
+            "hashes": [
+                "sha256:4027c5f6127a6267a435201981ba156de91ad0d1d98e9ddc2aa173453453492d",
+                "sha256:57dcf675a99b74d64dacf6fba08fb17cf7e3d5fdff53d4a30ea2a5e7e52543d4",
+                "sha256:a4c8473ce11a65999c8f59cb093e70686b6c84c98df58c1dae9b3b196089858a"
+            ],
+            "version": "==3.6.6"
         },
         "urllib3": {
             "hashes": [
