@@ -326,7 +326,7 @@ class sncli:
 
         # toggle the deleted flag
         note = self.ndb.get_note(key)
-        self.ndb.set_note_deleted(key, 0 if note['deleted'] else 1)
+        self.ndb.set_note_deleted(key, False if note['deleted'] else True)
 
         if self.gui_body_get().__class__ == view_titles.ViewTitles:
             self.view_titles.update_note_title()

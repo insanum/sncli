@@ -367,8 +367,7 @@ class NotesDB():
 
     def set_note_deleted(self, key, deleted):
         n = self.notes[key]
-        if (not n['deleted'] and deleted) or \
-           (n['deleted'] and not deleted):
+        if n['deleted'] != deleted:
             n['deleted'] = deleted
             n['modificationDate'] = time.time()
             self.flag_what_changed(n, 'deleted')

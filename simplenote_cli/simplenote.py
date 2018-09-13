@@ -278,7 +278,7 @@ class Simplenote(object):
         if (status == -1):
             return note, status
         # set deleted property
-        note["deleted"] = 1
+        note["deleted"] = True
         # update note
         return self.update_note(note)
 
