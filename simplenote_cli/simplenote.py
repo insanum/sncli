@@ -135,13 +135,10 @@ class Simplenote(object):
         # Note: all strings in notes stored as type str
         # - use s.encode('utf-8') when bytes type needed
 
-        logging.debug(note)
-
         try:
             # determine whether to create a new note or updated an existing one
             if 'key' not in note:
                 # new note; build full note object to send to avoid 400 errors
-                logging.debug(note)
                 note = {
                     'tags': note['tags'],
                     'deleted': note['deleted'],
