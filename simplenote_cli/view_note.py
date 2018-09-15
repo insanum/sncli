@@ -132,7 +132,7 @@ class ViewNote(urwid.ListBox):
             total = len(self.body.positions())
 
         if self.old_note:
-            t = time.localtime(float(self.old_note['versiondate']))
+            t = time.localtime(float(self.old_note['modificationDate']))
             title    = utils.get_note_title(self.old_note)
             version  = self.old_note['version']
         else:
