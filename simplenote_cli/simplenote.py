@@ -88,7 +88,7 @@ class Simplenote(object):
             self.api = self.authenticate(self.username, self.password)
         return self.api
 
-    def get_note(self, noteid: str, version: int = None):
+    def get_note(self, noteid, version=None):
         """ method to get a specific note
 
         Arguments:
