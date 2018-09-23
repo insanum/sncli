@@ -1,5 +1,5 @@
 __productname__ = 'sncli'
-__version__ = '0.2.1'
+__version__ = '0.3.0'
 __copyright__ = "Copyright (c) 2014 Eric Davis"
 __author__ = "Eric Davis"
 __author_email__ = "edavis@insanum.com"
