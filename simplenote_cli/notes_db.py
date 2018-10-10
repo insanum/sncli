@@ -58,6 +58,8 @@ class NotesDB():
                 #       is used for everything else in sncli
                 n['localkey'] = localkey
 
+                utils.sanitise_dates(n)
+
                 # add the note to our database
                 self.notes[localkey] = n
 
@@ -579,6 +581,8 @@ class NotesDB():
         if not skip_remote_syncing:
             len_nl = len(nl)
             for note_index, n in enumerate(nl):
+
+                utils.sanitise_dates(n)
                 k = n['key']
                 server_keys[k] = True
                 # this works because in the prior step we rewrite local keys to
@@ -695,4 +699,3 @@ class NotesDB():
         self.go_cond.acquire()
         self.go_cond.notify()
         self.go_cond.release()
-

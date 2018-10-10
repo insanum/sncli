@@ -6,7 +6,7 @@
 # copyright 2012 by Charl P. Botha <cpbotha@vxlabs.com>
 # new BSD license
 
-import datetime, random, re
+import datetime, random, re, time
 
 # first line with non-whitespace should be the title
 note_title_re = re.compile('\s*(.*)\n?')
@@ -196,3 +196,19 @@ def build_regex_search(search_string):
             sspat = None
 
     return sspat
+
+def sanitise_dates(note):
+    """
+    sanitise the dates in a note (in-place)
+    ref issue #71
+    """
+    now = time.time()
+    max_delta = 31536000 # a year of seconds
+
+    if 'modificationDate' in note:
+        if float(note['modificationDate']) - now > max_delta:
+            note['modificationDate'] = now
+
+    if 'creationDate' in note:
+        if float(note['creationDate']) - now > max_delta:
+            note['creationDate'] = now
