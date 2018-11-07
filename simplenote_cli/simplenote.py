@@ -55,11 +55,14 @@ class Simplenote(object):
 
         # attempt initial auth
         try:
-            self.get_api()
+            self.api = self.authenticate(self.username, self.password)
         except ConnectionError as e:
             logging.debug(e)
             self.status = 'offline: no connection'
         except HTTPError as e:
+            logging.debug(e)
+            self.status = 'offline: login failed; check username and password'
+        except KeyError as e:
             logging.debug(e)
             self.status = 'offline: login failed; check username and password'
         except Exception as e:
@@ -83,11 +86,6 @@ class Simplenote(object):
         self.status = "online"
         return api
 
-    def get_api(self) -> Api:
-        if self.api is None:
-            self.api = self.authenticate(self.username, self.password)
-        return self.api
-
     def get_note(self, noteid, version=None):
         """ method to get a specific note
 
@@ -103,8 +101,11 @@ class Simplenote(object):
 
         """
 
+        if self.api is None:
+            return None, -1
+
         try:
-            note = self.get_api().note.get(noteid, version=version)
+            note = self.api.note.get(noteid, version=version)
             if version is not None:
                 note['version'] = version
             if note is None:
@@ -133,6 +134,9 @@ class Simplenote(object):
         # Note: all strings in notes stored as type str
         # - use s.encode('utf-8') when bytes type needed
 
+        if self.api is None:
+            return None, -1
+
         try:
             # determine whether to create a new note or updated an existing one
             if 'key' not in note:
@@ -147,10 +151,10 @@ class Simplenote(object):
                     'shareURL': '',
                     'publishURL': '',
                 }
-                key, note = self.get_api().note.new(note, include_response=True)
+                key, note = self.api.note.new(note, include_response=True)
                 note['version'] = 1
             else:
-                key, note = self.get_api().note.set(note['key'], note, include_response=True)
+                key, note = self.api.note.set(note['key'], note, include_response=True)
             note['key'] = key
         except ConnectionError as e:
             self.status = 'offline, connection error'
@@ -224,10 +228,13 @@ class Simplenote(object):
         note_list = []
         mark = None
 
+        if self.api is None:
+            return [], -1
+
         while True:
 
             try:
-                data = self.get_api().note.index(data=True, mark=mark, limit=NOTE_FETCH_LENGTH)
+                data = self.api.note.index(data=True, mark=mark, limit=NOTE_FETCH_LENGTH)
 
                 note_list.extend(map(self._convert_index_to_note, data['index']))
 
@@ -299,7 +306,8 @@ class Simplenote(object):
             return note, status
 
         try:
-            self.get_api().note.delete(note_id)
+            # self.api is obviously ok if self.trash_note worked
+            self.api.note.delete(note_id)
         except ConnectionError as e:
             self.status = 'offline, connection error'
             return e, -1
