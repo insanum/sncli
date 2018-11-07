@@ -12,6 +12,7 @@ class Config:
         {
          'cfg_sn_username'       : '',
          'cfg_sn_password'       : '',
+         'cfg_sn_password_eval'  : '',
          'cfg_db_path'           : os.path.join(self.home, '.sncli'),
          'cfg_search_tags'       : 'yes',  # with regex searches
          'cfg_sort_mode'         : 'date', # 'alpha' or 'date'
@@ -121,10 +122,24 @@ class Config:
         }
 
         cp = configparser.SafeConfigParser(defaults)
-        if custom_file is not None:
-            self.configs_read = cp.read([custom_file])
-        else:
-            self.configs_read = cp.read([os.path.join(self.home, '.snclirc')])
+
+        fname = custom_file if custom_file is not None else os.path.join(self.home, '.snclirc')
+        try:
+            with open(fname) as f:
+                cp.read_file(f, source=fname)
+        except FileNotFoundError as e:
+            print("Config file not found: '{}'.".format(fname))
+            sys.exit(1)
+        except configparser.Error as e:
+            # catch all parser errors
+            print("Error parsing config file.")
+            print(e)
+            sys.exit(1)
+        except OSError as e:
+            # catch other file related errors
+            print("Error reading config file.")
+            print(e)
+            sys.exit(1)
 
         cfg_sec = 'sncli'
 
@@ -145,6 +160,10 @@ class Config:
                     print('Error evaluating command for password.')
                     print(e)
                     sys.exit(1)
+            else:
+                # no way of obtaining a password!
+                # TODO: gracefully handle
+                pass
 
         # ordered dicts used to ease help
 
