@@ -57,16 +57,16 @@ class Simplenote(object):
         try:
             self.api = self.authenticate(self.username, self.password)
         except ConnectionError as e:
-            logging.debug(e)
+            logging.debug("Auth error: " + str(e))
             self.status = 'offline: no connection'
         except HTTPError as e:
-            logging.debug(e)
+            logging.debug("Auth error: " + str(e))
             self.status = 'offline: login failed; check username and password'
         except KeyError as e:
-            logging.debug(e)
+            logging.debug("Auth error: " + str(e))
             self.status = 'offline: login failed; check username and password'
         except Exception as e:
-            logging.debug(e)
+            logging.debug("Auth error: " + str(e))
             self.status = 'offline: unknown auth error; check log for details'
 
     def authenticate(self, user: str, password: str) -> Api:

@@ -60,8 +60,8 @@ class sncli:
             self.sync_notes()
             self.verbose = verbose
 
-    def sync_notes(self):
-        self.ndb.sync_now(self.do_server_sync)
+    def sync_notes(self) -> int:
+        return self.ndb.sync_now(self.do_server_sync)
 
     def get_editor(self):
         editor = self.config.get_config('editor')
@@ -1355,7 +1355,11 @@ def main(argv=sys.argv[1:]):
 
     def sncli_start(sync=sync, verbose=verbose, config=config):
         sn = sncli(sync, verbose, config)
-        if sync: sn.sync_notes()
+        if sync: 
+            errors = sn.sync_notes()
+            if errors > 0:
+                print('ERROR: check log for sync errors.')
+                sys.exit(1)
         return sn
 
     if args[0] == 'sync':
