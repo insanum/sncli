@@ -53,6 +53,11 @@ class Simplenote(object):
         self.token = None
         self.status = 'offline'
 
+        if not username or not password:
+            logging.debug('Auth error: username or password not set')
+            self.status = 'offline: username or password not set'
+            return
+
         # attempt initial auth
         try:
             self.api = self.authenticate(self.username, self.password)
