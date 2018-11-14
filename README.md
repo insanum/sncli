@@ -169,6 +169,29 @@ cfg_editor = nano +{line}
 cfg_pager = less -c +{line} -N {fname}
 ```
 
+#### Editing notes
+
+The flow sncli uses for editing notes is:
+
+1. create temporary file
+2. load the note contents into it
+3. launch the editor with the file
+4. wait for the editor to exit
+5. load the file contents into the internal note
+
+As a result, the note doesn't get updated in sncli until the editor is closed.
+By default, the temporary file is created in the OS default tempdir (eg. `/tmp/`
+on Linux). This can be changed with the `cfg_tempdir` option. This may be useful
+to create temporary files on a persistent file system to avoid data loss. For
+example:
+
+```
+cfg_tempdir = /home/user/.sncli/tmp/
+```
+
+This directory must exist.
+
+
 #### Note Title Format
 
 The format of each line in the note list is driven by the
