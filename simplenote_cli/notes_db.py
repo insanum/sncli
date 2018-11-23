@@ -435,7 +435,7 @@ class NotesDB():
         # record that we saved this to disc.
         note['savedate'] = time.time()
 
-    def sync_notes(self, server_sync=True, full_sync=True):
+    def sync_notes(self, server_sync=True, full_sync=True) -> int:
         """Perform a full bi-directional sync with server.
 
         Params:
@@ -446,6 +446,7 @@ class NotesDB():
             changes since the last sync. Full sync should happen on sncli start,
             and partial syncs can happen periodically or after modifying a note.
 
+        Returns number of errors.
 
         This follows the recipe in the SimpleNote 2.0 API documentation.
         After this, it could be that local keys have been changed, so
@@ -678,11 +679,12 @@ class NotesDB():
         self.sync_lock.release()
         return all_saved
 
-    def sync_now(self, do_server_sync=True):
+    def sync_now(self, do_server_sync=True) -> int:
         self.sync_lock.acquire()
-        self.sync_notes(server_sync=do_server_sync,
+        n_errors = self.sync_notes(server_sync=do_server_sync,
                         full_sync=True if not self.last_sync else False)
         self.sync_lock.release()
+        return n_errors
 
     # sync worker thread...
     def sync_worker(self, do_server_sync):
