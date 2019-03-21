@@ -115,9 +115,13 @@ The current Simplenote API does not support oauth authentication so your
 Simplenote account information must live in the configuration file. Please be
 sure to protect this file.
 
-sncli pulls in configuration from the `.snclirc` file located in your $HOME
-directory. At the very least, the following example `.snclirc` will get you
-going (using your account information):
+The flow sncli uses for finding the config file is:
+
+1. Specified on the command line with `-c` or `--config`.
+2. If `SNCLIRC` environment variable is set, use that.
+3. Finally will pull from default location of `$HOME/.snclirc`.
+
+The following example `.snclirc` will get you going (using your account information):
 
 ```
 [sncli]
