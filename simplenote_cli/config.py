@@ -123,7 +123,13 @@ class Config:
 
         cp = configparser.SafeConfigParser(defaults)
 
-        fname = custom_file if custom_file is not None else os.path.join(self.home, '.snclirc')
+        if custom_file:
+            fname = custom_file
+        elif 'SNCLIRC' in os.environ:
+            fname = os.environ['SNCLIRC']
+        else:
+            fname = os.path.join(self.home, '.snclirc')
+
         try:
             with open(fname) as f:
                 cp.read_file(f, source=fname)
