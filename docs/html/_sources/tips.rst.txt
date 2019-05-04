@@ -31,7 +31,7 @@ Set ``mdv`` as your pager for ``sncli`` and get a formatted view of your markdow
         ------------------------
         cfg_pager = /usr/local/bin/mdless
 
-.. sidebar: MDV does not yet support using a light backdround
+.. note: MDV does not yet support using a light backdround
 
 Vim, Auto-set filetype
 ======================

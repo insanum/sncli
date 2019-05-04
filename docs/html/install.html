@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>sncli &#8212; sncli rtfd  documentation</title>
+    <title>Install &#8212; sncli rtfd  documentation</title>
     <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -35,19 +35,9 @@
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
 <h3><a href="index.html">Table of Contents</a></h3>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="index.html">sncli</a></li>
-</ul>
-<p class="caption"><span class="caption-text">Contents</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="welcome.html">Features</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">sncli</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#console-gui-features">Console GUI Features</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#command-line-scripting">Command Line Scripting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#tldr">TLDR</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="#install">Install</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#pip">Pip</a></li>
@@ -60,6 +50,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Command Line Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#cli-usage">CLI Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a></li>
 </ul>
 
@@ -88,58 +79,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="sncli">
-<h1>sncli<a class="headerlink" href="#sncli" title="Permalink to this headline">¶</a></h1>
-<p>Simplenote Command Line Interface</p>
-<a class="reference internal image-reference" href="_images/screenshot1.png"><img alt="_images/screenshot1.png" class="align-center" src="_images/screenshot1.png" style="width: 90%;" /></a>
-<div class="section" id="console-gui-features">
-<h2>Console GUI Features<a class="headerlink" href="#console-gui-features" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><p>full two-way sync with Simplenote performed dynamically in the background</p></li>
-<li><p>all actions logged and easily reviewed</p></li>
-<li><p>list note titles (configurable format w/ title, date, flags, tags, keys, etc)</p></li>
-<li><p>sort notes by date, alpha by title, tags, pinned on top</p></li>
-<li><p>search for notes using a Google style search pattern or Regular Expression</p></li>
-<li><p>view note contents and meta data</p></li>
-<li><p>view and restore previous versions of notes</p></li>
-<li><p>pipe note contents to external command</p></li>
-<li><p>create and edit notes (using your editor)</p></li>
-<li><p>edit note tags</p></li>
-<li><p>trash/untrash notes</p></li>
-<li><p>pin/unpin notes</p></li>
-<li><p>flag notes as markdown or not</p></li>
-<li><p>vi-like keybinds (fully configurable)</p></li>
-<li><p>Colors! (fully configurable)</p></li>
-</ul>
-</div>
-<div class="section" id="command-line-scripting">
-<h2>Command Line Scripting<a class="headerlink" href="#command-line-scripting" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><p>force a full two-way sync with Simplenote</p></li>
-<li><p>all actions logged and easily reviewed</p></li>
-<li><p>list note titles and keys</p></li>
-<li><p>search for notes using a Google style search pattern or Regular Expression</p></li>
-<li><p>dump note contents</p></li>
-<li><p>create a new note (via stdin or editor)</p></li>
-<li><p>import a note with raw json data (stdin or editor)</p></li>
-<li><p>edit a note (via editor)</p></li>
-<li><p>trash/untrash a note</p></li>
-<li><p>pin/unpin a note</p></li>
-<li><p>flag note as markdown or not</p></li>
-<li><p>view and edit note tags</p></li>
-</ul>
-</div>
-<div class="section" id="tldr">
-<h2>TLDR<a class="headerlink" href="#tldr" title="Permalink to this headline">¶</a></h2>
-<p>Notes can be viewed/created/edited in both an online and offline mode. All changes are saved to a local cache on disk and automatically sync’ed when sncli is brought online.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>GitHub <a class="reference external" href="https://github.com/insanum/sncli/pulls">pull requests</a> are welcome!</p>
-</div>
-</div>
-</div>
-<hr class="docutils" />
-<div class="section" id="install">
+  <div class="section" id="install">
 <h1>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
@@ -148,6 +88,10 @@
 <li><p><a class="reference external" href="http://www.python.org">Python 3</a></p></li>
 <li><p><a class="reference external" href="https://pip.pypa.io/en/stable/">Pip</a></p></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Python modules <a class="reference external" href="http://urwid.org">Urwid</a>, <a class="reference external" href="http://docs.python-requests.org">Requests</a>, and <a class="reference external" href="https://simperium.com/docs/reference/python/">Simperium3</a> will also be installed.</p>
+</div>
 </div>
 <div class="section" id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>

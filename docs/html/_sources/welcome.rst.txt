@@ -7,7 +7,7 @@ Simplenote Command Line Interface
     :align: center
 
 
-.. sidebar:: This project is on `GitHub`_ and `pull requests`_ are welcome.
+.. note:: This project is on `GitHub`_ and `pull requests`_ are welcome.
 
 Console GUI Features
 ====================
