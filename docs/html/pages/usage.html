@@ -1,0 +1,287 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Command Line Usage &#8212; sncli rtfd  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="command-line-usage">
+<h1>Command Line Usage<a class="headerlink" href="#command-line-usage" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="searching">
+<h2>Searching<a class="headerlink" href="#searching" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="import">
+<h2>Import<a class="headerlink" href="#import" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="export">
+<h2>Export<a class="headerlink" href="#export" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="note-creation">
+<h2>Note Creation<a class="headerlink" href="#note-creation" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+<div class="section" id="cli-usage">
+<h1>CLI Usage<a class="headerlink" href="#cli-usage" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>Searching<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id2">
+<h2>Import<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id3">
+<h2>Export<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id4">
+<h2>Note Creation<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<dl>
+<dt>Usage:</dt><dd><p>sncli [OPTIONS] [COMMAND] [COMMAND_ARGS]</p>
+<dl>
+<dt>OPTIONS:</dt><dd><dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><ul class="simple">
+<li><p>usage help</p></li>
+</ul>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><ul class="simple">
+<li><p>verbose output</p></li>
+</ul>
+</dd>
+<dt><kbd><span class="option">-n</span>, <span class="option">--nosync</span></kbd></dt>
+<dd><ul class="simple">
+<li><p>don’t perform a server sync</p></li>
+</ul>
+</dd>
+<dt><kbd><span class="option">-r</span>, <span class="option">--regex</span></kbd></dt>
+<dd><ul class="simple">
+<li><p>search string is a regular expression</p></li>
+</ul>
+</dd>
+<dt><kbd><span class="option">-k <var>&lt;key&gt;</var></span>, <span class="option">--key=<var>&lt;key&gt;</var></span></kbd></dt>
+<dd><ul class="simple">
+<li><p>note key</p></li>
+</ul>
+</dd>
+</dl>
+<p>-t &lt;title&gt;, –title=&lt;title&gt; - title of note for create (cli mode)
+-c &lt;file&gt;, –config=&lt;file&gt;  - config file to read from (defaults to ~/.snclirc)</p>
+</dd>
+<dt>COMMANDS:</dt><dd><p>–                     - console gui mode when no command specified</p>
+<dl>
+<dt>Usage:</dt><dd><p>sncli [OPTIONS] [COMMAND] [COMMAND_ARGS]</p>
+<blockquote>
+<div><dl>
+<dt>OPTIONS:</dt><dd><dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><ul class="simple">
+<li><p>usage help</p></li>
+</ul>
+<dl class="option-list">
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><ul class="simple">
+<li><p>verbose output</p></li>
+</ul>
+<dl class="option-list">
+<dt><kbd><span class="option">-n</span>, <span class="option">--nosync</span></kbd></dt>
+<dd><ul class="simple">
+<li><p>don’t perform a server sync</p></li>
+</ul>
+<dl class="option-list">
+<dt><kbd><span class="option">-r</span>, <span class="option">--regex</span></kbd></dt>
+<dd><ul class="simple">
+<li><p>search string is a regular expression</p></li>
+</ul>
+<dl class="option-list">
+<dt><kbd><span class="option">-k <var>&lt;key&gt;</var></span>, <span class="option">--key=<var>&lt;key&gt;</var></span></kbd></dt>
+<dd><ul class="simple">
+<li><p>note key</p></li>
+</ul>
+<dl>
+<dt>-t &lt;title&gt;, –title=&lt;title&gt; - title of note for create (cli mode)</dt><dd><dl class="option-list">
+<dt><kbd><span class="option">-c <var>&lt;file&gt;</var></span>, <span class="option">--config=<var>&lt;file&gt;</var></span></kbd></dt>
+<dd><ul class="simple">
+<li><p>config file to read from (defaults to ~/.snclirc)</p></li>
+</ul>
+<dl class="simple">
+<dt>COMMANDS:</dt><dd><dl class="simple">
+<dt>&lt;none&gt;                      - console gui mode when no command specified</dt><dd><dl class="simple">
+<dt>sync                        - perform a full sync with the server</dt><dd><dl class="simple">
+<dt>list [search_string]        - list notes(refined with search string)</dt><dd><dl class="simple">
+<dt>export [search_string]      - export notes in JSON (refined with search string)</dt><dd><dl class="simple">
+<dt>dump [search_string]        - dump notes(refined with search string)</dt><dd><dl class="simple">
+<dt>create [-]                  - create a note (‘-‘ content from stdin)</dt><dd><dl class="simple">
+<dt>import [-]                  - import a note in JSON format (‘-‘ JSON from stdin)</dt><dd><dl class="simple">
+<dt>export                      - export a note in JSON format (specified by &lt;key&gt;)</dt><dd><dl class="simple">
+<dt>dump                        - dump a note (specified by &lt;key&gt;)</dt><dd><dl class="simple">
+<dt>edit                        - edit a note (specified by &lt;key&gt;)</dt><dd><dl class="simple">
+<dt>&lt; trash | untrash &gt;         - trash/untrash a note (specified by &lt;key&gt;)</dt><dd><dl class="simple">
+<dt>&lt; pin | unpin &gt;             - pin/unpin a note (specified by &lt;key&gt;)</dt><dd><dl class="simple">
+<dt>&lt; markdown | unmarkdown &gt;   - markdown/unmarkdown a note (specified by &lt;key&gt;)</dt><dd><dl class="simple">
+<dt>tag get                     - retrieve the tags from a note (specified by &lt;key&gt;)</dt><dd><dl class="simple">
+<dt>tag set &lt;tags&gt;              - set the tags for a note (specified by &lt;key&gt;)</dt><dd><dl class="simple">
+<dt>tag add &lt;tags&gt;              - add tags to a note (specified by &lt;key&gt;)</dt><dd><p>tag rm &lt;tags&gt;               - remove tags from a note (specified by &lt;key&gt;)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+</dd>
+</dl>
+<p>sync                        - perform a full sync with the server
+list [search_string]        - list notes(refined with search string)
+export [search_string]      - export notes in JSON (refined with search string)
+dump [search_string]        - dump notes(refined with search string)
+create [-]                  - create a note (‘-‘ content from stdin)
+import [-]                  - import a note in JSON format (‘-‘ JSON from stdin)
+export                      - export a note in JSON format (specified by &lt;key&gt;)
+dump                        - dump a note (specified by &lt;key&gt;)
+edit                        - edit a note (specified by &lt;key&gt;)
+&lt; trash | untrash &gt;         - trash/untrash a note (specified by &lt;key&gt;)
+&lt; pin | unpin &gt;             - pin/unpin a note (specified by &lt;key&gt;)
+&lt; markdown | unmarkdown &gt;   - markdown/unmarkdown a note (specified by &lt;key&gt;)
+tag get                     - retrieve the tags from a note (specified by &lt;key&gt;)
+tag set &lt;tags&gt;              - set the tags for a note (specified by &lt;key&gt;)
+tag add &lt;tags&gt;              - add tags to a note (specified by &lt;key&gt;)
+tag rm &lt;tags&gt;               - remove tags from a note (specified by &lt;key&gt;)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">sncli rtfd</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, insanum, 1094.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/pages/usage.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

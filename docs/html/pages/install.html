@@ -1,0 +1,195 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>sncli &#8212; sncli rtfd  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="sncli">
+<h1>sncli<a class="headerlink" href="#sncli" title="Permalink to this headline">¶</a></h1>
+<p>Simplenote Command Line Interface</p>
+<a class="reference internal image-reference" href="pages/screenshot1.png"><img alt="pages/screenshot1.png" class="align-center" src="pages/screenshot1.png" style="width: 90%;" /></a>
+<p>sncli is a Python application that gives you access to your Simplenote account via the command line. You can access your notes via a customizable console GUI that implements vi-like keybinds or via a simple command line interface that you can script.</p>
+<div class="section" id="console-gui-features">
+<h2>Console GUI Features<a class="headerlink" href="#console-gui-features" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>full two-way sync with Simplenote performed dynamically in the background</p></li>
+<li><p>all actions logged and easily reviewed</p></li>
+<li><p>list note titles (configurable format w/ title, date, flags, tags, keys, etc)</p></li>
+<li><p>sort notes by date, alpha by title, tags, pinned on top</p></li>
+<li><p>search for notes using a Google style search pattern or Regular Expression</p></li>
+<li><p>view note contents and meta data</p></li>
+<li><p>view and restore previous versions of notes</p></li>
+<li><p>pipe note contents to external command</p></li>
+<li><p>create and edit notes (using your editor)</p></li>
+<li><p>edit note tags</p></li>
+<li><p>trash/untrash notes</p></li>
+<li><p>pin/unpin notes</p></li>
+<li><p>flag notes as markdown or not</p></li>
+<li><p>vi-like keybinds (fully configurable)</p></li>
+<li><p>Colors! (fully configurable)</p></li>
+</ul>
+</div>
+<div class="section" id="command-line-scripting">
+<h2>Command Line Scripting<a class="headerlink" href="#command-line-scripting" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>force a full two-way sync with Simplenote</p></li>
+<li><p>all actions logged and easily reviewed</p></li>
+<li><p>list note titles and keys</p></li>
+<li><p>search for notes using a Google style search pattern or Regular Expression</p></li>
+<li><p>dump note contents</p></li>
+<li><p>create a new note (via stdin or editor)</p></li>
+<li><p>import a note with raw json data (stdin or editor)</p></li>
+<li><p>edit a note (via editor)</p></li>
+<li><p>trash/untrash a note</p></li>
+<li><p>pin/unpin a note</p></li>
+<li><p>flag note as markdown or not</p></li>
+<li><p>view and edit note tags</p></li>
+</ul>
+</div>
+<div class="section" id="tldr">
+<h2>TLDR<a class="headerlink" href="#tldr" title="Permalink to this headline">¶</a></h2>
+<p>Notes can be viewed/created/edited in both an online and offline mode. All changes are saved to a local cache on disk and automatically sync’ed when sncli is brought online.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>GitHub <a class="reference external" href="https://github.com/insanum/sncli/pulls">pull requests</a> are welcome!</p>
+</div>
+</div>
+</div>
+<div class="section" id="install">
+<h1>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>A love for the command line</p></li>
+<li><p><a class="reference external" href="http://www.python.org">Python 3</a></p></li>
+<li><p><a class="reference external" href="https://pip.pypa.io/en/stable/">Pip</a></p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Python modules <a class="reference external" href="http://urwid.org">Urwid</a>, <a class="reference external" href="http://docs.python-requests.org">Requests</a>, and <a class="reference external" href="https://simperium.com/docs/reference/python/">Simperium3</a> will also be installed.</p>
+</div>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="pip">
+<h3>Pip<a class="headerlink" href="#pip" title="Permalink to this headline">¶</a></h3>
+<div class="line-block">
+<div class="line">pip install sncli</div>
+</div>
+</div>
+<div class="section" id="arch-aur">
+<h3>Arch AUR<a class="headerlink" href="#arch-aur" title="Permalink to this headline">¶</a></h3>
+<div class="line-block">
+<div class="line">yaourt -S sncli-git</div>
+</div>
+</div>
+<div class="section" id="manually">
+<h3>Manually<a class="headerlink" href="#manually" title="Permalink to this headline">¶</a></h3>
+<div class="line-block">
+<div class="line">git clone <a class="reference external" href="https://github.com/insanum/sncli.git">https://github.com/insanum/sncli.git</a></div>
+<div class="line">cd sncli/</div>
+<div class="line">python setup.py install</div>
+</div>
+</div>
+<div class="section" id="using-pipenv">
+<h3>Using Pipenv<a class="headerlink" href="#using-pipenv" title="Permalink to this headline">¶</a></h3>
+<div class="line-block">
+<div class="line">git clone <a class="reference external" href="https://github.com/insanum/sncli.git">https://github.com/insanum/sncli.git</a></div>
+<div class="line">cd sncli/</div>
+<div class="line">pipenv install</div>
+<div class="line">pipenv run sncli</div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">sncli rtfd</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, insanum, 1094.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/pages/install.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

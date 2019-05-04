@@ -1,0 +1,11 @@
+Configuration
+#############
+
+General
+=======
+
+Keyboard
+========
+
+Colors
+======

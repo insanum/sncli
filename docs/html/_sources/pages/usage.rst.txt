@@ -1,0 +1,93 @@
+Command Line Usage
+###################
+
+Searching
+=========
+
+Import
+======
+
+Export
+======
+
+Note Creation
+==============
+
+CLI Usage
+#########
+
+Searching
+=========
+
+Import
+======
+
+Export
+======
+
+Note Creation
+==============
+
+
+Usage:
+ sncli [OPTIONS] [COMMAND] [COMMAND_ARGS]
+
+ OPTIONS:
+  -h, --help                  - usage help
+  -v, --verbose               - verbose output
+  -n, --nosync                - don't perform a server sync
+  -r, --regex                 - search string is a regular expression
+  -k <key>, --key=<key>       - note key
+  -t <title>, --title=<title> - title of note for create (cli mode)
+  -c <file>, --config=<file>  - config file to read from (defaults to ~/.snclirc)
+
+ COMMANDS:
+  --                     - console gui mode when no command specified
+  
+
+  Usage:
+   sncli [OPTIONS] [COMMAND] [COMMAND_ARGS]
+
+    OPTIONS:
+      -h, --help                  - usage help
+        -v, --verbose               - verbose output
+          -n, --nosync                - don't perform a server sync
+            -r, --regex                 - search string is a regular expression
+              -k <key>, --key=<key>       - note key
+                -t <title>, --title=<title> - title of note for create (cli mode)
+                  -c <file>, --config=<file>  - config file to read from (defaults to ~/.snclirc)
+
+                   COMMANDS:
+                     <none>                      - console gui mode when no command specified
+                       sync                        - perform a full sync with the server
+                         list [search_string]        - list notes(refined with search string)
+                           export [search_string]      - export notes in JSON (refined with search string)
+                             dump [search_string]        - dump notes(refined with search string)
+                               create [-]                  - create a note ('-' content from stdin)
+                                 import [-]                  - import a note in JSON format ('-' JSON from stdin)
+                                   export                      - export a note in JSON format (specified by <key>)
+                                     dump                        - dump a note (specified by <key>)
+                                       edit                        - edit a note (specified by <key>)
+                                         < trash | untrash >         - trash/untrash a note (specified by <key>)
+                                           < pin | unpin >             - pin/unpin a note (specified by <key>)
+                                             < markdown | unmarkdown >   - markdown/unmarkdown a note (specified by <key>)
+                                               tag get                     - retrieve the tags from a note (specified by <key>)
+                                                 tag set <tags>              - set the tags for a note (specified by <key>)
+                                                   tag add <tags>              - add tags to a note (specified by <key>)
+                                                     tag rm <tags>               - remove tags from a note (specified by <key>)
+  sync                        - perform a full sync with the server
+  list [search_string]        - list notes(refined with search string)
+  export [search_string]      - export notes in JSON (refined with search string)
+  dump [search_string]        - dump notes(refined with search string)
+  create [-]                  - create a note ('-' content from stdin)
+  import [-]                  - import a note in JSON format ('-' JSON from stdin)
+  export                      - export a note in JSON format (specified by <key>)
+  dump                        - dump a note (specified by <key>)
+  edit                        - edit a note (specified by <key>)
+  < trash | untrash >         - trash/untrash a note (specified by <key>)
+  < pin | unpin >             - pin/unpin a note (specified by <key>)
+  < markdown | unmarkdown >   - markdown/unmarkdown a note (specified by <key>)
+  tag get                     - retrieve the tags from a note (specified by <key>)
+  tag set <tags>              - set the tags for a note (specified by <key>)
+  tag add <tags>              - add tags to a note (specified by <key>)
+  tag rm <tags>               - remove tags from a note (specified by <key>)
