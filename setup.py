@@ -4,18 +4,17 @@
 # Licensed under the MIT License
 
 from setuptools import setup
-import simplenote_cli
 
 deps = ['urwid', 'requests', 'Simperium3']
 
 setup(
-      name=simplenote_cli.__productname__,
-      description=simplenote_cli.__description__,
-      version=simplenote_cli.__version__,
-      author=simplenote_cli.__author__,
-      author_email=simplenote_cli.__author_email__,
-      url=simplenote_cli.__url__,
-      license=simplenote_cli.__license__,
+      name='sncli',
+      description='Simplenote Command Line Interface',
+      version='0.3.0',
+      author='Eric Davis',
+      author_email='edavis@insanum.com',
+      url='https://github.com/insanum/sncli',
+      license='MIT',
       requires=deps,
       install_requires=deps,
       packages=['simplenote_cli'],
