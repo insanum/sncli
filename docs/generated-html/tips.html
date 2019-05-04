@@ -1,0 +1,200 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tips and Tricks &#8212; sncli 2014 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Configuration" href="configuration.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="tips-and-tricks">
+<h1>Tips and Tricks<a class="headerlink" href="#tips-and-tricks" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="markdown-pager">
+<h2>Markdown Pager<a class="headerlink" href="#markdown-pager" title="Permalink to this headline">¶</a></h2>
+<p>Set <code class="docutils literal notranslate"><span class="pre">mdv</span></code> as your pager for <code class="docutils literal notranslate"><span class="pre">sncli</span></code> and get a formatted view of your markdown files.  <a class="footnote-reference brackets" href="#id4" id="id1">1</a></p>
+<ul>
+<li><p>Install <a class="reference external" href="https://github.com/axiros/terminal_markdown_viewer">mdv</a></p></li>
+<li><p>Create a pager/wrapper</p>
+<blockquote>
+<div><div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>/usr/local/bin/mdless
+---------------------
+<span class="c1">#!/bin/zsh</span>
+<span class="c1"># https://superuser.com/questions/1059781/what-exactly-is-in-bash-and-in-zsh</span>
+/usr/bin/less -R -c <span class="o">=(</span>mdv <span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span><span class="o">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Make the reader an executable file</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ sudo chmod +x /usr/local/bin/mdless
+</pre></div>
+</div>
+</li>
+<li><p>Now set <code class="docutils literal notranslate"><span class="pre">mdless</span></code> as your pager</p>
+<blockquote>
+<div><div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nv">$HOME</span>/.snclirc
+------------------------
+<span class="nv">cfg_pager</span> <span class="o">=</span> /usr/local/bin/mdless
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="vim-auto-set-filetype">
+<h2>Vim, Auto-set filetype<a class="headerlink" href="#vim-auto-set-filetype" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="modeline">
+<h3>Modeline<a class="headerlink" href="#modeline" title="Permalink to this headline">¶</a></h3>
+<p>Add a modeline to each note, for <a class="reference external" href="https://github.com/insanum/votl">VimOutliner</a> you would add:  <a class="footnote-reference brackets" href="#id5" id="id2">2</a></p>
+<div class="highlight-vim notranslate"><div class="highlight"><pre><span></span>; <span class="k">vim</span>:<span class="nb">ft</span><span class="p">=</span>votl
+</pre></div>
+</div>
+<p>Just replace <code class="docutils literal notranslate"><span class="pre">votl</span></code> with your preferred filetype.</p>
+</div>
+<div class="section" id="autocommand">
+<h3>AutoCommand<a class="headerlink" href="#autocommand" title="Permalink to this headline">¶</a></h3>
+<p>You could also add an AutoCommand to your <code class="docutils literal notranslate"><span class="pre">vimrc</span></code>:  <a class="footnote-reference brackets" href="#id6" id="id3">3</a></p>
+<div class="highlight-vim notranslate"><div class="highlight"><pre><span></span>augroup sncli_ft
+<span class="k">au</span> <span class="nb">BufEnter</span><span class="p">,</span><span class="nb">BufWrite</span><span class="p">,</span><span class="nb">BufRead</span><span class="p">,</span><span class="nb">BufNewFile</span> <span class="sr">/tmp/</span>*.txt <span class="k">set</span> <span class="k">filetype</span><span class="p">=</span>asciidoc
+augroup END
+</pre></div>
+</div>
+<p>This will set any file opened in sncli’s directory (set to default in this example) to the filetype of Asciidoc.</p>
+</div>
+</div>
+<div class="section" id="open-links">
+<h2>Open Links<a class="headerlink" href="#open-links" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Install <a class="reference external" href="https://github.com/firecat53/urlscan">urlscan</a> or <a class="reference external" href="https://github.com/sigpipe/urlview">urlview</a></p></li>
+<li><p>Pip the note</p></li>
+</ul>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nv">$HOME</span>/.snclirc
+------------------
+<span class="nv">cfg_pager</span> <span class="o">=</span> mdless <span class="p">|</span> urlview
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Select a link!</p></li>
+</ul>
+<hr class="docutils" />
+<p class="rubric">Footnotes</p>
+<dl class="footnote brackets">
+<dt class="label" id="id4"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p>Suggested by <a class="reference external" href="https://github.com/s5unty">s5unty</a></p>
+</dd>
+<dt class="label" id="id5"><span class="brackets"><a class="fn-backref" href="#id2">2</a></span></dt>
+<dd><p>Suggested by <a class="reference external" href="https://github.com/insanum">insanum</a></p>
+</dd>
+<dt class="label" id="id6"><span class="brackets"><a class="fn-backref" href="#id3">3</a></span></dt>
+<dd><p>Suggested by <a class="reference external" href="https://github.com/1094">1094</a></p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">sncli</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="welcome.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Command Line Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#cli-usage">CLI Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tips</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#markdown-pager">Markdown Pager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#vim-auto-set-filetype">Vim, Auto-set filetype</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#modeline">Modeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#autocommand">AutoCommand</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#open-links">Open Links</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="configuration.html" title="previous chapter">Configuration</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Eric Davis.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/tips.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
