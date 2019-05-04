@@ -2,7 +2,7 @@ sncli
 #####
 Simplenote Command Line Interface
 
-.. image:: screenshot1.png
+.. image:: screenshots/screenshot1.png
     :width: 90%
     :align: center
 
