@@ -18,11 +18,11 @@
 # -- Project information -----------------------------------------------------
 
 project = 'sncli'
-copyright = '2019, Eric Davis'
+copyright = '2014, Eric Davis'
 author = 'Eric Davis'
 
 # The full version, including alpha/beta/rc tags
-release = '2014'
+release = '0.3.0'
 
 
 # -- General configuration ---------------------------------------------------
