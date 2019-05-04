@@ -19,9 +19,9 @@ Set ``mdv`` as your pager for ``sncli`` and get a formatted view of your markdow
 
 + Make the reader an executable file
 
-  .. code-block:: shell
+        .. code-block:: shell
 
-        $ sudo chmod +x /usr/local/bin/mdless
+                $ sudo chmod +x /usr/local/bin/mdless
         
 + Now set ``mdless`` as your pager
 

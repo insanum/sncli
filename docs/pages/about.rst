@@ -2,10 +2,13 @@ sncli
 #####
 Simplenote Command Line Interface
 
-.. image:: screenshots/screenshot1.png
+.. image:: ../screenshots/screenshot1.png
     :width: 90%
     :align: center
 
+sncli is a Python application that gives you access to your Simplenote account via the command line. You can access your notes via a customizable console GUI that implements vi-like keybinds or via a simple command line interface that you can script.
+
+Notes can be viewed/created/edited in both an online and offline mode. All changes are saved to a local cache on disk and automatically sync'ed when sncli is brought online.
 
 .. note:: This project is on `GitHub`_ and `pull requests`_ are welcome.
 
@@ -44,10 +47,6 @@ Command Line Scripting
 + flag note as markdown or not
 + view and edit note tags
 
-TLDR
-====
-
-Notes can be viewed/created/edited in both an online and offline mode. All changes are saved to a local cache on disk and automatically sync'ed when sncli is brought online.
 
 
 .. _pull requests: https://github.com/insanum/sncli/pulls

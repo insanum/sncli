@@ -22,7 +22,7 @@ Pip
 Arch AUR
 ----------
 
-sncli is available in AUR as `sncli-git`.
+sncli is available in AUR as ``sncli-git``.
 
 Manually
 ----------
