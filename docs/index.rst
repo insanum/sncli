@@ -5,10 +5,12 @@ sncli Documentation
 ===================
 
 .. toctree::
+  :maxdepth: 2
 	
 	About <pages/about.rst>
 	Installation <pages/install.rst>
-	Usage <pages/usage.rst>
+	Command Line Usage <pages/cl-usage.rst>
+  CLI Usage <pages/gui-usage.rst>
 	Configuration <pages/configuration.rst>
 	Tips <pages/tips.rst>
-        Screenshots <pages/images.rst>
+	Screenshots <pages/images.rst>

@@ -8,7 +8,9 @@ Prerequisites
 + `Python 3`_
 + `Pip`_
 
-.. note:: The Python modules `Urwid`_, `Requests`_, and `Simperium3`_ will also be installed.
+.. topic:: Dependencies
+
+	The Python modules `Urwid`_, `Requests`_, and `Simperium3`_ will also be installed.
 
 Installation
 =============
@@ -17,29 +19,29 @@ Pip
 ---
 .. code-block:: shell
 
-    $ pip install sncli
+	$ pip install sncli
 
 Arch AUR
 ----------
 
-sncli is available in AUR as ``sncli-git``.
+Use your favorite `AUR helper`_ to install ``sncli-git``.
 
 Manually
 ----------
 .. code-block:: shell
 
-    $ git clone https://github.com/insanum/sncli.git
-    $ cd sncli/
-    $ python setup.py install
+	$ git clone https://github.com/insanum/sncli.git
+	$ cd sncli/
+	$ python setup.py install
 
 Using Pipenv
 --------------
 .. code-block:: shell
     
-    $ git clone https://github.com/insanum/sncli.git
-    $ cd sncli/
-    $ pipenv install
-    $ pipenv run sncli
+	$ git clone https://github.com/insanum/sncli.git
+	$ cd sncli/
+	$ pipenv install
+	$ pipenv run sncli
 
 
 .. _Python 3: http://www.python.org
@@ -47,3 +49,4 @@ Using Pipenv
 .. _Urwid: http://urwid.org
 .. _Requests: http://docs.python-requests.org
 .. _Simperium3: https://simperium.com/docs/reference/python/
+.. _AUR helper: https://wiki.archlinux.org/index.php/AUR_helpers
