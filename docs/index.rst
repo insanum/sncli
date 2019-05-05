@@ -10,7 +10,7 @@ sncli Documentation
 	About <pages/about.rst>
 	Installation <pages/install.rst>
 	Command Line Usage <pages/cl-usage.rst>
-  CLI Usage <pages/gui-usage.rst>
+  CLI Usage <pages/cli-usage.rst>
 	Configuration <pages/configuration.rst>
 	Tips <pages/tips.rst>
 	Screenshots <pages/images.rst>

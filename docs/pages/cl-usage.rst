@@ -38,7 +38,7 @@ Options
 	
 .. option:: -v, --verbose
 
-  Displays the commands verbose output.
+  Displays the command's verbose output.
 
 Commands
 ========
@@ -68,7 +68,7 @@ Edit
 
 .. option:: sncli -k <key> edit
 
-	Opens the requested note in your ``cfg_editor``.
+	Opens the specific note in your ``cfg_editor``.
 
 Export
 ------
@@ -84,7 +84,7 @@ Flags
 
 .. option:: sncli -k <key> {flag}
 
-  This will add or remove a flag from the requested note.
+  This will add or remove a flag from the specific note.
 
 Flags that can be added or removed: ``pin; unpin; markdown; unmarkdown; trash; untrash``
 

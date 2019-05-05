@@ -64,7 +64,8 @@ Open Links
 ==========
 
 + Install `urlscan`_ or `urlview`_
-+ Pip the note
++ Pip the note from the note view
++ Or pip all the notes
 
 .. code-block:: shell
 
