@@ -1,5 +1,6 @@
 import os
 from distutils import spawn
+from subprocess import Popen, PIPE
 
 
 class Clipboard(object):
@@ -8,11 +9,12 @@ class Clipboard(object):
 
     def get_copy_command(self):
         if (spawn.find_executable('xsel')):
-            return 'echo "%s" | xsel -ib'
+            return ['xsel', '-ib']
         if (spawn.find_executable('pbcopy')):
-            return 'echo "%s" | pbcopy'
+            return ['pbcopy']
         return None
-    
+
     def copy(self, text):
         if (self.copy_command):
-            os.system(self.copy_command % text)
+            proc = Popen(self.copy_command, stdin=PIPE)
+            proc.communicate(text.encode('utf-8'))
