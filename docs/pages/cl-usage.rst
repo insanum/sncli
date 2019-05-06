@@ -12,122 +12,192 @@ Options
 
   Open ``sncli`` in the console GUI.
 
-.. option:: -c <file>, --config=<file>
+-----
+
+.. option:: -c <file>
+.. option::  --config=<file>
 
   Sets the :doc:`/pages/configuration` used by ``sncli``. The default is ``$HOME/.snclirc``.
 
-.. option:: -h, --help 
+-----
+
+.. option:: -h
+.. option:: --help 
 
   View ``sncli`` options and subcommands.
 
-.. option:: -k <key>, --key=<key>
+-----
+
+.. option:: -k <key>
+.. option:: --key=<key>
 
 	Idenifies a note by it's key.
 
-.. option:: -n, --nosync
+-----
+
+.. option:: -n
+.. option:: --nosync
 
   Prevent ``sncli`` from performing a server sync.
 
-.. option:: -r, --regex
+-----
 
-	This will cause ``sncli`` to treat search strings (listed below as ``[term]``) as a regular expression.
+.. option:: -r
+.. option:: --regex
 
-.. option:: -t <title>, --title=<title>
+	This will cause ``sncli`` search strings as a regular expression. See :ref:`search` for more.
+
+-----
+
+.. option:: -t <title>
+.. option:: --title=<title>
 
 	If creating a new note from ``stdin``, this will allow you to set the title to <title>.
-	
-.. option:: -v, --verbose
+
+-----
+
+.. option:: -v
+.. option:: --verbose
 
   Displays the command's verbose output.
 
 Commands
 ========
 
-Create
-------
+Notes
+-----
 
-.. option:: sncli create
+.. option:: create
 
-	Opens a new note in your ``cfg_editor``.
+  Opens a new note in the editor.
 
-.. option:: echo 'your note content here' | sncli create -
+.. code-block:: shell
 
-	This will create and save a note with ``your note content here``. You can use the option ``-t <title>`` to add an title to the created note.
+  echo [your note content here] | sncli -t <title> create -
 
-Dump
-----
+.. note:: Creating a note from ``stdin`` is the only command  that accepts ``-t <title>``.
 
-.. option:: sncli dump
+-----
 
-	Dump notes in plain text format to ``stdin``.
+.. option:: dump
 
-Options to dump a specific note: ``-k <key>``
+  Dump notes in plain text format to ``stdin``.
 
-Edit
-----
+.. code-block:: shell
 
-.. option:: sncli -k <key> edit
+  sncli dump
+  sncli -k <key> dump
+  sncli dump [search_string]
+  sncli -r dump [search_string]
 
-	Opens the specific note in your ``cfg_editor``.
+-----
 
-Export
-------
+.. option:: edit
 
-.. option:: sncli export
+  Opens the specific note in the editor..
 
-	Export all notes in JSON to ``stdin``.
+.. code-block:: shell
 
-Options to export specific notes: ``-r [term]; [term]; -k <key>``
+  sncli -k <key> edit
+
+-----
+
+.. option:: export
+
+  Export notes in JSON to ``stdin``.
+
+.. code-block:: shell
+
+  sncli -k <key> export
+  sncli export [search_string]
+  sncli -r export [search_string]
+
+-----
+
+.. option:: import
+
+  Import a JSON formatted note.
+
+  Fields are: content; tags; systemTags; modificationDate; creationDate; deleted
+
+.. code-block:: shell
+
+  echo '{"tags":["testing","new"],"content":"New note!"}' | sncli import -
+
+-----
+
+.. option:: list
+
+  List all notes by ``key [flags] title``.
+
+.. code-block:: shell
+
+  sncli list [search_string]
+  sncli list -r [search_string]
+
+-----
+
+.. option:: sync
+	
+	Performs a full, bi-directional sync between the local notes cache and the Simplenote server.
 
 Flags
 -----
 
-.. option:: sncli -k <key> {flag}
+.. option:: pin | unpin
 
-  This will add or remove a flag from the specific note.
+  Pin or unpin a specific note.
 
-Flags that can be added or removed: ``pin; unpin; markdown; unmarkdown; trash; untrash``
+.. code-block:: shell
 
-Import
-------
+  sncli -k <key> pin
+  sncli -k <key> unpin
 
-.. option:: echo '{"tags":["testing","new"],"content":"New note!"}' | sncli import -
+.. option:: markdown | unmarkdown
 
-  Import a JSON formatted note.
+  Add or remove the markdown as the note's file type.
 
-JSON fields: ``content; tags; systemTags; modificationDate; creationDate; deleted``
+.. code-block:: shell
 
-List
-----
+  sncli -k <key> markdown
+  sncli -k <key> unmarkdown
 
-.. option:: sncli list
+.. option:: trash | untrash
 
-	List all notes by ``key [flags] title``.
-	
-Options for listing specific notes: ``-r [term]; [term]``
+  Move a note to or from trash. 
 
-Sync
-----
+.. code-block:: shell
 
-.. option:: sncli sync
-	
-	Performs a full, bi-directional sync between the local notes cache and the Simplenote server.
+  sncli -k <key> trash
+  sncli -k <key> untrash
 
 Tags
 ----
 
-.. option:: sncli -k <key> tab add <text>
+.. option:: tag <add|get|rm|set>
 
-  Add tag <text> to a specific note.
+.. code-block:: shell
 
-.. option:: sncli -k <key> tab get
+  sncli -k <key> tag add <tags>
 
-  List the tags of a specific note in ``stdin``.
+Add tag <text> to a specific note.
 
-.. option:: sncli -k <key> tab rm <text>
+.. code-block:: shell
 
-  Remove tag <text> from a specific note.
+  sncli -k <key> tag get
 
-.. option:: sncli -k <key> tab set <text>
+List the tags of a specific note in ``stdin``.
 
-  Set <text> as tags for a specific note.
+.. code-block:: shell
+
+  sncli -k <key> tag rm <tags>
+
+Remove tag <tags> from a specific note.
+
+.. code-block:: shell
+
+  sncli -k <key> tag set <tags>
+
+Set <tags> as tags for a specific note.
+
+.. note:: ``tag set`` will overwrite all previous tags for the specific note.

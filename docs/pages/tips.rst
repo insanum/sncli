@@ -50,7 +50,7 @@ This will change the file type for the note it's been added to.
 AutoCommand
 -----------
 
-You could also add an AutoCommand to your ``vimrc``:  [3]_
+You could also add an AutoCommand to your ``vimrc``: 
 
 .. code-block:: vim
 
@@ -64,14 +64,14 @@ Open Links
 ==========
 
 + Install `urlscan`_ or `urlview`_
-+ Pip the note from the note view
-+ Or pip all the notes
+  + Pip the note from the note view
+  + Or pip all the notes
 
-.. code-block:: shell
+  .. code-block:: shell
 
-	$HOME/.snclirc
-	------------------
-	cfg_pager = mdless | urlview
+    $HOME/.snclirc
+	  ------------------
+	  cfg_pager = mdless | urlview
 
 + Select a link!
 
@@ -81,12 +81,9 @@ Open Links
 
 .. [1] Suggested by `s5unty`_
 .. [2] Suggested by `insanum`_
-.. [3] Suggested by `1094`_
-
 
 .. _s5unty: https://github.com/s5unty
 .. _insanum: https://github.com/insanum
-.. _1094: https://github.com/1094
 
 .. _mdv: https://github.com/axiros/terminal_markdown_viewer
 .. _VimOutliner: https://github.com/insanum/votl
