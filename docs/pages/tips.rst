@@ -2,9 +2,9 @@ Tips and Tricks
 ###############
 
 Markdown Pager
-==============
+**************
 
-Set ``mdv`` as your pager for ``sncli`` and get a formatted view of your markdown files.  [1]_
+Set ``mdv`` as your pager for ``sncli`` and get a formatted view of your markdown files [Suggested by `s5unty`_]:
 
 + Install `mdv`_
 + Create a pager/wrapper
@@ -34,12 +34,12 @@ Set ``mdv`` as your pager for ``sncli`` and get a formatted view of your markdow
 Note: MDV does not yet support using a light backdround
 
 Vim, Auto-set filetype
-======================
+**********************
 
 Modeline
---------
+========
 
-Add a modeline to each note, for `VimOutliner`_ you would add:  [2]_
+Add a modeline to each note, for `VimOutliner`_ you would add [Suggested by `insanum`_]:
 
 .. code-block:: vim
 
@@ -48,7 +48,7 @@ Add a modeline to each note, for `VimOutliner`_ you would add:  [2]_
 This will change the file type for the note it's been added to.
 
 AutoCommand
------------
+===========
 
 You could also add an AutoCommand to your ``vimrc``: 
 
@@ -61,26 +61,13 @@ You could also add an AutoCommand to your ``vimrc``:
 This will set text files opened in sncli's default temp directory to the filetype of Asciidoc. 
 
 Open Links
-==========
+**********
+
+Find and open links faster with ``urlscan`` or ``urlview``.
 
 + Install `urlscan`_ or `urlview`_
-  + Pip the note from the note view
-  + Or pip all the notes
-
-  .. code-block:: shell
-
-    $HOME/.snclirc
-	  ------------------
-	  cfg_pager = mdless | urlview
-
++ Pip the note from the note view
 + Select a link!
-
------
-
-.. rubric:: Footnotes
-
-.. [1] Suggested by `s5unty`_
-.. [2] Suggested by `insanum`_
 
 .. _s5unty: https://github.com/s5unty
 .. _insanum: https://github.com/insanum

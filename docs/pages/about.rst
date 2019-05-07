@@ -15,7 +15,7 @@ Notes can be viewed/created/edited in both an online and offline mode. All chang
  This project is on `GitHub`_ and pull requests are welcome.
 
 Console GUI Features
-====================
+********************
 
 + full two-way sync with Simplenote performed dynamically in the background
 + all actions logged and easily reviewed
@@ -34,7 +34,7 @@ Console GUI Features
 + Colors! (fully configurable)
 
 Command Line Scripting
-======================
+**********************
 
 + force a full two-way sync with Simplenote
 + all actions logged and easily reviewed
@@ -49,10 +49,8 @@ Command Line Scripting
 + flag note as markdown or not
 + view and edit note tags
 
-.. _search:
-
 Editing Notes
-=============
+*************
 
 The flow sncli uses for editing notes is:
 
@@ -64,13 +62,15 @@ The flow sncli uses for editing notes is:
 
 As a result, the note doesn't get updated in sncli until the editor is closed. By default, the temporary file is created in the OS's default temporary directory (eg. ``/tmp/`` on Linux). This can be changed with the ``cfg_tempdir`` option. This may be useful to create temporary files on a persistent file system to avoid data loss.
 
+.. _search:
+
 Search Styles
-=============
+*************
 
 sncli supports two styles of search strings. First is a Google style search string and second is a Regular Expression.
 
 Google Style
-------------
+============
 
 A Google style search string is a group of tokens (separated by spaces) with an implied AND between each token. This style search is case insensitive. For example:
 
@@ -79,7 +79,7 @@ A Google style search string is a group of tokens (separated by spaces) with an 
   /tag:tag1 tag:tag2 word1 "word2 word3" tag:tag3
 
 Regular Expression
-------------------
+==================
 
 Regular expression searching also supports the use of flags (currently only case-insensitive) by adding a final forward slash followed by the flags. The following example will do a case-insensitive search for ``something``:
 

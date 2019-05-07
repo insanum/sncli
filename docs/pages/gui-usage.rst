@@ -2,197 +2,199 @@ Console GUI Usage
 #################
 
 Common
-======
+******
 
-.. object:: h
+:h:
   
   View the ``help`` menu
 
-.. object:: q
+:q:
 
   Quit ``sncli``
 
-.. object:: S
+:S:
 
   Perform a bi-directional ync local notes to Simplenote server.
 
-.. object:: j
+:j:
 
   Scroll down one line.
 
-.. object:: k
+:k:
 
   Scroll up one line.
 
-.. object:: space
+:space:
 
   Page down.
 
-.. object:: b
+:b:
 
   Page up.
 
-.. object:: ctrl+d
+:ctrl+d:
 
   Scroll half a page down.
 
-.. object:: ctrl+u
+:ctrl+u:
 
   Scroll half a page up.
 
-.. object:: G
+:G:
 
   Jump to the bottom of the page.
 
-.. object:: g
+:g:
 
   Jump to the top of the page.
 
-.. object:: s
+:s:
 
   Toggle the Status bar.
 
-.. object:: e
+:e:
 
   Edit highlighted note.
 
-.. object:: enter
+:enter:
 
   Open highlighted note in sncli pager.
 
-.. object:: meta+enter
+:meta+enter:
 
-  Open highlighted note in ???
+  Open highlighted note in an external pager (set by ``cfg_pager`` or ``$PAGER``).
 
-.. object:: O
+:O:
 
   View the selected note's JSON in the pager.
 
 .. object:: |
 
-  Pip note to another program.
+  Open the prompt to pip the note to another program.
 
-.. object:: l
+:l:
 
 	View the sync log.
 
-.. object:: T
+:T:
 
-  Trash the selected note. You will be asked to confirm.
+  Open the dialog box for trashing the selected note.
 
-.. object:: p
+:p:
 
   Toggle the selected note's pin status.
 
-.. object:: m
+:m:
 
   Toggle the selected note's markdown status.
 
-.. object:: t
+:t:
 
   Open a prompt with the selected note's tags.
 
-.. object:: y
-
-  Copy the note's text.
-
-.. object:: /
+:/:
 
   Open the Google style search prompt.
 
-.. object:: meta+/
+:meta+/:
 
   Open the Regular Expression style search prompt.
 
-.. object:: ?
+:?:
 
-  Search pervious Google style.
+  Open the Google style.search prompt, but with reverse search direction.
 
-.. object:: meta+?
+:meta+?:
 
-  Search previous Regular Expression style.
+  Open the Regular Expression style prompt, but with reverse search direction.
 
 Search Views
-------------
+============
 
-.. object:: n
+:n:
 
   View next search result.
 
-.. object:: N
+:N:
 
   View previous search result.
 
-.. object:: A
+:A:
 
   Clear the search.
 
 
 Notes List Only
-===============
+***************
 
-.. object:: C
+:C:
 
   Create a new note.
 
-.. object:: d
+:d:
 
   Sort notes by date.
 
-.. object:: a
+:a:
 
   Sort notes in alphabetical order.
 
-.. object:: ctrl+t
+:ctrl+t:
 
   Sort notes by tags.
 
 Pager View Only
-===============
+***************
 
-.. object:: J
+:J:
 
 	View the next note.
 
-.. object:: K
+:K:
 
 	View the previous note.
 
-.. object:: 2
+:2:
 
 	Change the notes tab stop to 2.
 
-.. object:: 4
+:4:
 
 	Change the notes tab stop to 4.
 
-.. object:: 8
+:8:
 
   Change the notes tab stop to 8.
 
-.. object:: <
+:y:
+
+  Copy the note's higtlighted line of text to the system clipboard.
+
+.. note:: This will only work on systems where X11 or macOS is present; it checks for ``xsel`` and  ``pbcoby`` commands.
+
+:<:
 
 	View an old version of the note (this cycles).
 
-.. object:: >
+:>:
 
 	View a newer version of the note (this cycles).
 
-While Viewing an older note
----------------------------
+History View
+============
 
-.. object:: D
+:D:
 
   Show the output of ``diff`` between the current note and the selected older version of the note.
 
-.. object:: R
+:R:
 
   Restore the older version of the note.
 
-.. object:: L
+:L:
 
   Jump to the lastest version of the note.
 
-.. object:: #
+:#:
 
   Enter a number and jump to that version of the note.

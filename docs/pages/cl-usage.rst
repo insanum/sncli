@@ -6,7 +6,7 @@ Command Line Usage
   sncli [OPTIONS] [COMMAND] [COMMAND_ARGS]
 
 Options
-========
+********
 
 .. option:: <none>
 
@@ -62,10 +62,10 @@ Options
   Displays the command's verbose output.
 
 Commands
-========
+********
 
 Notes
------
+=====
 
 .. option:: create
 
@@ -142,7 +142,7 @@ Notes
 	Performs a full, bi-directional sync between the local notes cache and the Simplenote server.
 
 Flags
------
+=====
 
 .. option:: pin | unpin
 
@@ -172,9 +172,11 @@ Flags
   sncli -k <key> untrash
 
 Tags
-----
+====
 
 .. option:: tag <add|get|rm|set>
+
+  Manage your note's tags.
 
 .. code-block:: shell
 
