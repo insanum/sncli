@@ -329,6 +329,5 @@ Example Configuration
   clr_help_descr_bg = default
 
   ### NOTE: You do not need to keep default vaules in your config
-  # they are listed here as examples and
-  # to give a complete view of what setting are
-  # customizable.
+  # they are listed here as examples to give a complete view of 
+  # what setting are customizable.
