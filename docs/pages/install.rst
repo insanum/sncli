@@ -17,7 +17,8 @@ Installation
 
 Pip
 ===
-.. code=block:: shell
+
+.. coder-block:: shell
 
 	$ pip install sncli
 
@@ -28,7 +29,8 @@ Use your favorite `AUR helper`_ to install ``sncli=git``.
 
 Manually
 ==========
-.. code=block:: shell
+
+.. code-block:: shell
 
 	$ git clone https://github.com/insanum/sncli.git
 	$ cd sncli/
@@ -36,7 +38,8 @@ Manually
 
 Using Pipenv
 ==============
-.. code=block:: shell
+
+.. code-block:: shell
     
 	$ git clone https://github.com/insanum/sncli.git
 	$ cd sncli/

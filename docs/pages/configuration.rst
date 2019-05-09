@@ -1,286 +1,334 @@
-Configuration
-#############
+Example Configuration
+#####################
 
-The current Simplenote API does not support ``oauth`` authentication so your Simplenote account information must live in the configuration file. Please be sure to protect this file.
+.. caution:: Values must not be quoted!
 
-The flow sncli uses for finding the config file is:
+::
 
-#. Specified with the command line options ``-c`` or ``config``.
-#.  If the environment variable ``SNCLIRC`` is set, it will use that.
-#. Lastly, it will pull from the default location of ``$HOME/.snclirc``.
-
-
-The following (using your account information) is enough to start using sncli.
-
-.. code-block::
-
-  ~/.snclirc
-  -------------------
   [sncli]
   cfg_sn_username = lebowski@thedude.com
-  cfg_sn_password = nihilist
+  # cfg_sn_password = nihilist
+  cfg_sn_password_eval = gpg --quiet --for-your-eyes-only --no-tty --decrypt ~/.sncli-pass.gpg
+  
+  ## NOTE: if both password config are given, cfg_sn_password will be used
+  
+  # sets the datebase path for your notes
+  cfg_db_path = os.path.join(self.home. .sncli)
+  
+  # allows you to do regex searches with tags
+  cfg_search_tags = yes
+  
+  # sets the default notes sort
+  # can be set to `alpha` or `date`
+  cfg_sort_mode = date
+  
+  # keep pins messages at top
+  cfg_pinned_ontop = yes
+  
+  # sets the default tapstop
+  cfg_tabstop = 4
 
-Everything else that goes into your ``snclirc`` is optional. 
+  # show the status bar
+  cfg_status_bar = yes
 
-General
-*******
+  ### DATE
+  ## run `man strftime` for all options
+  # cfg_format_strftime = %Y/%m/%d
+  cfg_format_stftime = %d %B %Y   
 
-Keyboard
-********
+  ### TITLES
+  ## %D - date
+  ## %N - title
+  ## %T - tags
+  ## %F - flags (fixed to 5 char width)
+    # X - not synced
+    # T - trashed
+    # S - published/shared
+    # m - markdown
+  ## The dash changes text alignment to the left
+  cfg_format_note_title = [%D] %F %-N %T 
 
-.. note:: The default keybinds can be found on the :doc:`gui-usage` page.
+  ### EDITOR and PAGER
+  # sncli will check your configuration file for the $EDITOR,
+  # if this varaible is blank it will check for your OS's $EDITOR
+  ## WARNING: if neither $EDITOR or cfg_editor is set, it will be impossible to edit notes
+  # `{fname}` is substituted with the filename
+  # `{line}` is substituted for the current line number in sncli's pager
+  
+  # The default editor and pager
+  # cfg_editor = os.environ[EDITOR] if EDITOR in os.environ else vim {fname} +{line}
+  # cfg_pager = os.environ[PAGER] if PAGER in os.environ else less -c 
+  ## If {fname} isn't supplied, the filename is simply appended
 
+  # EXAMPLES
+  # cfg_editor = nvim {fname} +{line}
+  # cfg_editor = nano +{line}
+  cfg_editor = vim +{line}
 
+  # set the pager
+  cfg_pager = less -c +{line} -N {fname}
+  
+  # set the diff pager
+  # cfg_diff = diff -b -U10
+  cfg_diff = colordiff -bl
 
+  ### THE LOG
+  # set the max number of logs sncli saves
+  cfg_max_logs = 5
+  
+  # set the log timeout
+  cfg_log_timeout = 5
 
-.. hint:: You can also find `examples`_ of acceptable key combinations on the Urwid website.
+  # does the log work in reverse
+  cfg_log_reversed = yes
 
+  ### TEMP DIR
+  # set sncli's temp directory
+  # this will default to your OS's temp folder
+  cfg_tempdir = ~/.sncli/temp/
 
-Colors
-******
+  ### KEYBINDING
+  ## see http://urwid.org/manual/userinput.html for examples of more key combinations
 
-.. note:: The list of available colors was pulled from the Urwid `documentation`_ and you can see what they *might* look like `here`_.
+  ## NOTES LIST KEYBINDS
+  # sort notes by date
+  kb_sort_date = d
 
-Available Text Colors
-=====================
+  # sort notes alphabetically
+  kb_sort_alpha = a
 
-.. hlist
-  columns 3
+  # sort notes by tags
+  kb_sort_tags = ctrl t
 
-  + default
-  + black
-  + dark red
-  + dark green
-  + brown
-  + dark blue
-  + dark magenta
-  + dark cyan
-  + light gray
-  + dark gray
-  + light red
-  + light green
-  + yellow
-  + light blue
-  + light magenta
-  + light cyan
-  + white
+  ## COMMON KEYBINDINS
+  # open help menu
+  kb_help = h
 
-Available Background Colors
-===========================
+  # quit the current view or exit the program
+  kb_quit = q
 
-.. hlist
-  columns 3
+  # sync notes
+  kb_sync = S
 
-  + default
-  + black
-  + dark red
-  + dark green
-  + brown
-  + dark blue
-  + dark magenta
-  + dark cyan
-  + light gray
+  # scroll down one note 
+  kb_down = j
+  
+  # scroll up one note
+  kb_up = k
 
-.. hint  ``fg`` stands for ``foreground`` and sets the text color.
+  # scroll down a page
+  kb_page_down = space
 
-  ``bg`` stands for ``background`` and sets the background color.
+  # scroll up a page
+  kb_page_up = b
 
-  ``default`` colors are set by your teminal.
+  # scroll down half a page
+  kb_half_page_down = ctrl d
 
-Available Settings
-==================
+  # scroll up half a page
+  kb_half_page_up = ctrl u
 
-.. code-block::
+  # jump to the bottom of the page/list
+  kb_bottom = G
 
-  clr_default_fg = default
-  clr_default_bg = default
+  # jump to the top of the page/list
+  kb_top = g
 
-Sets the default colors.
+  # toggle the status bar
+  kb_status = s
 
------
+  # create a new note
+  kb_create_note = C
 
-.. code-block::
+  # edit a note 
+  kb_edit_note = e
 
+  # view note in the pager
+  kb_view_note = enter
+
+  # view note in `cfg_pager`
+  kb_view_note_ext = meta enter
+
+  # view note in JSON format
+  kb_view_note_json = O
+
+  # open the pipe prompt
+  kb_pipe_note = |
+
+  # view the snyc log
+  kb_view_log = l
+
+  # open trash dialog
+  kb_note_trash = T
+
+  # pin or unpin a note
+  kb_note_pin = p
+
+  # set or unset a note's filetype to markdown
+  kb_note_markdown = m
+
+  # open the tag prmopt
+  kb_note_tags = t
+
+  # open Google search style prompt
+  kb_search_gstyle = /
+
+  # open regex search style promp
+  kb_search_regex  = meta /
+
+  # open Google reverse style prompt
+  kb_search_prev_gstyle = ?
+
+  # open regex reverse style prompt
+  kb_search_prev_regex = meta ?
+
+  ## SEARCH KEYBINDS
+  # jump to next search result
+  kb_search_next = n
+
+  # jump to previous search result
+  kb_search_prev = N
+
+  # clear search results
+  kb_clear_search = A
+
+  ## PAGER KEYBINDS
+  # view the next note
+  kb_view_next_note = J
+
+  # view the previous note
+  kb_view_prev_note = K
+
+  # change tab stop to 2
+  kb_tabstop2 = 2
+
+  # change tab stop to 4
+  kb_tabstop4 = 4
+
+  # change tab stop to 8
+  kb_tabstop8 = 8
+
+  # view an older version of the note
+  kb_prev_version = <
+
+  # view a newer version of the note
+  kb_next_version = >
+
+  # view difference between currently selected note and the most recent one
+  kb_diff_version = D
+
+  # restore an version of the note
+  kb_restore_version = R
+
+  # jump to the most recent version of the note
+  kb_latest_version = L
+
+  # open the verison selection prompt
+  kb_select_version = #
+
+  # copy the highlighted line of text
+  kb_copy_note_text = y
+
+  ### COLORS
+  ## see http//urwid.org/reference/constants.html for accepted colors
+  # `fg` means foreground, the text color
+  # `bg` means background color
+
+  ## COMMON 
+  # the status bar
   clr_status_bar_fg = dark gray
   clr_status_bar_bg = light gray
 
-Sets the status bar colors.
-
------
-
-.. code-block:: 
-
-  clr_log_fg = dark gray
-  clr_log_bg = light gray
-
-Sets the colors for the sync log.
-
------
-
-.. code-block::
-
+  # the prompt bar
   clr_user_input_bar_fg = white
   clr_user_input_bar_bg = light red
 
-Sets the prompt bar colors.
+  ## NOTES LIST
+  # the default colors
+  clr_default_fg = default
+  clr_default_bg = default
 
------
-
-.. code-block::
-
+  # the selected note,
   clr_note_focus_fg = white
   clr_note_focus_bg = light red
   
-Sets the colors for the focused (or selected) note.
-
------
-
-.. code-block::
-
+  # titles of notes that have been updated in the last 24 hours
   clr_note_title_day_fg = light red
   clr_note_title_day_bg = default
- 
-Sets the title colors of notes that have been updated in the last 24 hours. 
-  
------
 
-.. code-block::
-
+  # titles of notes that have been updated in the last week
   clr_note_title_week_fg = light green
   clr_note_title_week_bg = default
- 
-Sets the title colors of notes that have been updated in the last week. 
 
------
-
-.. code-block::
-
+  # titles of notes that have been updated in the last month
   clr_note_title_month_fg = brown
   clr_note_title_month_bg = default
- 
-Sets the title colors of notes that have been updated in the last month.
 
------
-
-.. code-block::
-
+  # titles of notes that have note been updated in a year
   clr_note_title_year_fg = light blue
   clr_note_title_year_bg = default
  
-Sets the title colors of notes that have not been updated in a year. 
-
------
-
-.. code-block::
-
+  # titles of notes that were last updated over a year ago
   clr_note_title_ancient_fg = light blue
   clr_note_title_ancient_bg = default
  
-Sets the title colors of notes that were last updated in over an year. 
+  # for the date
+  clr_note_date_fg = dark blue
+  clr_note_date_bg = default
 
------
+  # for the flags (markdown, pinned, shared)
+  clr_note_flags_fg = dark magenta
+  clr_note_flags_bg = default
 
-clr_note_date_fg = dark blue
-clr_note_date_bg = default
+  # tags in list view
+  clr_note_tags_fg = dark red
+  clr_note_tags_bg = default
 
------
+  ## PAGER
+  # note's content
+  clr_note_content_fg = default
+  clr_note_content_bg = default
 
-clr_note_flags_fg = dark magenta
-clr_note_flags_bg = default
+  # the selected line of text
+  clr_note_content_focus_fg = white
+  clr_note_content_focus_bg = light red
 
------
+  ## HISTORY PAGER
+  # note content in history view
+  clr_note_content_old_fg = yellow
+  clr_note_content_old_bg = dark gray
 
-clr_note_tags_fg = dark red
-clr_note_tags_bg = default
+  # selected line of text in history view
+  clr_note_content_old_focus_fg = white
+  clr_note_content_old_focus_bg = light red
 
------
+  ## SYNC LOG
+  # the content of the sync log
+  clr_log_fg = dark gray
+  clr_log_bg = light gray
 
-clr_note_content_fg = default
-clr_note_content_bg = default
+  ## HELP PAGE
+  # current line of text in help view
+  clr_help_focus_fg = white
+  clr_help_focus_bg = light red
 
------
+  # the help view's header
+  clr_help_header_fg = dark blue
+  clr_help_header_bg = default
 
-clr_note_content_focus_fg = white
-clr_note_content_focus_bg = light red
+  # the help view topics
+  clr_help_config_fg = dark green
+  clr_help_config_bg = default
 
------
+  # the help topics' values
+  clr_help_value_fg = dark red
+  clr_help_value_bg = default
 
-clr_note_content_old_fg = yellow
-clr_note_content_old_bg = dark gray
+  # the descriptions of the help topics
+  clr_help_descr_fg = default
+  clr_help_descr_bg = default
 
------
-
-clr_note_content_old_focus_fg = white
-clr_note_content_old_focus_bg = light red
-
------
-
-clr_help_focus_fg = white
-clr_help_focus_bg = light red
-
------
-
-clr_help_header_fg = dark blue
-clr_help_header_bg = default
-
------
-
-clr_help_config_fg = dark green
-clr_help_config_bg = default
-
------
-
-clr_help_value_fg = dark red
-clr_help_value_bg = default
-
------
-
-clr_help_descr_fg = default
-clr_help_descr_bg = default
-
------
-
-Example Configuration
-*********************
-
-.. code-block::
-
-  ~/.snclirc
-  --------------------
-  [sncli]
-  cfg_sn_username = lebowski@thedude.com
-  cfg_sn_password = nihilist
-  
-  # as an alternate to cfg_sn_password you could use the following config item
-  # any shell command can be used; its stdout is used for the password
-  # trailing newlines are stripped for ease of use
-  # note: if both password config are given, cfg_sn_password will be used
-  cfg_sn_password_eval = gpg --quiet --for-your-eyes-only --no-tty --decrypt ~/.sncli-pass.gpg
-  
-  # see http://urwid.org/manual/userinput.html for examples of more key combinations
-  kb_edit_note = space
-  kb_page_down = ctrl f
-  
-  # note that values must not be quoted
-  clr_note_focus_bg = light blue
-  
-  # if this editor config value is not provided, the $EDITOR env var will be used instead
-  # warning: if neither $EDITOR or cfg_editor is set, it will be impossible to edit notes
-  cfg_editor = nvim
-  
-  # alternatively, {fname} and/or {line} are substituted with the filename and
-  # current line number in sncli's pager.
-  # If {fname} isn't supplied, the filename is simply appended.
-  # examples:
-  cfg_editor = nvim {fname} +{line}
-  cfg_editor = nano +{line}
-  
-  # this is also supported for the pager:
-  cfg_pager = less -c +{line} -N {fname}
-
------
-
-.. _documentation: http//urwid.org/reference/constants.html
-.. _here: http//urwid.org/manual/displayattributes.html#high-colors
- 
-.. _examples: http://urwid.org/manual/userinput.html
+  ### NOTE: You do not need to keep default vaules in your config
+  # they are listed here as examples and
+  # to give a complete view of what setting are
+  # customizable.
