@@ -11,3 +11,4 @@ requests = "*"
 [dev-packages]
 mypy = "*"
 "e1839a8" = {editable = true, path = "."}
+sphinx = "*"
