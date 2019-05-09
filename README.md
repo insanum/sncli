@@ -69,10 +69,10 @@ Check your OS distribution for installation packages.
 
 ### Screenshots
 
-![sncli](https://github.com/insanum/sncli/raw/master/screenshots/screenshot1.png)
-![sncli](https://github.com/insanum/sncli/raw/master/screenshots/screenshot2.png)
-![sncli](https://github.com/insanum/sncli/raw/master/screenshots/screenshot3.png)
-![sncli](https://github.com/insanum/sncli/raw/master/screenshots/screenshot4.png)
+![sncli](docs/screenshots/screenshot1.png)
+![sncli](docs/screenshots/screenshot2.png)
+![sncli](docs/screenshots/screenshot3.png)
+![sncli](docs/screenshots/screenshot4.png)
 
 ### HowTo
 
