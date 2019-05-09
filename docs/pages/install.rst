@@ -18,7 +18,7 @@ Installation
 Pip
 ===
 
-.. coder-block:: shell
+.. code-block:: shell
 
 	$ pip install sncli
 
