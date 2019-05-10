@@ -74,7 +74,7 @@ Google Style
 
 A Google style search string is a group of tokens (separated by spaces) with an implied AND between each token. This style search is case insensitive. For example:
 
-.. code-block:: 
+.. code-block:: text
 
   /tag:tag1 tag:tag2 word1 "word2 word3" tag:tag3
 
@@ -83,7 +83,7 @@ Regular Expression
 
 Regular expression searching also supports the use of flags (currently only case-insensitive) by adding a final forward slash followed by the flags. The following example will do a case-insensitive search for ``something``:
 
-.. code-block::
+.. code-block:: text
 
   (regex) /something/i
 
