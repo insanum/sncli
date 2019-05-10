@@ -2,6 +2,7 @@ sncli
 =====
 
 Simplenote Command Line Interface
+[![Documentation Status](https://readthedocs.org/projects/sncli/badge/?version=latest)](https://sncli.readthedocs.io/en/latest/?badge=latest)
 
 sncli is a Python application that gives you access to your Simplenote account
 via the command line. You can access your notes via a customizable console GUI
