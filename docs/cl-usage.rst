@@ -17,7 +17,7 @@ Options
 .. option:: -c <file>
 .. option::  --config=<file>
 
-  Sets the :doc:`/pages/configuration` used by ``sncli``. The default is ``$HOME/.snclirc``.
+  Sets the configuration used by ``sncli``. The default is ``$HOME/.snclirc``. See :doc:`configuration`.
 
 -----
 
