@@ -9,27 +9,27 @@ Set ``mdv`` as your pager for ``sncli`` and get a formatted view of your markdow
 + Install `mdv`_
 + Create a pager/wrapper
 
-	.. code-block:: shell
-        
-		/usr/local/bin/mdless
-		---------------------
-		#!/bin/zsh
-		# https://superuser.com/questions/1059781/what-exactly-is-in-bash-and-in-zsh
-		/usr/bin/less -R -c =(mdv "$1")
+    .. code-block:: shell
+
+        /usr/local/bin/mdless
+        ---------------------
+        #!/bin/zsh
+        # https://superuser.com/questions/1059781/what-exactly-is-in-bash-and-in-zsh
+        /usr/bin/less -R -c =(mdv "$1")
 
 + Make the reader an executable file
 
-	.. code-block:: shell
+    .. code-block:: shell
 
-		sudo chmod +x /usr/local/bin/mdless
-        
+        sudo chmod +x /usr/local/bin/mdless
+
 + Now set ``mdless`` as your pager
 
-	.. code-block:: shell
-        
-		$HOME/.snclirc
-		------------------------
-		cfg_pager = /usr/local/bin/mdless
+    .. code-block:: shell
+
+        $HOME/.snclirc
+        ------------------------
+        cfg_pager = /usr/local/bin/mdless
 
 Note: MDV does not yet support using a light backdround
 
@@ -43,22 +43,22 @@ Add a modeline to each note, for `VimOutliner`_ you would add [Suggested by `ins
 
 .. code-block:: vim
 
-	; vim:ft=votl
+    ; vim:ft=votl
 
 This will change the file type for the note it's been added to.
 
 AutoCommand
 ===========
 
-You could also add an AutoCommand to your ``vimrc``: 
+You could also add an AutoCommand to your ``vimrc``:
 
 .. code-block:: vim
 
-	augroup sncli_ft
-	au BufEnter,BufWrite,BufRead,BufNewFile /tmp/*.txt set filetype=asciidoc
-	augroup END
+    augroup sncli_ft
+    au BufEnter,BufWrite,BufRead,BufNewFile /tmp/*.txt set filetype=asciidoc
+    augroup END
 
-This will set text files opened in sncli's default temp directory to the filetype of Asciidoc. 
+This will set text files opened in sncli's default temp directory to the filetype of Asciidoc.
 
 Open Links
 **********

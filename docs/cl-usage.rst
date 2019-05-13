@@ -31,7 +31,7 @@ Options
 .. option:: -k <key>
 .. option:: --key=<key>
 
-	Idenifies a note by it's key.
+    Idenifies a note by its key.
 
 -----
 
@@ -45,14 +45,14 @@ Options
 .. option:: -r
 .. option:: --regex
 
-	This will cause ``sncli`` search strings as a regular expression. See :ref:`search` for more.
+    This will cause ``sncli`` search strings as a regular expression. See :ref:`searchstyles` for more.
 
 -----
 
 .. option:: -t <title>
 .. option:: --title=<title>
 
-	If creating a new note from ``stdin``, this will allow you to set the title to <title>.
+    If creating a new note from ``stdin``, this will allow you to set the title to <title>.
 
 -----
 
@@ -138,8 +138,8 @@ Notes
 -----
 
 .. option:: sync
-	
-	Performs a full, bi-directional sync between the local notes cache and the Simplenote server.
+    
+    Performs a full, bi-directional sync between the local notes cache and the Simplenote server.
 
 Flags
 =====

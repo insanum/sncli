@@ -1,11 +1,14 @@
-Console GUI Usage
+TUI Usage
 #################
+
+.. note:: All keybindings can be configured. See the help menu in sncli for
+          names of the config items and the :doc:`configuration`.
 
 Common
 ******
 
 .. object:: h
-  
+
   View the help menu
 
 .. object:: q
@@ -74,7 +77,7 @@ Common
 
 .. object:: l
 
-	View the sync log.
+    View the sync log.
 
 .. object:: T
 
@@ -148,19 +151,19 @@ Pager View Only
 
 .. object:: J
 
-	View the next note.
+    View the next note.
 
 .. object:: K
 
-	View the previous note.
+    View the previous note.
 
 .. object:: 2
 
-	Change the notes tab stop to 2.
+    Change the notes tab stop to 2.
 
 .. object:: 4
 
-	Change the notes tab stop to 4.
+    Change the notes tab stop to 4.
 
 .. object:: 8
 
@@ -174,11 +177,11 @@ Pager View Only
 
 .. object:: <
 
-	View an old version of the note (this cycles).
+    View an old version of the note (this cycles).
 
 .. object:: >
 
-	View a newer version of the note (this cycles).
+    View a newer version of the note (this cycles).
 
 History View
 ============

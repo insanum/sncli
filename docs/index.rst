@@ -63,7 +63,7 @@ The flow sncli uses for editing notes is:
 
 As a result, the note doesn't get updated in sncli until the editor is closed. By default, the temporary file is created in the OS's default temporary directory (eg. ``/tmp/`` on Linux). This can be changed with the ``cfg_tempdir`` option. This may be useful to create temporary files on a persistent file system to avoid data loss.
 
-.. _search:
+.. _searchstyles:
 
 Search Styles
 *************
