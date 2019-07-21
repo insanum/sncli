@@ -66,7 +66,7 @@ Open Links
 Find and open links faster with ``urlscan`` or ``urlview``.
 
 + Install `urlscan`_ or `urlview`_
-+ Pip the note from the note view
++ Pipe the note from the note view
 + Select a link!
 
 .. _s5unty: https://github.com/s5unty
