@@ -120,7 +120,7 @@ class sncli:
             subprocess.check_call(cmd_list)
         except Exception as e:
             self.log('Command error: ' + str(e))
-            temp.tempfile_delete(tf)
+            self.log('Temp file saved: {}'.format(temp.tempfile_name(tf)))
             return None
 
         content = None
@@ -129,7 +129,7 @@ class sncli:
             if not content or content == '\n':
                 content = None
 
-        temp.tempfile_delete(tf)
+        self.log('Temp file saved: {}'.format(temp.tempfile_name(tf)))
         return content
 
     def exec_diff_on_note(self, note, old_note):
