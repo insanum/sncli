@@ -2,12 +2,12 @@
 # Copyright (c) 2014 Eric Davis
 # Licensed under the MIT License
 
-import os, json, tempfile
+import os, json, tempfile, time
 
 def tempfile_create(note, raw=False, tempdir=None):
     if raw:
         # dump the raw json of the note
-        tf = tempfile.NamedTemporaryFile(suffix='.json', prefix="sncli-temp-", delete=False, dir=tempdir)
+        tf = tempfile.NamedTemporaryFile(suffix='.json', prefix=_get_tempfile_prefix(), delete=False, dir=tempdir)
 
         contents = json.dumps(note, indent=2)
         tf.write(contents.encode('utf-8'))
@@ -18,12 +18,15 @@ def tempfile_create(note, raw=False, tempdir=None):
            'systemTags' in note and \
            'markdown' in note['systemTags']:
             ext = '.mkd'
-        tf = tempfile.NamedTemporaryFile(suffix=ext, prefix="sncli-temp-", delete=False, dir=tempdir)
+        tf = tempfile.NamedTemporaryFile(suffix=ext, prefix=_get_tempfile_prefix(), delete=False, dir=tempdir)
         if note:
             contents = note['content']
             tf.write(contents.encode('utf-8'))
         tf.flush()
     return tf
+
+def _get_tempfile_prefix():
+    return "sncli-temp-{}-".format(int(time.time()))
 
 def tempfile_delete(tf):
     if tf:

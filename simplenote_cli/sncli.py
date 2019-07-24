@@ -84,7 +84,7 @@ class sncli:
             return None
         return diff
 
-    def exec_cmd_on_note(self, note, cmd=None, raw=False):
+    def exec_cmd_on_note(self, note, cmd=None, raw=False, delete_tempfile=False):
 
         if not cmd:
             cmd = self.get_editor()
@@ -120,7 +120,8 @@ class sncli:
             subprocess.check_call(cmd_list)
         except Exception as e:
             self.log('Command error: ' + str(e))
-            self.log('Temp file saved: {}'.format(temp.tempfile_name(tf)))
+            if delete_tempfile:
+                temp.tempfile_delete(tf)
             return None
 
         content = None
@@ -129,7 +130,9 @@ class sncli:
             if not content or content == '\n':
                 content = None
 
-        self.log('Temp file saved: {}'.format(temp.tempfile_name(tf)))
+        if delete_tempfile:
+            temp.tempfile_delete(tf)
+
         return content
 
     def exec_diff_on_note(self, note, old_note):
@@ -663,9 +666,9 @@ class sncli:
             if key == self.config.get_keybind('edit_note'):
                 content = self.exec_cmd_on_note(note)
             elif key == self.config.get_keybind('view_note_ext'):
-                content = self.exec_cmd_on_note(note, cmd=self.get_pager())
+                content = self.exec_cmd_on_note(note, cmd=self.get_pager(), delete_tempfile=True)
             else: # key == self.config.get_keybind('view_note_json')
-                content = self.exec_cmd_on_note(note, cmd=self.get_pager(), raw=True)
+                content = self.exec_cmd_on_note(note, cmd=self.get_pager(), raw=True, delete_tempfile=True)
 
             self.gui_reset()
 

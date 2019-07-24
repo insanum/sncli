@@ -196,6 +196,14 @@ cfg_tempdir = /home/user/.sncli/tmp/
 
 This directory must exist.
 
+Note that currently sncli does not clean up the tempfiles. This is to avoid the
+possibility of unrecoverable data loss in the case where sncli crashes between
+editing a note and saving or syncing the note. If using the OS default tempdir,
+these should be deleted upon reboot. If using a persistent tempdir, one should
+clean them up periodically to avoid too many files cluttering the system. For
+convenience, all tempfiles are created with the name prefix
+`sncli-temp-<timestamp>-`.
+
 
 #### Note Title Format
 
