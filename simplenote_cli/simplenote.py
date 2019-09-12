@@ -152,7 +152,7 @@ class Simplenote(object):
                     'content': note['content'],
                     'modificationDate': note['modificationDate'],
                     'creationDate': note['creationDate'],
-                    'systemTags': [],
+                    'systemTags': note['systemTags'],
                     'shareURL': '',
                     'publishURL': '',
                 }

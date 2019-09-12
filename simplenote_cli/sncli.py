@@ -44,6 +44,9 @@ class sncli:
 
         self.logs = []
 
+        # whether to default to markdown for new notes or note
+        self.default_markdown = self.config.get_config('default_markdown') == 'yes'
+
         try:
             self.ndb = NotesDB(self.config, self.log, self.gui_update_view)
         except Exception as e:
@@ -91,7 +94,12 @@ class sncli:
         if not cmd:
             return None
 
-        tf = temp.tempfile_create(note if note else None, raw=raw, tempdir=self.tempdir)
+        tf = temp.tempfile_create(
+            note if note else None,
+            raw=raw,
+            tempdir=self.tempdir,
+            ext_override='.mkd' if self.default_markdown else '.txt',
+        )
         fname = temp.tempfile_name(tf)
 
         focus_position = 0
@@ -641,7 +649,7 @@ class sncli:
 
             if content:
                 self.log('New note created')
-                self.ndb.create_note(content)
+                self.ndb.create_note(content, markdown=self.default_markdown)
                 self.gui_update_view()
                 self.ndb.sync_worker_go()
 
@@ -1122,7 +1130,7 @@ class sncli:
 
         if content:
             self.log('New note created')
-            self.ndb.create_note(content)
+            self.ndb.create_note(content, markdown=self.default_markdown)
             self.sync_notes()
 
     def cli_note_import(self, from_stdin):
