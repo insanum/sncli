@@ -231,7 +231,7 @@ class Config:
         self.keybinds['search_prev_regex'] = [ cp.get(cfg_sec, 'kb_search_prev_regex'), [ 'notes' ], 'Search backwards using regex' ]
         self.keybinds['search_next'] = [ cp.get(cfg_sec, 'kb_search_next'), [ 'notes' ], 'Go to next search result' ]
         self.keybinds['search_prev'] = [ cp.get(cfg_sec, 'kb_search_prev'), [ 'notes' ], 'Go to previous search result' ]
-        self.keybinds['clear_search'] = [ cp.get(cfg_sec, 'kb_clear_search'), [ 'titles' ], 'Show all notes' ]
+        self.keybinds['clear_search'] = [ cp.get(cfg_sec, 'kb_clear_search'), [ 'titles' ], 'Clear search / Show all' ]
         self.keybinds['sort_date'] = [ cp.get(cfg_sec, 'kb_sort_date'), [ 'titles' ], 'Sort notes by date' ]
         self.keybinds['sort_alpha'] = [ cp.get(cfg_sec, 'kb_sort_alpha'), [ 'titles' ], 'Sort notes by alpha' ]
         self.keybinds['sort_tags'] = [ cp.get(cfg_sec, 'kb_sort_tags'), [ 'titles' ], 'Sort notes by tags' ]
