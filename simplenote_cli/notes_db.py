@@ -324,7 +324,7 @@ class NotesDB():
 
         return new_key
 
-    def create_note(self, content):
+    def create_note(self, content, markdown=False):
         # need to get a key unique to this database. not really important
         # what it is, as long as it's unique.
         new_key = utils.generate_random_key()
@@ -342,8 +342,12 @@ class NotesDB():
                     'creationDate' : timestamp,
                     'savedate'   : 0, # never been written to disc
                     'syncdate'   : 0, # never been synced with server
-                    'tags'       : []
+                    'tags'       : [],
+                    'systemTags' : [],
                    }
+
+        if markdown:
+            new_note['systemTags'].append('markdown')
 
         self.notes[new_key] = new_note
 
