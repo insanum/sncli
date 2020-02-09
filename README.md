@@ -34,6 +34,9 @@ Check your OS distribution for installation packages.
     - Run with `pipenv run sncli`
   - or more manual:
     - `python setup.py install`
+  - or with Docker
+    - docker build . -t sncli
+    - docker run --rm -it -v /tmp:/tmp -v "$HOME/.sncli/:/root/.sncli/" -v "$HOME/.snclirc:/root/.snclirc" sncli
 
 
 ### Features
