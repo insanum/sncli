@@ -344,6 +344,26 @@ possibilities here...
 
 _Note: more tips and tricks on the [GitHub wiki](https://github.com/insanum/sncli/wiki/Tips-and-Tricks)!_
 
+### Docker Tips
+
+The Docker installation offers some flexibility in that you don't need to install dependencies outside of Docker itself to run. However, because sncli has both an interactive component as well as being scriptable by passing data via stdin there can be some subtle differences in the Docker command used in some situations. In general, `-it` needs to be passed to the Docker command when trying to use sncli interactively (this gives a full TTY allowing interaction) but only `-i` when trying to pass input. For example:
+
+If you are trying to launch the GUI console, you might run exactly what's in the setup instructions:
+
+`docker run --rm -it -v /tmp:/tmp -v "$HOME/.sncli/:/root/.sncli/" -v "$HOME/.snclirc:/root/.snclirc" sncli`
+
+In order to create a new note from stdin, you'll need to drop the `-t` from the command, but still preserve the `-i` input argument:
+
+`echo "hello world" | docker run --rm -i -v /tmp:/tmp -v "$HOME/.sncli/:/root/.sncli/" -v "$HOME/.snclirc:/root/.snclirc" sncli create -`
+
+The above command can be simplified by using an alias in your shell:
+
+`alias sncli='docker run --rm -i -v /tmp:/tmp -v "$HOME/.sncli/:/root/.sncli/" -v "$HOME/.snclirc:/root/.snclirc" sncli'`
+
+Then you can interact with sncli as though Docker wasn't there (aside from the interactive nuance from above):
+
+`echo "hello world" | sncli create -`
+
 ### Thanks
 
 This application pulls in and uses the
