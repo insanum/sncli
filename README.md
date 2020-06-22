@@ -37,6 +37,7 @@ Check your OS distribution for installation packages.
   - or with Docker
     - docker build . -t sncli
     - docker run --rm -it -v /tmp:/tmp -v "$HOME/.sncli/:/root/.sncli/" -v "$HOME/.snclirc:/root/.snclirc" sncli
+    - See [Docker Tips](#docker-tips) below for usage instructions for this method
 
 
 ### Features
