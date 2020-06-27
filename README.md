@@ -34,7 +34,7 @@ Check your OS distribution for installation packages.
     - Run with `pipenv run sncli`
   - or more manual:
     - `python setup.py install`
-  - or with Docker
+  - or with Docker (see the wiki for [Docker usage tips](https://github.com/insanum/sncli/wiki/Tips-and-Tricks#docker-usage-tips))
     - docker build . -t sncli
     - docker run --rm -it -v /tmp:/tmp -v "$HOME/.sncli/:/root/.sncli/" -v "$HOME/.snclirc:/root/.snclirc" sncli
 

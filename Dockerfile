@@ -8,7 +8,7 @@ COPY . /sncli
 WORKDIR /sncli
 RUN pipenv install
 
-ENTRYPOINT pipenv run ./sncli
+ENTRYPOINT ["pipenv", "run", "./sncli"]
 
 # Install editors and tools of your choice
 RUN apt-get update && apt-get install -y neovim && apt-get clean
