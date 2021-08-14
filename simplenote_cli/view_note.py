@@ -30,13 +30,13 @@ class ViewNote(urwid.ListBox):
         if not self.key:
             return lines
         if self.old_note:
-            for l in self.old_note['content'].split('\n'):
+            for l in self.old_note['content'].splitlines():
                 lines.append(
                     urwid.AttrMap(urwid.Text(l.replace('\t', ' ' * self.tabstop)),
                                   'note_content_old',
                                   'note_content_old_focus'))
         else:
-            for l in self.note['content'].split('\n'):
+            for l in self.note['content'].splitlines():
                 lines.append(
                     urwid.AttrMap(urwid.Text(l.replace('\t', ' ' * self.tabstop)),
                                   'note_content',

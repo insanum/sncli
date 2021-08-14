@@ -9,7 +9,7 @@
 import datetime, random, re, time
 
 # first line with non-whitespace should be the title
-note_title_re = re.compile('\s*(.*)\n?')
+note_title_re = re.compile(r'\s*([^\r\n]*)')
 
 def generate_random_key():
     """Generate random 30 digit (15 byte) hex string.
