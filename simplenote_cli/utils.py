@@ -10,6 +10,7 @@ import datetime, random, re, time
 
 # first line with non-whitespace should be the title
 note_title_re = re.compile(r'\s*([^\r\n]*)')
+note_newline_re = re.compile(r'\r?\n')
 
 def generate_random_key():
     """Generate random 30 digit (15 byte) hex string.
@@ -45,6 +46,12 @@ def get_note_flags(note):
     else:
         flags += '   '
     return flags
+
+def get_note_lines(note, max_lines=0):
+    lines = note_newline_re.split(
+        note.get('content', ''),
+        max_lines)
+    return lines
 
 def get_note_title(note):
     mo = note_title_re.match(note.get('content', ''))
