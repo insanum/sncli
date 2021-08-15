@@ -30,13 +30,13 @@ class ViewNote(urwid.ListBox):
         if not self.key:
             return lines
         if self.old_note:
-            for l in self.old_note['content'].split('\n'):
+            for l in utils.get_note_lines(self.old_note):
                 lines.append(
                     urwid.AttrMap(urwid.Text(l.replace('\t', ' ' * self.tabstop)),
                                   'note_content_old',
                                   'note_content_old_focus'))
         else:
-            for l in self.note['content'].split('\n'):
+            for l in utils.get_note_lines(self.note):
                 lines.append(
                     urwid.AttrMap(urwid.Text(l.replace('\t', ' ' * self.tabstop)),
                                   'note_content',
@@ -105,8 +105,9 @@ class ViewNote(urwid.ListBox):
         self.search_note_range(note_range)
 
     def search_note_range(self, note_range):
+        note_lines = utils.get_note_lines(self.note)
         for line in note_range:
-            line_content = self.note['content'].split('\n')[line]
+            line_content = note_lines[line]
             if (self.is_match(self.search_string, line_content)):
                 self.focus_position = line
                 break
@@ -198,7 +199,7 @@ class ViewNote(urwid.ListBox):
                           'status_bar')
 
     def copy_note_text(self):
-        line_content = self.note['content'].split('\n')[self.focus_position]
+        line_content = utils.get_note_lines(self.note)[self.focus_position]
         self.clipboard.copy(line_content)
 
     def keypress(self, size, key):
