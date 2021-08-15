@@ -47,10 +47,8 @@ def get_note_flags(note):
         flags += '   '
     return flags
 
-def get_note_lines(note, max_lines=0):
-    lines = note_newline_re.split(
-        note.get('content', ''),
-        max_lines)
+def get_note_lines(note):
+    lines = note_newline_re.split(note.get('content', ''))
     return lines
 
 def get_note_title(note):
