@@ -116,8 +116,9 @@ Usage:
 #### Configuration
 
 The current Simplenote API does not support oauth authentication so your
-Simplenote account information must live in the configuration file. Please be
-sure to protect this file.
+Simplenote account information must live in the configuration file or in
+the `SN_USERNAME` and `SN_PASSWORD` environment variables.
+Please be sure to protect any file containing these secrets.
 
 The flow sncli uses for finding the config file is:
 
@@ -131,6 +132,10 @@ The following example `.snclirc` will get you going (using your account informat
 [sncli]
 cfg_sn_username = lebowski@thedude.com
 cfg_sn_password = nihilist
+```
+Or, if using environment variables, run `sncli` like this:
+``` shell
+SN_USERNAME=lebowski@thedude.com SN_PASSWORD=nihilist ./sncli
 ```
 
 Start sncli with no arguments which starts the console GUI mode. sncli with

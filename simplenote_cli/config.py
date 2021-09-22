@@ -10,8 +10,8 @@ class Config:
         self.home = os.path.abspath(os.path.expanduser('~'))
         defaults = \
         {
-         'cfg_sn_username'       : '',
-         'cfg_sn_password'       : '',
+         'cfg_sn_username'       : os.environ['SN_USERNAME'] if 'SN_USERNAME' in os.environ else '',
+         'cfg_sn_password'       : os.environ['SN_PASSWORD'] if 'SN_PASSWORD' in os.environ else '',
          'cfg_sn_password_eval'  : '',
          'cfg_db_path'           : os.path.join(self.home, '.sncli'),
          'cfg_search_tags'       : 'yes',  # with regex searches
