@@ -2,7 +2,7 @@
 # docker run --rm -it -v /tmp:/tmp -v "$HOME/.sncli/:/root/.sncli/" -v "$HOME/.snclirc:/root/.snclirc" sncli
 FROM python:3.8-buster
 
-ARG editor_packages="neovim"
+ARG editor_packages="vim"
 
 # Install editors and tools of your choice
 ARG DEBIAN_FRONTEND=noninteractive
@@ -26,5 +26,3 @@ RUN \
 COPY . /sncli/
 
 ENTRYPOINT [ "pipenv", "run", "./sncli" ]
-
-# ENV EDITOR /usr/bin/nvim
