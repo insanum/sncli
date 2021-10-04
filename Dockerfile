@@ -1,15 +1,28 @@
-# docker build . -t sncli
+# docker build . [--build-arg editor_packages=neovim] -t sncli
 # docker run --rm -it -v /tmp:/tmp -v "$HOME/.sncli/:/root/.sncli/" -v "$HOME/.snclirc:/root/.snclirc" sncli
 FROM python:3.8-buster
 
-RUN pip3 install pipenv
-
-COPY . /sncli
-WORKDIR /sncli
-RUN pipenv install
-
-ENTRYPOINT ["pipenv", "run", "./sncli"]
+ARG editor_packages="vim"
 
 # Install editors and tools of your choice
-RUN apt-get update && apt-get install -y neovim && apt-get clean
-# ENV EDITOR /usr/bin/nvim
+ARG DEBIAN_FRONTEND=noninteractive
+RUN \
+    apt-get update && \
+    apt-get install -y \
+      ${editor_packages} \
+    && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/
+
+RUN pip3 install --no-cache pipenv
+
+COPY ./Pipfile /sncli/
+COPY ./Pipfile.lock /sncli/
+WORKDIR /sncli/
+RUN \
+    pipenv install && \
+    pipenv --clear
+
+COPY . /sncli/
+
+ENTRYPOINT [ "pipenv", "run", "./sncli" ]
