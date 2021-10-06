@@ -1,6 +1,6 @@
 # docker build . [--build-arg editor_packages=neovim] -t sncli
 # docker run --rm -it -v /tmp:/tmp -v "$HOME/.sncli/:/root/.sncli/" -v "$HOME/.snclirc:/root/.snclirc" sncli
-FROM python:3.8-buster
+FROM python:3.9-bullseye
 
 ARG editor_packages="vim"
 
