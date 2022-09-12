@@ -24,10 +24,10 @@ Example Configuration
   # can be set to `alpha` or `date`
   cfg_sort_mode = date
 
-  # keep pins messages at top
+  # keep pinned notes on top
   cfg_pinned_ontop = yes
 
-  # sets the default tapstop
+  # sets the default tabstop
   cfg_tabstop = 4
 
   # show the status bar
@@ -78,7 +78,7 @@ Example Configuration
   cfg_diff = colordiff -bl
 
   ### THE LOG
-  # set the max number of logs sncli saves
+  # set the max number of log files sncli will keep
   cfg_max_logs = 5
 
   # set the log timeout
@@ -160,7 +160,7 @@ Example Configuration
   # open the pipe prompt
   kb_pipe_note = |
 
-  # view the snyc log
+  # view the sync log
   kb_view_log = l
 
   # open trash dialog
@@ -172,13 +172,13 @@ Example Configuration
   # set or unset a note's filetype to markdown
   kb_note_markdown = m
 
-  # open the tag prmopt
+  # open the tag prompt
   kb_note_tags = t
 
   # open Google search style prompt
   kb_search_gstyle = /
 
-  # open regex search style promp
+  # open regex search style prompt
   kb_search_regex  = meta /
 
   # open Google reverse style prompt
@@ -222,7 +222,7 @@ Example Configuration
   # view difference between currently selected note and the most recent one
   kb_diff_version = D
 
-  # restore an version of the note
+  # restore a version of the note
   kb_restore_version = R
 
   # jump to the most recent version of the note
