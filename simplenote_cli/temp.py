@@ -4,7 +4,7 @@
 
 import os, json, tempfile, time
 
-def tempfile_create(note, raw=False, tempdir=None, ext_override=None):
+def tempfile_create(note, raw=False, tempdir=None, default_markdown=False):
     if raw:
         # dump the raw json of the note
         tf = tempfile.NamedTemporaryFile(suffix='.json', prefix=_get_tempfile_prefix(), delete=False, dir=tempdir)
@@ -13,13 +13,12 @@ def tempfile_create(note, raw=False, tempdir=None, ext_override=None):
         tf.write(contents.encode('utf-8'))
         tf.flush()
     else:
-        ext = '.txt'
-        if ext_override:
-            ext = ext_override
-        elif note and \
-           'systemTags' in note and \
-           'markdown' in note['systemTags']:
-            ext = '.mkd'
+        if note:
+            ext = (
+                '.mkd' if 'markdown' in note.get('systemTags', []) else '.txt'
+            )
+        else:
+            ext = '.mkd' if default_markdown else '.txt'
         tf = tempfile.NamedTemporaryFile(suffix=ext, prefix=_get_tempfile_prefix(), delete=False, dir=tempdir)
         if note:
             contents = note['content']

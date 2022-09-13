@@ -98,7 +98,7 @@ class sncli:
             note if note else None,
             raw=raw,
             tempdir=self.tempdir,
-            ext_override='.mkd' if self.default_markdown else '.txt',
+            default_markdown=self.default_markdown,
         )
         fname = temp.tempfile_name(tf)
 
