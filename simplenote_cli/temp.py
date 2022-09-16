@@ -15,10 +15,10 @@ def tempfile_create(note, raw=False, tempdir=None, default_markdown=False):
     else:
         if note:
             ext = (
-                '.mkd' if 'markdown' in note.get('systemTags', []) else '.txt'
+                '.md' if 'markdown' in note.get('systemTags', []) else '.txt'
             )
         else:
-            ext = '.mkd' if default_markdown else '.txt'
+            ext = '.md' if default_markdown else '.txt'
         tf = tempfile.NamedTemporaryFile(suffix=ext, prefix=_get_tempfile_prefix(), delete=False, dir=tempdir)
         if note:
             contents = note['content']
