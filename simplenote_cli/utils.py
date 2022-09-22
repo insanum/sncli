@@ -73,7 +73,7 @@ def get_note_title_file(note):
             fn = str(fn)
 
         if note_markdown(note):
-            fn += '.mkdn'
+            fn += '.md'
         else:
             fn += '.txt'
 
