@@ -87,7 +87,7 @@ class sncli:
             return None
         return diff
 
-    def exec_cmd_on_note(self, note, cmd=None, raw=False, delete_tempfile=False):
+    def exec_cmd_on_note(self, note, cmd=None, raw=False, delete_tempfile=False, line=0):
 
         if not cmd:
             cmd = self.get_editor()
@@ -105,6 +105,7 @@ class sncli:
         focus_position = 0
         try:
             focus_position = self.gui_body_get().focus_position
+            line = focus_position + 1
         except (IndexError, AttributeError):
             # Focus position will fail if no notes available (listbox empty), or
             # if no gui running (eg. when called as `sncli create`).
@@ -113,7 +114,7 @@ class sncli:
 
         subs = {
             'fname': fname,
-            'line': focus_position + 1,
+            'line': line,
         }
         cmd_list = [c.format(**subs) for c in shlex.split(cmd)]
 
@@ -1173,14 +1174,14 @@ class sncli:
         notes_data = [n.note for n in note_list]
         print(json.dumps(notes_data, indent=2))
 
-    def cli_note_edit(self, key):
+    def cli_note_edit(self, key, line):
 
         note = self.ndb.get_note(key)
         if not note:
             self.log('ERROR: Key does not exist')
             return
 
-        content = self.exec_cmd_on_note(note)
+        content = self.exec_cmd_on_note(note, line=line)
         if not content:
             return
 
@@ -1314,7 +1315,7 @@ Usage:
   import [-]                  - import a note in JSON format ('-' JSON from stdin)
   export                      - export a note in JSON format (specified by <key>)
   dump                        - dump a note (specified by <key>)
-  edit                        - edit a note (specified by <key>)
+  edit [+line_number]         - edit a note (specified by <key>, optionally jump to line)
   < trash | untrash >         - trash/untrash a note (specified by <key>)
   < pin | unpin >             - pin/unpin a note (specified by <key>)
   < markdown | unmarkdown >   - markdown/unmarkdown a note (specified by <key>)
@@ -1424,8 +1425,15 @@ def main(argv=sys.argv[1:]):
         if not key:
             usage()
 
+        line = 0
+        if len(args) == 2 and args[1].startswith('+'):
+            try:
+                line = int(args[1][1:])
+            except ValueError:
+                self.log('ERROR: Invalid argument for line to jump to')
+
         sn = sncli_start()
-        sn.cli_note_edit(key)
+        sn.cli_note_edit(key, line)
 
     elif args[0] == 'trash' or args[0] == 'untrash':
 
