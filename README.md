@@ -349,6 +349,16 @@ possibilities here...
 
 _Note: more tips and tricks on the [GitHub wiki](https://github.com/insanum/sncli/wiki/Tips-and-Tricks)!_
 
+### Microsoft Windows support
+
+There is **partial** Windows support:
+
+* WSL and Cygwin versions of Python work
+* Native Windows support is limited:
+    * batch/command line like sync and view work
+    * UI interaction does not work BUT can be made to partially work via a monkey patch to Urwid (see https://github.com/urwid/urwid/issues/447)
+    * See https://github.com/insanum/sncli/issues/119 for details
+
 ### Thanks
 
 This application pulls in and uses the
