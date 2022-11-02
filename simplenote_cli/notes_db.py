@@ -6,10 +6,18 @@
 # copyright 2012 by Charl P. Botha <cpbotha@vxlabs.com>
 # new BSD license
 
-import os, time, re, glob, json, copy, threading
+import copy
+import glob
+import json
+import logging
+import os
+import re
+import threading
+import time
+
 from . import utils
 from .simplenote import Simplenote
-import logging
+
 
 class ReadError(RuntimeError):
     pass

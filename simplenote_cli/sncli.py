@@ -2,15 +2,30 @@
 # Copyright (c) 2014 Eric Davis
 # Licensed under the MIT License
 
-import os, sys, getopt, re, signal, time, datetime, shlex, hashlib
-import subprocess, threading, logging
-import copy, json, urwid, datetime
-from . import view_titles, view_note, view_help, view_log, user_input
-from . import utils, temp
-from .config import Config
-from .simplenote import Simplenote
-from .notes_db import NotesDB, ReadError, WriteError
+import copy
+import datetime
+import getopt
+import hashlib
+import json
+import logging
+import os
+import re
+import shlex
+import signal
+import subprocess
+import sys
+import threading
+import time
 from logging.handlers import RotatingFileHandler
+
+import urwid
+
+from . import (temp, user_input, utils, view_help, view_log, view_note,
+               view_titles)
+from .config import Config
+from .notes_db import NotesDB, ReadError, WriteError
+from .simplenote import Simplenote
+
 
 class sncli:
 
