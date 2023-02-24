@@ -10,7 +10,7 @@ deps = ['urwid', 'requests', 'Simperium3']
 setup(
       name='sncli',
       description='Simplenote Command Line Interface',
-      version='0.4.1',
+      version='0.4.2',
       author='Eric Davis',
       author_email='edavis@insanum.com',
       url='https://github.com/insanum/sncli',
