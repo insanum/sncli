@@ -158,7 +158,7 @@ class sncli:
         out = temp.tempfile_create(None, tempdir=self.tempdir)
 
         try:
-            subprocess.call(diff + ' ' + 
+            subprocess.call(diff + ' ' +
                             temp.tempfile_name(ltf) + ' ' +
                             temp.tempfile_name(otf) + ' > ' +
                             temp.tempfile_name(out),
@@ -1284,6 +1284,26 @@ class sncli:
             tags = ','.join(tag_list)
             self.cli_note_tags_set(key, tags)
 
+    def get_key_from_title(self, title):
+
+        note_list, match_regex, all_notes_cnt = \
+            self.ndb.filter_notes(
+                title,
+                search_mode='gstyle',
+                sort_mode=self.config.get_config('sort_mode'))
+        if len(note_list) == 1:
+            return note_list[0].key
+        elif len(note_list) == 0:
+            print('''
+No notes could be found containing that title string.
+''')
+            sys.exit(0)
+        else:
+            print('''
+There were too many notes containing that title string. Please be more specific.
+''')
+            sys.exit(0)
+
 def SIGINT_handler(signum, frame):
     print('\nSignal caught, bye!')
     sys.exit(1)
@@ -1421,34 +1441,58 @@ def main(argv=sys.argv[1:]):
 
     elif args[0] == 'edit':
 
-        if not key:
-            usage()
+        sn = 0
 
-        sn = sncli_start()
+        if not key:
+            if not title:
+                usage()
+            else:
+                sn = sncli_start()
+                key = sn.get_key_from_title(title)
+
+        sn = sncli_start() if sn == 0 else sn
         sn.cli_note_edit(key)
 
     elif args[0] == 'trash' or args[0] == 'untrash':
 
-        if not key:
-            usage()
+        sn = 0
 
-        sn = sncli_start()
+        if not key:
+            if not title:
+                usage()
+            else:
+                sn = sncli_start()
+                key = sn.get_key_from_title(title)
+
+        sn = sncli_start() if sn == 0 else sn
         sn.cli_note_trash(key, 1 if args[0] == 'trash' else 0)
 
     elif args[0] == 'pin' or args[0] == 'unpin':
 
-        if not key:
-            usage()
+        sn = 0
 
-        sn = sncli_start()
+        if not key:
+            if not title:
+                usage()
+            else:
+                sn = sncli_start()
+                key = sn.get_key_from_title(title)
+
+        sn = sncli_start() if sn == 0 else sn
         sn.cli_note_pin(key, 1 if args[0] == 'pin' else 0)
 
     elif args[0] == 'markdown' or args[0] == 'unmarkdown':
 
-        if not key:
-            usage()
+        sn = 0
 
-        sn = sncli_start()
+        if not key:
+            if not title:
+                usage()
+            else:
+                sn = sncli_start()
+                key = sn.get_key_from_title(title)
+
+        sn = sncli_start() if sn == 0 else sn
         sn.cli_note_markdown(key, 1 if args[0] == 'markdown' else 0)
 
     # Tag API
