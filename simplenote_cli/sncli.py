@@ -87,8 +87,7 @@ class sncli:
             return None
         return diff
 
-    def exec_cmd_on_note(self, note, cmd=None, raw=False, delete_tempfile=False, cmd_args=None):
-        cmd_args = cmd_args if cmd_args else {}
+    def exec_cmd_on_note(self, note, cmd=None, raw=False, delete_tempfile=False, line=0):
 
         if not cmd:
             cmd = self.get_editor()
@@ -103,18 +102,21 @@ class sncli:
         )
         fname = temp.tempfile_name(tf)
 
-        cmd_args['fname'] = fname
-
+        focus_position = 0
         try:
             focus_position = self.gui_body_get().focus_position
-            cmd_args['line'] = focus_position + 1
+            line = focus_position + 1
         except (IndexError, AttributeError):
             # Focus position will fail if no notes available (listbox empty), or
             # if no gui running (eg. when called as `sncli create`).
             # TODO: find a neater way to check than try/except
-            cmd_args.setdefault('line', 1)
+            pass
 
-        cmd_list = [c.format(**cmd_args) for c in shlex.split(cmd)]
+        subs = {
+            'fname': fname,
+            'line': line,
+        }
+        cmd_list = [c.format(**subs) for c in shlex.split(cmd)]
 
         # if the filename wasn't able to be subbed, append it
         # this makes it fully backwards compatible with previous configs
@@ -1172,14 +1174,14 @@ class sncli:
         notes_data = [n.note for n in note_list]
         print(json.dumps(notes_data, indent=2))
 
-    def cli_note_edit(self, key, cmd_args=None):
+    def cli_note_edit(self, key, line):
 
         note = self.ndb.get_note(key)
         if not note:
             self.log('ERROR: Key does not exist')
             return
 
-        content = self.exec_cmd_on_note(note, cmd_args=cmd_args)
+        content = self.exec_cmd_on_note(note, line=line)
         if not content:
             return
 
@@ -1423,15 +1425,15 @@ def main(argv=sys.argv[1:]):
         if not key:
             usage()
 
-        cmd_args = {}
+        line = 0
         if len(args) == 2 and args[1].startswith('+'):
             try:
-                cmd_args['line'] = int(args[1][1:])
+                line = int(args[1][1:])
             except ValueError:
-                logging.error('ERROR: Invalid argument for line to jump to')
+                self.log('ERROR: Invalid argument for line to jump to')
 
         sn = sncli_start()
-        sn.cli_note_edit(key, cmd_args)
+        sn.cli_note_edit(key, line)
 
     elif args[0] == 'trash' or args[0] == 'untrash':
 
