@@ -87,7 +87,7 @@ class sncli:
             return None
         return diff
 
-    def exec_cmd_on_note(self, note, cmd=None, raw=False, delete_tempfile=False, line=0):
+    def exec_cmd_on_note(self, note, cmd=None, raw=False, delete_tempfile=False, line=1):
 
         if not cmd:
             cmd = self.get_editor()
@@ -102,7 +102,6 @@ class sncli:
         )
         fname = temp.tempfile_name(tf)
 
-        focus_position = 0
         try:
             focus_position = self.gui_body_get().focus_position
             line = focus_position + 1
@@ -1425,7 +1424,7 @@ def main(argv=sys.argv[1:]):
         if not key:
             usage()
 
-        line = 0
+        line = 1
         if len(args) == 2 and args[1].startswith('+'):
             try:
                 line = int(args[1][1:])
