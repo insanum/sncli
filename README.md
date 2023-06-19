@@ -103,7 +103,7 @@ Usage:
   import [-]                  - import a note in JSON format ('-' JSON from stdin)
   export                      - export a note in JSON format (specified by <key>)
   dump                        - dump a note (specified by <key>)
-  edit                        - edit a note (specified by <key>)
+  edit [+line_number]         - edit a note (specified by <key>, optionally jump to line)
   < trash | untrash >         - trash/untrash a note (specified by <key>)
   < pin | unpin >             - pin/unpin a note (specified by <key>)
   < markdown | unmarkdown >   - markdown/unmarkdown a note (specified by <key>)
