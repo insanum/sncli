@@ -4,6 +4,7 @@
 
 import urwid
 
+
 class UserInput(urwid.Edit):
 
     def __init__(self, config, caption, edit_text, callback_func, args):

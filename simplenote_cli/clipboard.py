@@ -1,6 +1,6 @@
 import os
 from distutils import spawn
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 
 
 class Clipboard(object):

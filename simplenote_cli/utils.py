@@ -6,7 +6,10 @@
 # copyright 2012 by Charl P. Botha <cpbotha@vxlabs.com>
 # new BSD license
 
-import datetime, random, re, time
+import datetime
+import random
+import re
+import time
 
 # first line with non-whitespace should be the title
 note_title_re = re.compile(r'\s*([^\r\n]*)')

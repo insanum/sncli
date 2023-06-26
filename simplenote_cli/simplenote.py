@@ -23,8 +23,7 @@ import urllib.parse
 import uuid
 
 import requests
-from requests.exceptions import ConnectionError, RequestException, HTTPError
-
+from requests.exceptions import ConnectionError, HTTPError, RequestException
 from simperium.core import Api, Auth
 
 # Application token provided for sncli.

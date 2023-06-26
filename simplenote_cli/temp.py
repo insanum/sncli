@@ -2,7 +2,11 @@
 # Copyright (c) 2014 Eric Davis
 # Licensed under the MIT License
 
-import os, json, tempfile, time
+import json
+import os
+import tempfile
+import time
+
 
 def tempfile_create(note, raw=False, tempdir=None, default_markdown=False):
     if raw:

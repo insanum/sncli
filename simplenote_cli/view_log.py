@@ -4,6 +4,7 @@
 
 import urwid
 
+
 class ViewLog(urwid.ListBox):
 
     def __init__(self, config):

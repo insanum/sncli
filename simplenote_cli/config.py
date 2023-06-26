@@ -2,7 +2,14 @@
 # Copyright (c) 2014 Eric Davis
 # Licensed under the MIT License
 
-import os, sys, urwid, collections, configparser, subprocess
+import collections
+import configparser
+import os
+import subprocess
+import sys
+
+import urwid
+
 
 class Config:
 

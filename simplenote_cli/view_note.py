@@ -2,11 +2,15 @@
 # Copyright (c) 2014 Eric Davis
 # Licensed under the MIT License
 
-import time, urwid
-from . import utils
-import re
-from .clipboard import Clipboard
 import logging
+import re
+import time
+
+import urwid
+
+from . import utils
+from .clipboard import Clipboard
+
 
 class ViewNote(urwid.ListBox):
 
