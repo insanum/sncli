@@ -359,6 +359,18 @@ There is **partial** Windows support:
     * UI interaction does not work BUT can be made to partially work via a monkey patch to Urwid (see https://github.com/urwid/urwid/issues/447)
     * See https://github.com/insanum/sncli/issues/119 for details
 
+### Building and releasing
+
+First, bump the version in setup.py.
+Ensure python-build and twine are installed on your system.
+
+Run:
+
+```
+python -m build  # build the source and built distributions, outputs to dist/
+twine upload dist/*  # Upload to pypi.  This may prompt for your pypi token.
+```
+
 ### Thanks
 
 This application pulls in and uses the
