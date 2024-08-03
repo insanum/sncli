@@ -1,5 +1,4 @@
-import os
-from distutils import spawn
+from shutil import which
 from subprocess import Popen, PIPE
 
 
@@ -8,9 +7,9 @@ class Clipboard(object):
         self.copy_command = self.get_copy_command()
 
     def get_copy_command(self):
-        if (spawn.find_executable('xsel')):
+        if (which('xsel')):
             return ['xsel', '-ib']
-        if (spawn.find_executable('pbcopy')):
+        if (which('pbcopy')):
             return ['pbcopy']
         return None
 
