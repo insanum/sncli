@@ -122,7 +122,7 @@ class Config:
          'clr_help_descr_bg'             : 'default'
         }
 
-        cp = configparser.SafeConfigParser(defaults)
+        cp = configparser.ConfigParser(defaults)
 
         if custom_file:
             fname = custom_file
