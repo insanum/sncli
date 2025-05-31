@@ -367,6 +367,8 @@ Ensure python-build and twine are installed on your system.
 Run:
 
 ```
+# activate venv
+pip install -r requirements-release.txt  # install build and twine packages
 python -m build  # build the source and built distributions, outputs to dist/
 twine upload dist/*  # Upload to pypi.  This may prompt for your pypi token.
 ```
