@@ -4,6 +4,7 @@
 # venv dirs
 env/
 venv/
+.venv/
 
 # python packaging files/dirs
 build
