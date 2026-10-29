@@ -52,6 +52,7 @@ class Simplenote(object):
         self.password = password
         self.token = None
         self.status = 'offline'
+        self.cv = None # head change version of the last index fetch
 
         if not username or not password:
             logging.debug('Auth error: username or password not set')
@@ -207,13 +208,15 @@ class Simplenote(object):
         note['version'] = entry['v']
         return note
 
-    def get_note_list(self, since=None, tags=[]):
+    def get_note_list(self, since=None, tags=[], cv=None):
         """ function to get the note list
 
         The function can be passed optional arguments to limit the
         date range of the list returned and/or limit the list to notes
         containing a certain tag. If omitted a list of all notes
         is returned.
+            - cv=str: only return notes changed on the server since this
+        change version (see self.cv)
 
         Arguments:
             - since=time.time() epoch stamp: only return notes modified
@@ -232,6 +235,7 @@ class Simplenote(object):
         status = 0
         note_list = []
         mark = None
+        new_cv = cv
 
         if self.api is None:
             return [], -1
@@ -239,9 +243,11 @@ class Simplenote(object):
         while True:
 
             try:
-                data = self.api.note.index(data=True, mark=mark, limit=NOTE_FETCH_LENGTH)
+                data = self.api.note.index(data=True, mark=mark, limit=NOTE_FETCH_LENGTH, since=cv)
 
-                note_list.extend(map(self._convert_index_to_note, data['index']))
+                if mark is None and 'current' in data:
+                    new_cv = data['current']
+                note_list.extend(self._convert_index_to_note(e) for e in data['index'] if 'd' in e)
 
                 if 'mark' not in data:
                     break
@@ -259,6 +265,9 @@ class Simplenote(object):
                 # if invalid json data
                 status = -1
                 break
+
+        # failed fetch with a cv: drop it so the next sync fetches everything
+        self.cv = new_cv if status == 0 else None
 
         # Can only filter for tags at end, once all notes have been retrieved.
         #Below based on simplenote.vim, except we return deleted notes as well

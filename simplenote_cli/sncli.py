@@ -19,6 +19,8 @@ class sncli:
         self.do_server_sync = do_server_sync
         self.verbose        = verbose
         self.do_gui         = False
+        self.nvalt_panes    = None
+        self.preview_focused = False
         force_full_sync     = False
         self.current_sort_mode = self.config.get_config('sort_mode')
 
@@ -48,7 +50,7 @@ class sncli:
         self.default_markdown = self.config.get_config('default_markdown') == 'yes'
 
         try:
-            self.ndb = NotesDB(self.config, self.log, self.gui_update_view)
+            self.ndb = NotesDB(self.config, self.log, self.gui_update_view, self.gui_update_status_bar)
         except Exception as e:
             self.log(str(e))
             sys.exit(1)
@@ -231,12 +233,23 @@ class sncli:
         self.sncli_loop.draw_screen()
 
     def gui_body_set(self, w):
+        if self.nvalt_panes and (w is self.view_titles or
+                                 (w is self.view_note and self.preview_focused)):
+            w = self.nvalt_panes
+            w.focus_position = 1 if self.preview_focused else 0
         self.master_frame.contents['body'] = ( w, None )
         self.gui_update_status_bar()
         self.sncli_loop.draw_screen()
 
     def gui_body_get(self):
-        return self.master_frame.contents['body'][0]
+        b = self.master_frame.contents['body'][0]
+        if b is self.nvalt_panes:
+            return self.view_note if self.preview_focused else self.view_titles
+        return b
+
+    def gui_panes_shown(self):
+        return self.nvalt_panes is not None and \
+               self.master_frame.contents['body'][0] is self.nvalt_panes
 
     def gui_body_focus(self):
         self.master_frame.focus_position = 'body'
@@ -312,11 +325,32 @@ class sncli:
 
         self.gui_update_status_bar()
 
+    def gui_update_preview(self):
+        if self.preview_focused or not self.gui_panes_shown():
+            return
+        lb = self.view_titles
+        vn = self.view_note
+        if len(lb.body.positions()) == 0:
+            if vn.key:
+                vn.key = vn.note = vn.old_note = None
+                vn.body[:] = []
+            return
+        note = lb.note_list[lb.focus_position].note
+        if note['localkey'] != vn.key or note.get('content') != self.preview_content:
+            vn.update_note_view(note['localkey'])
+            self.preview_content = note.get('content')
+
     def gui_update_status_bar(self):
+        if not self.do_gui:
+            return
+        self.gui_update_preview()
         if self.status_bar != 'yes':
             self.gui_header_clear()
         else:
-            self.gui_header_set(self.gui_body_get().get_status_bar())
+            w = self.gui_body_get().get_status_bar()
+            if self.ndb.syncing:
+                w = urwid.Columns([w, ('pack', urwid.AttrMap(urwid.Text(' syncing... '), 'status_bar'))])
+            self.gui_header_set(w)
 
     def gui_switch_frame_body(self, new_view, save_current_view=True):
         if new_view == None:
@@ -344,6 +378,20 @@ class sncli:
 
         self.gui_update_status_bar()
         self.ndb.sync_worker_go()
+
+    def delete_note_callback(self, key, yes):
+        if not yes:
+            return
+
+        if not self.ndb.delete_note(key):
+            return
+
+        self.preview_focused = False
+        if self.gui_body_get().__class__ == view_note.ViewNote:
+            self.gui_switch_frame_body(None)
+        self.view_titles.update_note_list(self.view_titles.search_string,
+                                          sort_mode=self.current_sort_mode)
+        self.gui_body_set(self.view_titles)
 
     def restore_note_callback(self, key, yes):
         if not yes:
@@ -440,6 +488,19 @@ class sncli:
             key = 'space'
 
         lb = self.gui_body_get()
+
+        if self.gui_panes_shown():
+            if key == self.config.get_keybind('focus_pane') or \
+               (key == self.config.get_keybind('quit') and self.preview_focused):
+                if self.preview_focused or self.view_note.key:
+                    self.preview_focused = not self.preview_focused
+                    self.nvalt_panes.focus_position = 1 if self.preview_focused else 0
+                    self.gui_update_status_bar()
+                return None
+            # give scroll keys the size of the focused pane
+            widths = self.nvalt_panes.column_widths(size)
+            size = (widths[1] - 2, size[1] - 2) if self.preview_focused \
+                   else (widths[0], size[1])
 
         if key == self.config.get_keybind('quit'):
             self.gui_switch_frame_body(None)
@@ -756,6 +817,34 @@ class sncli:
             self.gui_footer_focus_input()
             self.master_frame.keypress = self.gui_footer_input_get().keypress
 
+        elif key == self.config.get_keybind('note_delete'):
+            if self.gui_body_get().__class__ != view_titles.ViewTitles and \
+               self.gui_body_get().__class__ != view_note.ViewNote:
+                return key
+
+            if self.gui_body_get().__class__ == view_titles.ViewTitles:
+                if len(lb.body.positions()) <= 0:
+                    return None
+                note = lb.note_list[lb.focus_position].note
+            else: # self.gui_body_get().__class__ == view_note.ViewNote:
+                note = lb.note
+
+            if not note or not note.get('deleted'):
+                self.log('Only trashed notes can be deleted (trash it first)')
+                return None
+
+            self.gui_footer_input_set(
+                urwid.AttrMap(
+                    user_input.UserInput(
+                        self.config,
+                        'Delete permanently? (y/n): ',
+                        '',
+                        self.gui_yes_no_input,
+                        [ self.delete_note_callback, note['localkey'] ]),
+                    'user_input_bar'))
+            self.gui_footer_focus_input()
+            self.master_frame.keypress = self.gui_footer_input_get().keypress
+
         elif key == self.config.get_keybind('note_pin'):
             if self.gui_body_get().__class__ != view_titles.ViewTitles and \
                self.gui_body_get().__class__ != view_note.ViewNote:
@@ -913,7 +1002,9 @@ class sncli:
             self.view_note.copy_note_text()
 
         else:
-            return lb.keypress(size, key)
+            r = lb.keypress(size, key)
+            self.gui_update_status_bar()
+            return r
 
         self.gui_update_status_bar()
         return None
@@ -980,6 +1071,13 @@ class sncli:
 
         self.view_log  = view_log.ViewLog(self.config)
         self.view_help = view_help.ViewHelp(self.config)
+
+        self.nvalt_panes = None
+        self.preview_content = None
+        if self.config.get_config('layout') == 'nvalt':
+            self.nvalt_panes = urwid.Columns([
+                ('weight', 1, self.view_titles),
+                ('weight', 2, urwid.LineBox(self.view_note)) ])
 
         palette = \
           [
@@ -1204,6 +1302,19 @@ class sncli:
         self.ndb.set_note_deleted(key, trash)
         self.sync_notes()
 
+    def cli_note_delete(self, key):
+
+        note = self.ndb.get_note(key)
+        if not note:
+            self.log('ERROR: Key does not exist')
+            return
+
+        if not note.get('deleted'):
+            self.log('ERROR: Only trashed notes can be deleted (trash it first)')
+            return
+
+        self.ndb.delete_note(key)
+
     def cli_note_pin(self, key, pin):
 
         note = self.ndb.get_note(key)
@@ -1316,6 +1427,7 @@ Usage:
   dump                        - dump a note (specified by <key>)
   edit [+line_number]         - edit a note (specified by <key>, optionally jump to line)
   < trash | untrash >         - trash/untrash a note (specified by <key>)
+  delete                      - permanently delete a trashed note (specified by <key>)
   < pin | unpin >             - pin/unpin a note (specified by <key>)
   < markdown | unmarkdown >   - markdown/unmarkdown a note (specified by <key>)
   tag get                     - retrieve the tags from a note (specified by <key>)
@@ -1441,6 +1553,14 @@ def main(argv=sys.argv[1:]):
 
         sn = sncli_start()
         sn.cli_note_trash(key, 1 if args[0] == 'trash' else 0)
+
+    elif args[0] == 'delete':
+
+        if not key:
+            usage()
+
+        sn = sncli_start()
+        sn.cli_note_delete(key)
 
     elif args[0] == 'pin' or args[0] == 'unpin':
 

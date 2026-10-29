@@ -29,6 +29,8 @@ class Config:
          'cfg_log_reversed'      : 'yes',
          'cfg_tempdir'           : '',
          'cfg_default_markdown'  : 'no',
+         'cfg_sync_interval'     : '15',
+         'cfg_layout'            : 'default', # or 'nvalt'
 
          'kb_help'            : 'h',
          'kb_quit'            : 'q',
@@ -45,6 +47,7 @@ class Config:
          'kb_create_note'     : 'C',
          'kb_edit_note'       : 'e',
          'kb_view_note'       : 'enter',
+         'kb_focus_pane'      : 'tab',
          'kb_view_note_ext'   : 'meta enter',
          'kb_view_note_json'  : 'O',
          'kb_pipe_note'       : '|',
@@ -71,6 +74,7 @@ class Config:
          'kb_sort_alpha'      : 'a',
          'kb_sort_tags'       : 'ctrl t',
          'kb_note_trash'      : 'T',
+         'kb_note_delete'     : 'X',
          'kb_note_pin'        : 'p',
          'kb_note_markdown'   : 'm',
          'kb_note_tags'       : 't',
@@ -193,6 +197,8 @@ class Config:
         self.configs['log_reversed'] = [ cp.get(cfg_sec, 'cfg_log_reversed'), 'Log file reversed' ]
         self.configs['tempdir'] = [ cp.get(cfg_sec, 'cfg_tempdir'), 'Temporary directory for note storage' ]
         self.configs['default_markdown'] = [ cp.get(cfg_sec, 'cfg_default_markdown'), 'Default to markdown for new notes' ]
+        self.configs['sync_interval'] = [ cp.get(cfg_sec, 'cfg_sync_interval'), 'Sync interval in seconds' ]
+        self.configs['layout'] = [ cp.get(cfg_sec, 'cfg_layout'), 'Layout (default or nvalt)' ]
 
         self.keybinds = collections.OrderedDict()
         self.keybinds['help'] = [ cp.get(cfg_sec, 'kb_help'), [ 'common' ], 'Help' ]
@@ -211,6 +217,7 @@ class Config:
         self.keybinds['create_note'] = [ cp.get(cfg_sec, 'kb_create_note'), [ 'titles' ], 'Create a new note' ]
         self.keybinds['edit_note'] = [ cp.get(cfg_sec, 'kb_edit_note'), [ 'titles', 'notes' ], 'Edit note' ]
         self.keybinds['view_note'] = [ cp.get(cfg_sec, 'kb_view_note'), [ 'titles' ], 'View note' ]
+        self.keybinds['focus_pane'] = [ cp.get(cfg_sec, 'kb_focus_pane'), [ 'titles', 'notes' ], 'Switch pane (nvalt layout)' ]
         self.keybinds['view_note_ext'] = [ cp.get(cfg_sec, 'kb_view_note_ext'), [ 'titles', 'notes' ], 'View note with pager' ]
         self.keybinds['view_note_json'] = [ cp.get(cfg_sec, 'kb_view_note_json'), [ 'titles', 'notes' ], 'View note raw json' ]
         self.keybinds['pipe_note'] = [ cp.get(cfg_sec, 'kb_pipe_note'), [ 'titles', 'notes' ], 'Pipe note contents' ]
@@ -236,6 +243,7 @@ class Config:
         self.keybinds['sort_alpha'] = [ cp.get(cfg_sec, 'kb_sort_alpha'), [ 'titles' ], 'Sort notes by alpha' ]
         self.keybinds['sort_tags'] = [ cp.get(cfg_sec, 'kb_sort_tags'), [ 'titles' ], 'Sort notes by tags' ]
         self.keybinds['note_trash'] = [ cp.get(cfg_sec, 'kb_note_trash'), [ 'titles', 'notes' ], 'Trash a note' ]
+        self.keybinds['note_delete'] = [ cp.get(cfg_sec, 'kb_note_delete'), [ 'titles', 'notes' ], 'Permanently delete a trashed note' ]
         self.keybinds['note_pin'] = [ cp.get(cfg_sec, 'kb_note_pin'), [ 'titles', 'notes' ], 'Pin note' ]
         self.keybinds['note_markdown'] = [ cp.get(cfg_sec, 'kb_note_markdown'), [ 'titles', 'notes' ], 'Flag note as markdown' ]
         self.keybinds['note_tags'] = [ cp.get(cfg_sec, 'kb_note_tags'), [ 'titles', 'notes' ], 'Edit note tags' ]

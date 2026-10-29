@@ -20,10 +20,12 @@ class WriteError(RuntimeError):
 class NotesDB():
     """NotesDB will take care of the local notes database and syncing with SN.
     """
-    def __init__(self, config, log, update_view):
+    def __init__(self, config, log, update_view, update_status=lambda: None):
         self.config      = config
         self.log         = log
         self.update_view = update_view
+        self.update_status = update_status
+        self.syncing     = False
 
         self.last_sync = 0 # set to zero to trigger a full sync
         self.sync_lock = threading.Lock()
@@ -67,6 +69,10 @@ class NotesDB():
         # this does not yet need network access
         self.simplenote = Simplenote(self.config.get_config('sn_username'),
                                      self.config.get_config('sn_password'))
+
+        # resume from the last server change version so startup only
+        # fetches notes changed since the previous run
+        self.load_cv()
 
         # we'll use this to store which notes are currently being synced by
         # the background thread, so we don't add them anew if they're still
@@ -371,6 +377,25 @@ class NotesDB():
         if what_changed not in note['what_changed']:
             note['what_changed'].append(what_changed)
 
+    def delete_note(self, key):
+        """Permanently delete a trashed note on the server and locally.
+        Returns True on success. Server failure leaves the note untouched."""
+        n = self.notes.get(key)
+        if not n or not n.get('deleted'):
+            return False
+        with self.sync_lock:
+            if n.get('key'):
+                ret = self.simplenote.delete_note(n['key'])
+                if ret[1] != 0:
+                    self.log('ERROR: Failed to delete note on server (key={0}): {1}'.format(key, ret[0]))
+                    return False
+            del self.notes[key]
+            fn = self.helper_key_to_fname(key)
+            if os.path.exists(fn):
+                os.unlink(fn)
+        self.log('Note permanently deleted (key={0})'.format(key))
+        return True
+
     def set_note_deleted(self, key, deleted):
         n = self.notes[key]
         if n['deleted'] != deleted:
@@ -427,6 +452,34 @@ class NotesDB():
             n['modificationDate'] = time.time()
             self.flag_what_changed(n, 'systemTags')
             self.log('Note markdown {0} (key={1})'.format('flagged' if markdown else 'unflagged', key))
+
+    def helper_cv_fname(self):
+        # not .json, so it is never picked up as a note
+        return os.path.join(self.config.get_config('db_path'), 'sync_cv.state')
+
+    def load_cv(self):
+        try:
+            with open(self.helper_cv_fname()) as f:
+                state = json.load(f)
+        except (IOError, ValueError):
+            return
+        # a cv is only valid for the account it came from
+        if state.get('user') == self.config.get_config('sn_username') and state.get('cv'):
+            self.simplenote.cv = state['cv']
+            self.last_sync = state.get('time', 1) # non-zero: skip startup full sync
+
+    def save_cv(self):
+        fn = self.helper_cv_fname()
+        if not self.simplenote.cv:
+            if os.path.exists(fn):
+                os.unlink(fn)
+            return
+        tmp = fn + '.tmp'
+        with open(tmp, 'w') as f:
+            json.dump({'user': self.config.get_config('sn_username'),
+                       'cv': self.simplenote.cv,
+                       'time': time.time()}, f)
+        os.replace(tmp, fn)
 
     def helper_key_to_fname(self, k):
         return os.path.join(self.config.get_config('db_path'), k) + '.json'
@@ -569,7 +622,9 @@ class NotesDB():
         if not server_sync:
             nl = []
         else:
-            nl = self.simplenote.get_note_list()
+            # partial syncs only fetch notes changed since the last fetch
+            nl = self.simplenote.get_note_list(
+                    cv=None if full_sync else self.simplenote.cv)
 
             if nl[1] == 0:  # success
                 nl = nl[0]
@@ -639,6 +694,12 @@ class NotesDB():
                 os.unlink(fn)
                 self.log("Deleted note from disk (key={0})".format(k))
 
+        if server_sync:
+            try:
+                self.save_cv()
+            except OSError as e:
+                self.log('ERROR: Failed to save sync state: ' + str(e))
+
         if not sync_errors:
             self.last_sync = sync_start_time
 
@@ -685,9 +746,15 @@ class NotesDB():
 
     def sync_now(self, do_server_sync=True) -> int:
         self.sync_lock.acquire()
-        n_errors = self.sync_notes(server_sync=do_server_sync,
-                        full_sync=True if not self.last_sync else False)
-        self.sync_lock.release()
+        self.syncing = True
+        self.update_status()
+        try:
+            n_errors = self.sync_notes(server_sync=do_server_sync,
+                            full_sync=True if not self.last_sync else False)
+        finally:
+            self.syncing = False
+            self.update_status()
+            self.sync_lock.release()
         return n_errors
 
     # sync worker thread...
@@ -697,7 +764,7 @@ class NotesDB():
         self.sync_now(do_server_sync)
         while True:
             self.go_cond.acquire()
-            self.go_cond.wait(15)
+            self.go_cond.wait(int(self.config.get_config('sync_interval')))
             self.sync_now(do_server_sync)
             self.go_cond.release()
 
